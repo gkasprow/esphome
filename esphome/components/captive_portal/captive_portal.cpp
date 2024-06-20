@@ -37,7 +37,8 @@ void CaptivePortal::handle_wifisave(AsyncWebServerRequest *request) {
 }
 
 void CaptivePortal::setup() {}
-void CaptivePortal::start() {
+void CaptivePortal::start(const String path) {
+  this->path_ = path;
   this->base_->init();
   if (!this->initialized_) {
     this->base_->add_handler(this);
@@ -66,7 +67,7 @@ void CaptivePortal::start() {
 }
 
 void CaptivePortal::handleRequest(AsyncWebServerRequest *req) {
-  if (req->url() == "/") {
+  if (req->url() == this->path_) {
     auto *response = req->beginResponse_P(200, "text/html", INDEX_GZ, sizeof(INDEX_GZ));
     response->addHeader("Content-Encoding", "gzip");
     req->send(response);

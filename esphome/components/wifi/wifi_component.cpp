@@ -105,7 +105,7 @@ void WiFiComponent::start() {
     if (captive_portal::global_captive_portal != nullptr) {
       this->wifi_sta_pre_setup_();
       this->start_scanning();
-      captive_portal::global_captive_portal->start();
+      captive_portal::global_captive_portal->start("/");
     }
 #endif
 #endif  // USE_WIFI_AP
@@ -182,7 +182,7 @@ void WiFiComponent::loop() {
         this->setup_ap_config_();
 #ifdef USE_CAPTIVE_PORTAL
         if (captive_portal::global_captive_portal != nullptr)
-          captive_portal::global_captive_portal->start();
+          captive_portal::global_captive_portal->start("/");
 #endif
       }
     }
@@ -621,6 +621,7 @@ void WiFiComponent::check_connecting_finished() {
       if (this->is_captive_portal_active_()) {
         captive_portal::global_captive_portal->end();
       }
+      captive_portal::global_captive_portal->start("/captive_portal");
 #endif
       ESP_LOGD(TAG, "Disabling AP...");
       this->wifi_mode_({}, false);

@@ -25,7 +25,7 @@ class CaptivePortal : public AsyncWebHandler, public Component {
   }
 #endif
   float get_setup_priority() const override;
-  void start();
+  void start(const String path);
   bool is_active() const { return this->active_; }
   void end() {
     this->active_ = false;
@@ -41,7 +41,7 @@ class CaptivePortal : public AsyncWebHandler, public Component {
       return false;
 
     if (request->method() == HTTP_GET) {
-      if (request->url() == "/")
+      if (request->url() == this->path_)
         return true;
       if (request->url() == "/config.json")
         return true;
@@ -62,6 +62,7 @@ class CaptivePortal : public AsyncWebHandler, public Component {
   web_server_base::WebServerBase *base_;
   bool initialized_{false};
   bool active_{false};
+  String path_{};
 #ifdef USE_ARDUINO
   std::unique_ptr<DNSServer> dns_server_{nullptr};
 #endif
