@@ -71,11 +71,12 @@ void WiFiComponent::start() {
   SavedWifiSettings save{};
   if (this->pref_.load(&save)) {
     ESP_LOGD(TAG, "Loaded saved wifi settings: %s", save.ssid);
-
-    WiFiAP sta{};
-    sta.set_ssid(save.ssid);
-    sta.set_password(save.password);
-    this->set_sta(sta);
+    if (strlen(save.ssid)) {
+      WiFiAP sta{};
+      sta.set_ssid(save.ssid);
+      sta.set_password(save.password);
+      this->set_sta(sta);
+    }
   }
 
   if (this->has_sta()) {
@@ -105,7 +106,11 @@ void WiFiComponent::start() {
     if (captive_portal::global_captive_portal != nullptr) {
       this->wifi_sta_pre_setup_();
       this->start_scanning();
+#ifdef USE_WEBSERVER
+      captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_PORTAL_PATH);
+#elif
       captive_portal::global_captive_portal->start("/");
+#endif
     }
 #endif
 #endif  // USE_WIFI_AP
@@ -154,6 +159,9 @@ void WiFiComponent::loop() {
       case WIFI_COMPONENT_STATE_STA_CONNECTING_2: {
         this->status_set_warning("associating to network");
         this->check_connecting_finished();
+        if (this->is_connected()) {
+          this->last_connected_ = now;
+        }
         break;
       }
 
@@ -182,7 +190,11 @@ void WiFiComponent::loop() {
         this->setup_ap_config_();
 #ifdef USE_CAPTIVE_PORTAL
         if (captive_portal::global_captive_portal != nullptr)
+#ifdef USE_WEBSERVER
+          captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_PORTAL_PATH);
+#elif
           captive_portal::global_captive_portal->start("/");
+#endif
 #endif
       }
     }
@@ -296,16 +308,29 @@ void WiFiComponent::set_sta(const WiFiAP &ap) {
 void WiFiComponent::clear_sta() { this->sta_.clear(); }
 void WiFiComponent::save_wifi_sta(const std::string &ssid, const std::string &password) {
   SavedWifiSettings save{};
-  strncpy(save.ssid, ssid.c_str(), sizeof(save.ssid));
-  strncpy(save.password, password.c_str(), sizeof(save.password));
+  if (ssid.length()) {
+    ESP_LOGV(TAG, "ssid.length()");
+    strncpy(save.ssid, ssid.c_str(), sizeof(save.ssid));
+    strncpy(save.password, password.c_str(), sizeof(save.password));
+
+    WiFiAP sta{};
+    sta.set_ssid(ssid);
+    sta.set_password(password);
+    this->set_sta(sta);
+  } else {
+    this->clear_sta();
+    this->selected_ap_ = WiFiAP{};
+#ifdef USE_WEBSERVER
+    if (this->is_captive_portal_active_()) {
+      captive_portal::global_captive_portal->end();
+      captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_PORTAL_PATH);
+    }
+#endif
+  }
   this->pref_.save(&save);
   // ensure it's written immediately
   global_preferences->sync();
-
-  WiFiAP sta{};
-  sta.set_ssid(ssid);
-  sta.set_password(password);
-  this->set_sta(sta);
+  this->ap_setup_ = 0;
 }
 
 void WiFiComponent::start_connecting(const WiFiAP &ap, bool two) {
@@ -621,7 +646,7 @@ void WiFiComponent::check_connecting_finished() {
       if (this->is_captive_portal_active_()) {
         captive_portal::global_captive_portal->end();
       }
-      captive_portal::global_captive_portal->start("/captive_portal");
+      captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_PORTAL_PATH);
 #endif
       ESP_LOGD(TAG, "Disabling AP...");
       this->wifi_mode_({}, false);

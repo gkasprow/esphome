@@ -221,6 +221,7 @@ class WiFiComponent : public Component {
 
   void enable();
   void disable();
+  void disconnect() { this->wifi_disconnect_(); }
   bool is_disabled();
   void start_scanning();
   void check_scanning_finished();

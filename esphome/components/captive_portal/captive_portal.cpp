@@ -14,6 +14,8 @@ void CaptivePortal::handle_config(AsyncWebServerRequest *request) {
   stream->addHeader("cache-control", "public, max-age=0, must-revalidate");
   stream->printf(R"({"mac":"%s","name":"%s","aps":[{})", get_mac_address_pretty().c_str(), App.get_name().c_str());
 
+  // wifi::global_wifi_component->start_scanning();
+
   for (auto &scan : wifi::global_wifi_component->get_scan_result()) {
     if (scan.get_is_hidden())
       continue;
@@ -34,10 +36,13 @@ void CaptivePortal::handle_wifisave(AsyncWebServerRequest *request) {
   wifi::global_wifi_component->save_wifi_sta(ssid, psk);
   wifi::global_wifi_component->start_scanning();
   request->redirect("/?save");
+  if (wifi::global_wifi_component->is_connected())
+    wifi::global_wifi_component->disconnect();
 }
 
 void CaptivePortal::setup() {}
 void CaptivePortal::start(const String portal_path) {
+  ESP_LOGV(TAG, "Starting Captive Portal using path: %s", portal_path.c_str());
   this->portal_path_ = portal_path;
   this->base_->init();
   if (!this->initialized_) {

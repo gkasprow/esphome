@@ -13,6 +13,8 @@ namespace esphome {
 
 namespace captive_portal {
 
+const char WEB_SERVER_PORTAL_PATH[] = "/captive_portal";
+
 enum Mode { MODE_ALWAYS_ON, MODE_AP_ONLY };
 
 class CaptivePortal : public AsyncWebHandler, public Component {
