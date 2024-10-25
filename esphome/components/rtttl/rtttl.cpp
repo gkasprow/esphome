@@ -40,7 +40,7 @@ void Rtttl::dump_config() {
 }
 
 void Rtttl::play(std::string rtttl) {
-  if (this->state_ != State::STATE_STOPPED && this->state_ != State::STATE_STOPPING) {
+  if (this->state_ != State::STATE_STOPPED) {
     int pos = this->rtttl_.find(':');
     auto name = this->rtttl_.substr(0, pos);
     ESP_LOGW(TAG, "RTTTL Component is already playing: %s", name.c_str());
@@ -141,7 +141,7 @@ void Rtttl::stop() {
     if (this->speaker_->is_running()) {
       this->speaker_->stop();
     }
-    this->set_state_(STATE_STOPPING);
+    this->set_state_(STATE_STOPPED);
   }
 #endif
   this->note_duration_ = 0;
