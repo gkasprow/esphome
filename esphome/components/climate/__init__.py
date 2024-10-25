@@ -120,9 +120,11 @@ visual_temperature = cv.float_with_unit(
 
 
 def single_visual_temperature(value):
+    # Seems already being separate target/current values, pass it through
     if isinstance(value, dict):
         return value
 
+    # Otherwise, use the single value for both properties
     value = visual_temperature(value)
     return VISUAL_TEMPERATURE_STEP_SCHEMA(
         {
@@ -143,12 +145,15 @@ ControlTrigger = climate_ns.class_(
 
 VISUAL_TEMPERATURE_STEP_SCHEMA = cv.Any(
     single_visual_temperature,
+    # Allow defining target/current temperature steps separately
     cv.Schema(
         {
             cv.Required(CONF_TARGET_TEMPERATURE): visual_temperature,
             cv.Required(CONF_CURRENT_TEMPERATURE): visual_temperature,
         }
     ),
+    # Otherwise take the single value for both
+    single_visual_temperature,
 )
 
 CLIMATE_SCHEMA = (
