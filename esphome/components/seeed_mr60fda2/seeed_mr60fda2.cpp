@@ -214,6 +214,10 @@ void MR60FDA2Component::split_frame_(uint8_t buffer) {
 }
 
 void MR60FDA2Component::process_frame_() {
+  // Declare variables outside of the switch statement
+  float install_height_float = 0;
+  float height_threshold_float = 0;
+
   switch (this->current_frame_type_) {
     case IS_FALL_TYPE_BUFFER:
       if (this->fall_detected_binary_sensor_ != nullptr) {
@@ -221,11 +225,13 @@ void MR60FDA2Component::process_frame_() {
       }
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
+
     case PEOPLE_EXIST_TYPE_BUFFER:
       if (this->people_exist_binary_sensor_ != nullptr)
         this->people_exist_binary_sensor_->publish_state(this->current_frame_buf_[LEN_TO_HEAD_CKSUM]);
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
+
     case RESULT_INSTALL_HEIGHT:
       if (this->current_data_buf_[0]) {
         ESP_LOGD(TAG, "Successfully set the mounting height");
@@ -234,6 +240,7 @@ void MR60FDA2Component::process_frame_() {
       }
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
+
     case RESULT_HEIGHT_THRESHOLD:
       if (this->current_data_buf_[0]) {
         ESP_LOGD(TAG, "Successfully set the height threshold");
@@ -242,6 +249,7 @@ void MR60FDA2Component::process_frame_() {
       }
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
+
     case RESULT_SENSITIVITY:
       if (this->current_data_buf_[0]) {
         ESP_LOGD(TAG, "Successfully set the sensitivity");
@@ -250,10 +258,9 @@ void MR60FDA2Component::process_frame_() {
       }
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
-    case RESULT_PARAMETERS:
-      float install_height_float = 0;
-      float height_threshold_float = 0;
 
+    case RESULT_PARAMETERS:
+      // Variables declared outside the switch statement will be initialized here
       if (this->install_height_select_ != nullptr) {
         this->current_install_height_int_ =
             encode_uint32(current_data_buf_[3], current_data_buf_[2], current_data_buf_[1], current_data_buf_[0]);
@@ -284,6 +291,7 @@ void MR60FDA2Component::process_frame_() {
                height_threshold_float, this->current_sensitivity_);
       this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
+
     default:
       break;
   }
