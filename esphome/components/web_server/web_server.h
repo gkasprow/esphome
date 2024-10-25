@@ -1,5 +1,4 @@
 #pragma once
-#define WEB_SERVER_H
 
 #include "list_entities.h"
 
