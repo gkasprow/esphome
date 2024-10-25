@@ -309,8 +309,8 @@ void AsyncEventSource::deferrable_send_state(void *source, const char *event_typ
 AsyncEventSourceResponse::AsyncEventSourceResponse(const AsyncWebServerRequest *request,
                                                    esphome::web_server_idf::AsyncEventSource *server,
                                                    esphome::web_server::WebServer *ws)
-    : server_(server), web_server_(ws) {
-  this->entities_iterator_ = new esphome::web_server::ListEntitiesIterator(ws, server);
+    : server_(server), web_server_(ws), 
+    entities_iterator_(new esphome::web_server::ListEntitiesIterator(ws, server)) {
   httpd_req_t *req = *request;
 
   httpd_resp_set_status(req, HTTPD_200);
@@ -354,8 +354,6 @@ AsyncEventSourceResponse::AsyncEventSourceResponse(const AsyncWebServerRequest *
   //  this->entities_iterator_->advance();
   //}
 }
-
-AsyncEventSourceResponse::~AsyncEventSourceResponse() { delete this->entities_iterator_; }
 
 void AsyncEventSourceResponse::destroy(void *ptr) {
   auto *rsp = static_cast<AsyncEventSourceResponse *>(ptr);
