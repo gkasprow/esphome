@@ -144,7 +144,6 @@ ControlTrigger = climate_ns.class_(
 )
 
 VISUAL_TEMPERATURE_STEP_SCHEMA = cv.Any(
-    single_visual_temperature,
     # Allow defining target/current temperature steps separately
     cv.Schema(
         {
