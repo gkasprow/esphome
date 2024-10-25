@@ -31,7 +31,7 @@ class ListEntitiesIterator : public ComponentIterator {
   bool on_cover(cover::Cover *obj) override;
 #endif
 #ifdef USE_FAN
-  bool on_fan(fan::Fan *obj) override;
+  bool on_fan(fan::Fan *obj) override; 
 #endif
 #ifdef USE_LIGHT
   bool on_light(light::LightState *obj) override;
