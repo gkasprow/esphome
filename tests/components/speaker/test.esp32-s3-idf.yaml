@@ -14,12 +14,12 @@ esphome:
       - media_player.pause:
       - media_player.toggle:
       - media_player.stop:
-      - nabu.play_local_media_file: wake_word_trigger_sound
-      - nabu.stop_pipeline: media
-      - nabu.play_local_media_file:
+      - speaker_media_player.play_local_media_file: wake_word_trigger_sound
+      - speaker_media_player.stop_pipeline: media
+      - speaker_media_player.play_local_media_file:
           media_file: wake_word_trigger_sound
           announcement: true
-      - nabu.stop_pipeline: announcement
+      - speaker_media_player.stop_pipeline: announcement
 
 wifi:
   ssid: MySSID
@@ -38,8 +38,8 @@ speaker:
     sample_rate: 16000
 
 media_player:
-  - platform: nabu
-    id: nabu_media_player
+  - platform: speaker
+    id: speaker_media_player
     name: Media Player
     speaker: speaker_id
     sample_rate: 16000
@@ -56,11 +56,11 @@ media_player:
       - wait_until:
           media_player.is_idle:
     on_volume:
-      - nabu.set_ducking:
+      - speaker_media_player.set_ducking:
           decibel_reduction: 20
           duration: 0.0s
       - wait_until:
           media_player.is_idle:
-      - nabu.set_ducking:
+      - speaker_media_player.set_ducking:
           decibel_reduction: 0
           duration: 2.0s
