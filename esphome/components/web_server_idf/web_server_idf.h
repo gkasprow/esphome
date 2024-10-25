@@ -14,7 +14,9 @@
 namespace esphome {
 namespace web_server {
 class WebServer;
+#ifndef LIST_ENTITIES_H
 class ListEntitiesIterator;
+#endif
 };  // namespace web_server
 namespace web_server_idf {
 

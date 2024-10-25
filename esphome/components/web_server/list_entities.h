@@ -1,4 +1,5 @@
 #pragma once
+#define LIST_ENTITIES_H 1
 
 #include "esphome/core/defines.h"
 #ifdef USE_WEBSERVER
