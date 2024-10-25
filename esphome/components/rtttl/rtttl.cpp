@@ -161,7 +161,7 @@ void Rtttl::loop() {
         audio_stream_info.sample_rate = SAMPLE_RATE;
 
         this->speaker_->set_audio_stream_info(audio_stream_info);
-        // this->speaker_->set_volume(this->gain_);
+        this->speaker_->set_volume(this->gain_);
         this->speaker_->start();
         this->set_state_(State::STATE_STARTING);
       }
@@ -359,11 +359,6 @@ void Rtttl::finish_() {
     this->output_->set_level(0.0);
   }
 #endif
-#ifdef USE_SPEAKER
-  if (this->speaker_ != nullptr) {
-    this->speaker_->finish();
-  }
-#endif
   this->set_state_(State::STATE_STOPPED);
   this->note_duration_ = 0;
   this->on_finished_playback_callback_.call();
@@ -378,8 +373,6 @@ static const LogString *state_to_string(State state) {
       return LOG_STR("STATE_STARTING");
     case STATE_RUNNING:
       return LOG_STR("STATE_RUNNING");
-    case STATE_STOPPING:
-      return LOG_STR("STATE_STOPPING");
     case STATE_INIT:
       return LOG_STR("STATE_INIT");
     default:
@@ -390,7 +383,7 @@ static const LogString *state_to_string(State state) {
 void Rtttl::set_state_(State state) {
   State old_state = this->state_;
   this->state_ = state;
-  ESP_LOGD(TAG, "State changed from %s to %s", LOG_STR_ARG(state_to_string(old_state)),
+  ESP_LOGV(TAG, "State changed from %s to %s", LOG_STR_ARG(state_to_string(old_state)),
            LOG_STR_ARG(state_to_string(state)));
 }
 

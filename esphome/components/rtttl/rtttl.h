@@ -19,7 +19,6 @@ enum State : uint8_t {
   STATE_INIT,
   STATE_STARTING,
   STATE_RUNNING,
-  STATE_STOPPING,
 };
 
 class Rtttl : public Component {
@@ -69,7 +68,7 @@ class Rtttl : public Component {
   uint16_t note_duration_;
 
   uint32_t output_freq_;
-  float gain_{1.0f};
+  float gain_{0.9f};
   State state_{State::STATE_STOPPED};
 
 #ifdef USE_OUTPUT
