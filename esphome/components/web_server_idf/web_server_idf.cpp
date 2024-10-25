@@ -9,7 +9,7 @@
 
 #include "utils.h"
 
-#define USE_WEBSERVER // needed due to some jank lint checks
+#define USE_WEBSERVER  // jank linting doesn't replicate the build env
 #include "esphome/components/web_server/web_server.h"
 #include "esphome/components/web_server/list_entities.h"
 
