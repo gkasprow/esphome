@@ -26,7 +26,6 @@ static const char *const TAG = "i2s_audio.speaker";
 enum SpeakerEventGroupBits : uint32_t {
   COMMAND_START = (1 << 0),                           // Starts the main task purpose
   COMMAND_STOP = (1 << 1),                            // stops the main task
-  COMMAND_STOP_GRACEFULLY = (1 << 2),                 // Stops the task once all data has been written
   MESSAGE_RING_BUFFER_AVAILABLE_TO_WRITE = (1 << 5),  // Locks the ring buffer when not set
   STATE_STARTING = (1 << 10),
   STATE_RUNNING = (1 << 11),
@@ -195,6 +194,9 @@ size_t I2SAudioSpeaker::play(const uint8_t *data, size_t length, TickType_t tick
     ESP_LOGE(TAG, "Cannot play audio, speaker failed to setup");
     return 0;
   }
+  if (this->state_ == speaker::STATE_STOPPING)
+    return 0;
+
   if (this->state_ != speaker::STATE_RUNNING && this->state_ != speaker::STATE_STARTING) {
     this->start();
   }
@@ -227,15 +229,14 @@ bool I2SAudioSpeaker::has_buffered_data() const {
 
 void I2SAudioSpeaker::speaker_task(void *params) {
   I2SAudioSpeaker *this_speaker = (I2SAudioSpeaker *) params;
-  uint32_t event_group_bits =
-      xEventGroupWaitBits(this_speaker->event_group_,
-                          SpeakerEventGroupBits::COMMAND_START | SpeakerEventGroupBits::COMMAND_STOP |
-                              SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY,  // Bit message to read
-                          pdTRUE,                                              // Clear the bits on exit
-                          pdFALSE,                                             // Don't wait for all the bits,
-                          portMAX_DELAY);                                      // Block indefinitely until a bit is set
+  uint32_t event_group_bits = xEventGroupWaitBits(
+      this_speaker->event_group_,
+      SpeakerEventGroupBits::COMMAND_START | SpeakerEventGroupBits::COMMAND_STOP,  // Bit message to read
+      pdTRUE,                                                                      // Clear the bits on exit
+      pdFALSE,                                                                     // Don't wait for all the bits,
+      portMAX_DELAY);  // Block indefinitely until a bit is set
 
-  if (event_group_bits & (SpeakerEventGroupBits::COMMAND_STOP | SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY)) {
+  if (event_group_bits & (SpeakerEventGroupBits::COMMAND_STOP)) {
     // Received a stop signal before the task was requested to start
     this_speaker->delete_task_(0);
   }
@@ -277,9 +278,6 @@ void I2SAudioSpeaker::speaker_task(void *params) {
       if (event_group_bits & SpeakerEventGroupBits::COMMAND_STOP) {
         break;
       }
-      if (event_group_bits & SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY) {
-        stop_gracefully = true;
-      }
 
       size_t bytes_to_read = dma_buffers_size;
       size_t bytes_read = this_speaker->audio_ring_buffer_->read((void *) this_speaker->data_buffer_, bytes_to_read,
@@ -307,21 +305,16 @@ void I2SAudioSpeaker::speaker_task(void *params) {
         if (bytes_written != bytes_read) {
           xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::ERR_ESP_INVALID_SIZE);
         }
-
-      } else {
-        // No data received
-
-        if (stop_gracefully) {
-          break;
-        }
-
-        i2s_zero_dma_buffer(this_speaker->parent_->get_port());
       }
     }
   } else {
     // Couldn't configure the I2S port to be compatible with the incoming audio
     xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::ERR_INVALID_FORMAT);
   }
+  uint64_t tmp = 0;
+  size_t bytes_written = 0;
+  i2s_write(this_speaker->parent_->get_port(), &tmp, 8, &bytes_written, portMAX_DELAY);
+
   i2s_zero_dma_buffer(this_speaker->parent_->get_port());
 
   xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::STATE_STOPPING);
@@ -354,7 +347,8 @@ void I2SAudioSpeaker::start() {
 
 void I2SAudioSpeaker::stop() { this->stop_(false); }
 
-void I2SAudioSpeaker::finish() { this->stop_(true); }
+void I2SAudioSpeaker::finish() { /*do notting. */
+}
 
 void I2SAudioSpeaker::stop_(bool wait_on_empty) {
   if (this->is_failed())
@@ -363,7 +357,7 @@ void I2SAudioSpeaker::stop_(bool wait_on_empty) {
     return;
 
   if (wait_on_empty) {
-    xEventGroupSetBits(this->event_group_, SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY);
+    this->state_ = speaker::STATE_STOPPING;
   } else {
     xEventGroupSetBits(this->event_group_, SpeakerEventGroupBits::COMMAND_STOP);
   }
