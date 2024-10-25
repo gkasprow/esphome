@@ -242,9 +242,8 @@ void I2SAudioSpeaker::speaker_task(void *params) {
                           pdFALSE,                                             // Don't wait for all the bits,
                           portMAX_DELAY);                                      // Block indefinitely until a bit is set
 
-  if (event_group_bits & (SpeakerEventGroupBits::COMMAND_STOP |
-                          SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY)) {  // Received a stop signal before the task
-                                                                              // was requested to start
+  if (event_group_bits & (SpeakerEventGroupBits::COMMAND_STOP | SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY)) {
+    // Received a stop signal before the task was requested to start
     this_speaker->delete_task_(0);
   }
 
