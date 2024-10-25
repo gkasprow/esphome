@@ -355,9 +355,7 @@ AsyncEventSourceResponse::AsyncEventSourceResponse(const AsyncWebServerRequest *
   //}
 }
 
-AsyncEventSourceResponse::~AsyncEventSourceResponse() {
-  delete this->entities_iterator_;
-}
+AsyncEventSourceResponse::~AsyncEventSourceResponse() { delete this->entities_iterator_; }
 
 void AsyncEventSourceResponse::destroy(void *ptr) {
   auto *rsp = static_cast<AsyncEventSourceResponse *>(ptr);
