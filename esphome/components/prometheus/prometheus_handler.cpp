@@ -357,7 +357,7 @@ void PrometheusHandler::lock_row_(AsyncResponseStream *stream, lock::Lock *obj) 
 
 // Type-specific implementation
 #ifdef USE_TEXT_SENSOR
-void PrometheusHandler::text_sensor_sensor_type_(AsyncResponseStream *stream) {
+void PrometheusHandler::text_sensor_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_text_sensor_value gauge\n"));
   stream->print(F("#TYPE esphome_text_sensor_failed gauge\n"));
 }
