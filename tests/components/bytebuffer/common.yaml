@@ -3,6 +3,7 @@ bytebuffer:
 esphome:
   on_boot:
     - lambda: |-
+        using namespace bytebuffer;
         auto buf = ByteBuffer(16);
         assert(buf.get_endianness() == LITTLE);
         assert(buf.get_remaining() == 16);

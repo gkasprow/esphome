@@ -7,6 +7,7 @@
 #include "esphome/core/helpers.h"
 
 namespace esphome {
+namespace bytebuffer {
 
 enum Endian { LITTLE, BIG };
 
@@ -416,4 +417,5 @@ class ByteBuffer {
   size_t limit_{0};
 };
 
+}  // namespace bytebuffer
 }  // namespace esphome
