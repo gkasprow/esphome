@@ -32,6 +32,7 @@ def print_error_for_file(file, body):
 def build_all_include():
     # Build a cpp file that includes all header files in this repo.
     # Otherwise header-only integrations would not be tested by clang-tidy
+    # Also helps pio find included files for the benefit of IDEs
     headers = []
     for path in walk_files(basepath):
         filetypes = (".h",)

@@ -6,6 +6,8 @@ import argparse
 import configparser
 import subprocess
 
+from helpers import build_all_include
+
 config = configparser.ConfigParser(inline_comment_prefixes=(";",))
 
 parser = argparse.ArgumentParser(description="")
@@ -56,3 +58,4 @@ for section in config.sections():
             tools.append(tool)
 
 subprocess.check_call(["platformio", "pkg", "install", "-g", *libs, *platforms, *tools])
+build_all_include()
