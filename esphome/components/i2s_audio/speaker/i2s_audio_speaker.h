@@ -48,8 +48,6 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   /// @param mute_state true for muting, false for unmuting
   void set_mute_state(bool mute_state) override;
 
-  void get_default_audio_stream_info(audio::AudioStreamInfo &audio_stream_info) override;
-
   size_t get_dma_buffers_size();
   size_t get_ring_buffer_size();
 
