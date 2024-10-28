@@ -55,16 +55,10 @@ class I2SAudioComponent : public Component {
   bool try_lock() { return this->lock_.try_lock(); }
   void unlock() { this->lock_.unlock(); }
 
-  virtual bool lock_component(I2SAudioBase *audio);
-  virtual void unlock_component(I2SAudioBase *audio);
-  virtual bool is_compoment_locked(I2SAudioBase *audio);
-
   i2s_port_t get_port() const { return this->port_; }
 
  protected:
   Mutex lock_;
-
-  I2SAudioBase *audio_base_{nullptr};
 
   int mclk_pin_{I2S_PIN_NO_CHANGE};
   int bclk_pin_{I2S_PIN_NO_CHANGE};

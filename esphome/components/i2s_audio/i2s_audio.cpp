@@ -28,23 +28,6 @@ void I2SAudioComponent::setup() {
   ESP_LOGCONFIG(TAG, "Setting up I2S Audio...");
 }
 
-bool I2SAudioComponent::lock_component(I2SAudioBase *audio) {
-  if (!this->is_compoment_locked(audio)) {
-    this->audio_base_ = audio;
-    return true;
-  }
-  return false;
-}
-void I2SAudioComponent::unlock_component(I2SAudioBase *audio) {
-  if (!this->is_compoment_locked(audio)) {
-    this->audio_base_ = nullptr;
-  }
-}
-
-bool I2SAudioComponent::is_compoment_locked(I2SAudioBase *audio) {
-  return !(this->audio_base_ == nullptr || this->audio_base_ == audio);
-}
-
 }  // namespace i2s_audio
 }  // namespace esphome
 
