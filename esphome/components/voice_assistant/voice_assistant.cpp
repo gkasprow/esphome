@@ -435,7 +435,7 @@ void VoiceAssistant::loop() {
 void VoiceAssistant::write_speaker_() {
   if ((this->speaker_ != nullptr) && (this->speaker_buffer_ != nullptr)) {
     if (this->speaker_buffer_size_ > 0) {
-      size_t write_chunk = std::min<size_t>(this->speaker_buffer_size_, 4 * 1024);
+      // size_t write_chunk = std::min<size_t>(this->speaker_buffer_size_, 4 * 1024);
       size_t written = 0;  // this->speaker_->play(this->speaker_buffer_, write_chunk);
       if (written > 0) {
         memmove(this->speaker_buffer_, this->speaker_buffer_ + written, this->speaker_buffer_size_ - written);
