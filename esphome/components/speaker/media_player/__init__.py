@@ -242,7 +242,7 @@ async def to_code(config):
     esp32.add_idf_sdkconfig_option("CONFIG_TCP_SYNMAXRTX", 6)
     esp32.add_idf_sdkconfig_option("CONFIG_TCP_MSS", 1436)
     esp32.add_idf_sdkconfig_option("CONFIG_TCP_MSL", 60000)
-    esp32.add_idf_sdkconfig_option("CONFIG_TCP_SND_BUF_DEFAULT", 5840)
+    esp32.add_idf_sdkconfig_option("CONFIG_TCP_SND_BUF_DEFAULT", 65535)
     esp32.add_idf_sdkconfig_option(
         "CONFIG_TCP_WND_DEFAULT", 65535
     )  # Adjusted from referenced settings to avoid compilation error
@@ -252,6 +252,9 @@ async def to_code(config):
     esp32.add_idf_sdkconfig_option("CONFIG_LWIP_WND_SCALE", True)
     esp32.add_idf_sdkconfig_option("CONFIG_TCP_RCV_SCALE", 3)
     esp32.add_idf_sdkconfig_option("CONFIG_LWIP_TCPIP_RECVMBOX_SIZE", 512)
+
+    # Allocate wifi buffers in PSRAM
+    esp32.add_idf_sdkconfig_option("CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP", True)
 
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
