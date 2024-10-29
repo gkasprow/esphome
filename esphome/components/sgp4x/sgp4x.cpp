@@ -230,7 +230,7 @@ void SGP4xComponent::measure_raw_() {
     return;
   }
 
-  this->set_timeout(measure_time_, [this, response_words]() {
+  this->set_timeout(this->measure_time_, [this, response_words]() {
     uint16_t raw_data[2];
     raw_data[1] = 0;
     if (!this->read_data(raw_data, response_words)) {
