@@ -90,14 +90,14 @@ void PrometheusHandler::sensor_row_(AsyncResponseStream *stream, sensor::Sensor 
     // We have a valid value, output this value
     stream->print(F("esphome_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 0\n"));
     // Data itself
     stream->print(F("esphome_sensor_value{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\",unit=\""));
@@ -109,7 +109,7 @@ void PrometheusHandler::sensor_row_(AsyncResponseStream *stream, sensor::Sensor 
     // Invalid state
     stream->print(F("esphome_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 1\n"));
@@ -131,14 +131,14 @@ void PrometheusHandler::binary_sensor_row_(AsyncResponseStream *stream, binary_s
     // We have a valid value, output this value
     stream->print(F("esphome_binary_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 0\n"));
     // Data itself
     stream->print(F("esphome_binary_sensor_value{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} "));
@@ -148,7 +148,7 @@ void PrometheusHandler::binary_sensor_row_(AsyncResponseStream *stream, binary_s
     // Invalid state
     stream->print(F("esphome_binary_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 1\n"));
@@ -168,14 +168,14 @@ void PrometheusHandler::fan_row_(AsyncResponseStream *stream, fan::Fan *obj, std
     return;
   stream->print(F("esphome_fan_failed{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} 0\n"));
   // Data itself
   stream->print(F("esphome_fan_value{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} "));
@@ -185,7 +185,7 @@ void PrometheusHandler::fan_row_(AsyncResponseStream *stream, fan::Fan *obj, std
   if (obj->get_traits().supports_speed()) {
     stream->print(F("esphome_fan_speed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} "));
@@ -196,7 +196,7 @@ void PrometheusHandler::fan_row_(AsyncResponseStream *stream, fan::Fan *obj, std
   if (obj->get_traits().supports_oscillation()) {
     stream->print(F("esphome_fan_oscillation{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} "));
@@ -218,7 +218,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   // State
   stream->print(F("esphome_light_state{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} "));
@@ -231,7 +231,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   color.as_rgbw(&r, &g, &b, &w);
   stream->print(F("esphome_light_color{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",channel=\"brightness\"} "));
@@ -239,7 +239,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   stream->print(F("\n"));
   stream->print(F("esphome_light_color{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",channel=\"r\"} "));
@@ -247,7 +247,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   stream->print(F("\n"));
   stream->print(F("esphome_light_color{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",channel=\"g\"} "));
@@ -255,7 +255,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   stream->print(F("\n"));
   stream->print(F("esphome_light_color{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",channel=\"b\"} "));
@@ -263,7 +263,7 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   stream->print(F("\n"));
   stream->print(F("esphome_light_color{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",channel=\"w\"} "));
@@ -274,14 +274,14 @@ void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightStat
   if (effect == "None") {
     stream->print(F("esphome_light_effect_active{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\",effect=\"None\"} 0\n"));
   } else {
     stream->print(F("esphome_light_effect_active{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\",effect=\""));
@@ -303,14 +303,14 @@ void PrometheusHandler::cover_row_(AsyncResponseStream *stream, cover::Cover *ob
     // We have a valid value, output this value
     stream->print(F("esphome_cover_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 0\n"));
     // Data itself
     stream->print(F("esphome_cover_value{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} "));
@@ -319,7 +319,7 @@ void PrometheusHandler::cover_row_(AsyncResponseStream *stream, cover::Cover *ob
     if (obj->get_traits().get_supports_tilt()) {
       stream->print(F("esphome_cover_tilt{id=\""));
       stream->print(relabel_id_(obj).c_str());
-      add_area_label_(area);
+      add_area_label_(stream, area);
       stream->print(F("\",name=\""));
       stream->print(relabel_name_(obj).c_str());
       stream->print(F("\"} "));
@@ -330,7 +330,7 @@ void PrometheusHandler::cover_row_(AsyncResponseStream *stream, cover::Cover *ob
     // Invalid state
     stream->print(F("esphome_cover_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 1\n"));
@@ -348,14 +348,14 @@ void PrometheusHandler::switch_row_(AsyncResponseStream *stream, switch_::Switch
     return;
   stream->print(F("esphome_switch_failed{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} 0\n"));
   // Data itself
   stream->print(F("esphome_switch_value{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} "));
@@ -374,14 +374,14 @@ void PrometheusHandler::lock_row_(AsyncResponseStream *stream, lock::Lock *obj, 
     return;
   stream->print(F("esphome_lock_failed{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} 0\n"));
   // Data itself
   stream->print(F("esphome_lock_value{id=\""));
   stream->print(relabel_id_(obj).c_str());
-  add_area_label_(area);
+  add_area_label_(stream, area);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} "));
@@ -403,14 +403,14 @@ void PrometheusHandler::text_sensor_row_(AsyncResponseStream *stream, text_senso
     // We have a valid value, output this value
     stream->print(F("esphome_text_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 0\n"));
     // Data itself
     stream->print(F("esphome_text_sensor_value{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\",value=\""));
@@ -422,7 +422,7 @@ void PrometheusHandler::text_sensor_row_(AsyncResponseStream *stream, text_senso
     // Invalid state
     stream->print(F("esphome_text_sensor_failed{id=\""));
     stream->print(relabel_id_(obj).c_str());
-    add_area_label_(area);
+    add_area_label_(stream, area);
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
     stream->print(F("\"} 1\n"));
