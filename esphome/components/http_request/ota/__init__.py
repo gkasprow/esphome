@@ -2,13 +2,7 @@ from esphome import automation
 import esphome.codegen as cg
 from esphome.components.ota import BASE_OTA_SCHEMA, OTAComponent, ota_to_code
 import esphome.config_validation as cv
-from esphome.const import (
-    CONF_DISABLE_BLUETOOTH_PROXY,
-    CONF_ID,
-    CONF_PASSWORD,
-    CONF_URL,
-    CONF_USERNAME,
-)
+from esphome.const import CONF_ID, CONF_PASSWORD, CONF_URL, CONF_USERNAME
 from esphome.core import coroutine_with_priority
 
 from .. import CONF_HTTP_REQUEST_ID, HttpRequestComponent, http_request_ns
@@ -20,6 +14,7 @@ DEPENDENCIES = ["network", "http_request"]
 
 CONF_MD5 = "md5"
 CONF_MD5_URL = "md5_url"
+CONF_DISABLE_BLUETOOTH_PROXY = "disable_bluetooth_proxy"
 
 OtaHttpRequestComponent = http_request_ns.class_(
     "OtaHttpRequestComponent", OTAComponent
