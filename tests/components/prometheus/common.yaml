@@ -48,7 +48,6 @@ switch:
       } else {
         return false;
       }
-    update_interval: 60s
 
 fan:
   - platform: template
