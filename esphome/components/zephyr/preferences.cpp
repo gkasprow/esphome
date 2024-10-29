@@ -1,5 +1,6 @@
 #ifdef USE_ZEPHYR
 
+#include <zephyr/kernel.h>
 #include "esphome/core/preferences.h"
 #include "esphome/core/log.h"
 #include <zephyr/settings/settings.h>

@@ -22,6 +22,7 @@
 #endif  // USE_ESP_IDF
 
 #ifdef USE_ZEPHYR
+#include <zephyr/kernel.h>
 struct device;
 #endif
 
