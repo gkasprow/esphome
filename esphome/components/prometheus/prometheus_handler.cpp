@@ -7,53 +7,54 @@ namespace prometheus {
 
 void PrometheusHandler::handleRequest(AsyncWebServerRequest *req) {
   AsyncResponseStream *stream = req->beginResponseStream("text/plain; version=0.0.4; charset=utf-8");
+  std::string area = App.get_area();
 
 #ifdef USE_SENSOR
   this->sensor_type_(stream);
   for (auto *obj : App.get_sensors())
-    this->sensor_row_(stream, obj);
+    this->sensor_row_(stream, obj, area);
 #endif
 
 #ifdef USE_BINARY_SENSOR
   this->binary_sensor_type_(stream);
   for (auto *obj : App.get_binary_sensors())
-    this->binary_sensor_row_(stream, obj);
+    this->binary_sensor_row_(stream, obj, area);
 #endif
 
 #ifdef USE_FAN
   this->fan_type_(stream);
   for (auto *obj : App.get_fans())
-    this->fan_row_(stream, obj);
+    this->fan_row_(stream, obj, area);
 #endif
 
 #ifdef USE_LIGHT
   this->light_type_(stream);
   for (auto *obj : App.get_lights())
-    this->light_row_(stream, obj);
+    this->light_row_(stream, obj, area);
 #endif
 
 #ifdef USE_COVER
   this->cover_type_(stream);
   for (auto *obj : App.get_covers())
-    this->cover_row_(stream, obj);
+    this->cover_row_(stream, obj, area);
 #endif
 
 #ifdef USE_SWITCH
   this->switch_type_(stream);
-  for (auto *obj : App.get_switches())
+  for (auto *obj : App.get_switches(), area)
     this->switch_row_(stream, obj);
 #endif
 
 #ifdef USE_LOCK
   this->lock_type_(stream);
-  for (auto *obj : App.get_locks())
+  for (auto *obj : App.get_locks(), area)
     this->lock_row_(stream, obj);
 #endif
 
 #ifdef USE_TEXT_SENSOR
   this->text_sensor_type_(stream);
   for (auto *obj : App.get_text_sensors())
-    this->text_sensor_row_(stream, obj);
+    this->text_sensor_row_(stream, obj, area);
 #endif
 
   req->send(stream);
@@ -75,7 +76,7 @@ void PrometheusHandler::sensor_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_sensor_value gauge\n"));
   stream->print(F("#TYPE esphome_sensor_failed gauge\n"));
 }
-void PrometheusHandler::sensor_row_(AsyncResponseStream *stream, sensor::Sensor *obj) {
+void PrometheusHandler::sensor_row_(AsyncResponseStream *stream, sensor::Sensor *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   if (!std::isnan(obj->state)) {
@@ -84,7 +85,8 @@ void PrometheusHandler::sensor_row_(AsyncResponseStream *stream, sensor::Sensor 
     stream->print(relabel_id_(obj).c_str());
     stream->print(F("\",name=\""));
     stream->print(relabel_name_(obj).c_str());
-    stream->print(F("\"} 0\n"));
+    if stream
+      ->print(F("\"} 0\n"));
     // Data itself
     stream->print(F("esphome_sensor_value{id=\""));
     stream->print(relabel_id_(obj).c_str());
@@ -112,7 +114,8 @@ void PrometheusHandler::binary_sensor_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_binary_sensor_value gauge\n"));
   stream->print(F("#TYPE esphome_binary_sensor_failed gauge\n"));
 }
-void PrometheusHandler::binary_sensor_row_(AsyncResponseStream *stream, binary_sensor::BinarySensor *obj) {
+void PrometheusHandler::binary_sensor_row_(AsyncResponseStream *stream, binary_sensor::BinarySensor *obj,
+                                           std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   if (obj->has_state()) {
@@ -148,7 +151,7 @@ void PrometheusHandler::fan_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_fan_speed gauge\n"));
   stream->print(F("#TYPE esphome_fan_oscillation gauge\n"));
 }
-void PrometheusHandler::fan_row_(AsyncResponseStream *stream, fan::Fan *obj) {
+void PrometheusHandler::fan_row_(AsyncResponseStream *stream, fan::Fan *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   stream->print(F("esphome_fan_failed{id=\""));
@@ -193,7 +196,7 @@ void PrometheusHandler::light_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_light_color gauge\n"));
   stream->print(F("#TYPE esphome_light_effect_active gauge\n"));
 }
-void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightState *obj) {
+void PrometheusHandler::light_row_(AsyncResponseStream *stream, light::LightState *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   // State
@@ -269,7 +272,7 @@ void PrometheusHandler::cover_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_cover_value gauge\n"));
   stream->print(F("#TYPE esphome_cover_failed gauge\n"));
 }
-void PrometheusHandler::cover_row_(AsyncResponseStream *stream, cover::Cover *obj) {
+void PrometheusHandler::cover_row_(AsyncResponseStream *stream, cover::Cover *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   if (!std::isnan(obj->position)) {
@@ -312,7 +315,7 @@ void PrometheusHandler::switch_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_switch_value gauge\n"));
   stream->print(F("#TYPE esphome_switch_failed gauge\n"));
 }
-void PrometheusHandler::switch_row_(AsyncResponseStream *stream, switch_::Switch *obj) {
+void PrometheusHandler::switch_row_(AsyncResponseStream *stream, switch_::Switch *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   stream->print(F("esphome_switch_failed{id=\""));
@@ -336,7 +339,7 @@ void PrometheusHandler::lock_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_lock_value gauge\n"));
   stream->print(F("#TYPE esphome_lock_failed gauge\n"));
 }
-void PrometheusHandler::lock_row_(AsyncResponseStream *stream, lock::Lock *obj) {
+void PrometheusHandler::lock_row_(AsyncResponseStream *stream, lock::Lock *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   stream->print(F("esphome_lock_failed{id=\""));
@@ -361,7 +364,7 @@ void PrometheusHandler::text_sensor_type_(AsyncResponseStream *stream) {
   stream->print(F("#TYPE esphome_text_sensor_value gauge\n"));
   stream->print(F("#TYPE esphome_text_sensor_failed gauge\n"));
 }
-void PrometheusHandler::text_sensor_row_(AsyncResponseStream *stream, text_sensor::TextSensor *obj) {
+void PrometheusHandler::text_sensor_row_(AsyncResponseStream *stream, text_sensor::TextSensor *obj, std::string &area) {
   if (obj->is_internal() && !this->include_internal_)
     return;
   if (obj->has_state()) {

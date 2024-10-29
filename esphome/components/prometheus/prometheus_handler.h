@@ -65,56 +65,56 @@ class PrometheusHandler : public AsyncWebHandler, public Component {
   /// Return the type for prometheus
   void sensor_type_(AsyncResponseStream *stream);
   /// Return the sensor state as prometheus data point
-  void sensor_row_(AsyncResponseStream *stream, sensor::Sensor *obj);
+  void sensor_row_(AsyncResponseStream *stream, sensor::Sensor *obj, std::string &area);
 #endif
 
 #ifdef USE_BINARY_SENSOR
   /// Return the type for prometheus
   void binary_sensor_type_(AsyncResponseStream *stream);
   /// Return the sensor state as prometheus data point
-  void binary_sensor_row_(AsyncResponseStream *stream, binary_sensor::BinarySensor *obj);
+  void binary_sensor_row_(AsyncResponseStream *stream, binary_sensor::BinarySensor *obj, std::string &area);
 #endif
 
 #ifdef USE_FAN
   /// Return the type for prometheus
   void fan_type_(AsyncResponseStream *stream);
   /// Return the sensor state as prometheus data point
-  void fan_row_(AsyncResponseStream *stream, fan::Fan *obj);
+  void fan_row_(AsyncResponseStream *stream, fan::Fan *obj, std::string &area);
 #endif
 
 #ifdef USE_LIGHT
   /// Return the type for prometheus
   void light_type_(AsyncResponseStream *stream);
   /// Return the Light Values state as prometheus data point
-  void light_row_(AsyncResponseStream *stream, light::LightState *obj);
+  void light_row_(AsyncResponseStream *stream, light::LightState *obj, std::string &area);
 #endif
 
 #ifdef USE_COVER
   /// Return the type for prometheus
   void cover_type_(AsyncResponseStream *stream);
   /// Return the switch Values state as prometheus data point
-  void cover_row_(AsyncResponseStream *stream, cover::Cover *obj);
+  void cover_row_(AsyncResponseStream *stream, cover::Cover *obj, std::string &area);
 #endif
 
 #ifdef USE_SWITCH
   /// Return the type for prometheus
   void switch_type_(AsyncResponseStream *stream);
   /// Return the switch Values state as prometheus data point
-  void switch_row_(AsyncResponseStream *stream, switch_::Switch *obj);
+  void switch_row_(AsyncResponseStream *stream, switch_::Switch *obj, std::string &area);
 #endif
 
 #ifdef USE_LOCK
   /// Return the type for prometheus
   void lock_type_(AsyncResponseStream *stream);
   /// Return the lock Values state as prometheus data point
-  void lock_row_(AsyncResponseStream *stream, lock::Lock *obj);
+  void lock_row_(AsyncResponseStream *stream, lock::Lock *obj, std::string &area);
 #endif
 
 #ifdef USE_TEXT_SENSOR
   /// Return the type for prometheus
   void text_sensor_type_(AsyncResponseStream *stream);
   /// Return the lock Values state as prometheus data point
-  void text_sensor_row_(AsyncResponseStream *stream, text_sensor::TextSensor *obj);
+  void text_sensor_row_(AsyncResponseStream *stream, text_sensor::TextSensor *obj, std::string &area);
 #endif
 
   web_server_base::WebServerBase *base_;
