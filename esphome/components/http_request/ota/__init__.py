@@ -1,15 +1,11 @@
-import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome import automation
-from esphome.const import (
-    CONF_ID,
-    CONF_PASSWORD,
-    CONF_URL,
-    CONF_USERNAME,
-)
-from esphome.components.ota import BASE_OTA_SCHEMA, ota_to_code, OTAComponent
+import esphome.codegen as cg
+from esphome.components.ota import BASE_OTA_SCHEMA, OTAComponent, ota_to_code
+import esphome.config_validation as cv
+from esphome.const import CONF_ID, CONF_PASSWORD, CONF_URL, CONF_USERNAME
 from esphome.core import coroutine_with_priority
-from .. import CONF_HTTP_REQUEST_ID, http_request_ns, HttpRequestComponent
+
+from .. import CONF_HTTP_REQUEST_ID, HttpRequestComponent, http_request_ns
 
 CODEOWNERS = ["@oarcher"]
 
@@ -63,6 +59,7 @@ OTA_HTTP_REQUEST_FLASH_ACTION_SCHEMA = cv.All(
             cv.Optional(CONF_PASSWORD): cv.templatable(cv.string),
             cv.Optional(CONF_USERNAME): cv.templatable(cv.string),
             cv.Required(CONF_URL): cv.templatable(cv.url),
+            cv.Optional("disable_bluetooth", default=False): cv.boolean,
         }
     ),
     cv.has_exactly_one_key(CONF_MD5, CONF_MD5_URL),
@@ -93,6 +90,10 @@ async def ota_http_request_action_to_code(config, action_id, template_arg, args)
     if username_str := config.get(CONF_USERNAME):
         template_ = await cg.templatable(username_str, args, cg.std_string)
         cg.add(var.set_username(template_))
+
+    if disable_bluetooth_bool := config.get("disable_bluetooth"):
+        template_ = await cg.templatable(disable_bluetooth_bool, args, cg.bool_)
+        cg.add(var.set_disable_bluetooth_bool(template_))
 
     template_ = await cg.templatable(config[CONF_URL], args, cg.std_string)
     cg.add(var.set_url(template_))
