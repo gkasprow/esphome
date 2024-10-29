@@ -4,6 +4,7 @@
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/sys/reboot.h>
 #include "esphome/core/hal.h"
+#include "esphome/core/helpers.h"
 
 namespace esphome {
 
@@ -38,6 +39,17 @@ void arch_restart() { sys_reboot(SYS_REBOOT_COLD); }
 uint32_t arch_get_cpu_cycle_count() { return k_cycle_get_32(); }
 uint32_t arch_get_cpu_freq_hz() { return sys_clock_hw_cycles_per_sec(); }
 uint8_t progmem_read_byte(const uint8_t *addr) { return *addr; }
+
+Mutex::Mutex() {
+  auto mutex = new k_mutex();
+  this->handle_ = mutex;
+  k_mutex_init(mutex);
+}
+Mutex::~Mutex() { delete static_cast<k_mutex *>(this->handle_); }
+void Mutex::lock() { k_mutex_lock(static_cast<k_mutex *>(this->handle_), K_FOREVER); }
+bool Mutex::try_lock() { return k_mutex_lock(static_cast<k_mutex *>(this->handle_), K_NO_WAIT) == 0; }
+void Mutex::unlock() { k_mutex_unlock(static_cast<k_mutex *>(this->handle_)); }
+uint32_t random_uint32() { return rand(); }
 
 }  // namespace esphome
 
