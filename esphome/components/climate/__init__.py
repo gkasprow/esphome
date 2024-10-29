@@ -119,10 +119,17 @@ visual_temperature = cv.float_with_unit(
 )
 
 
-def single_visual_temperature(value):
-    # Seems already being separate target/current values, pass it through
+def visual_temperature_step(value):
+    VISUAL_TEMPERATURE_STEP_SCHEMA = cv.Schema(
+        {
+            cv.Required(CONF_TARGET_TEMPERATURE): visual_temperature,
+            cv.Required(CONF_CURRENT_TEMPERATURE): visual_temperature,
+        }
+    )
+
+    # Allow defining target/current temperature steps separately
     if isinstance(value, dict):
-        return value
+        return VISUAL_TEMPERATURE_STEP_SCHEMA(value)
 
     # Otherwise, use the single value for both properties
     value = visual_temperature(value)
@@ -143,18 +150,6 @@ ControlTrigger = climate_ns.class_(
     "ControlTrigger", automation.Trigger.template(ClimateCall.operator("ref"))
 )
 
-VISUAL_TEMPERATURE_STEP_SCHEMA = cv.Any(
-    # Allow defining target/current temperature steps separately
-    cv.Schema(
-        {
-            cv.Required(CONF_TARGET_TEMPERATURE): visual_temperature,
-            cv.Required(CONF_CURRENT_TEMPERATURE): visual_temperature,
-        }
-    ),
-    # Otherwise take the single value for both
-    single_visual_temperature,
-)
-
 CLIMATE_SCHEMA = (
     cv.ENTITY_BASE_SCHEMA.extend(web_server.WEBSERVER_SORTING_SCHEMA)
     .extend(cv.MQTT_COMMAND_COMPONENT_SCHEMA)
@@ -166,7 +161,7 @@ CLIMATE_SCHEMA = (
                 {
                     cv.Optional(CONF_MIN_TEMPERATURE): cv.temperature,
                     cv.Optional(CONF_MAX_TEMPERATURE): cv.temperature,
-                    cv.Optional(CONF_TEMPERATURE_STEP): VISUAL_TEMPERATURE_STEP_SCHEMA,
+                    cv.Optional(CONF_TEMPERATURE_STEP): visual_temperature_step,
                     cv.Optional(CONF_MIN_HUMIDITY): cv.percentage_int,
                     cv.Optional(CONF_MAX_HUMIDITY): cv.percentage_int,
                 }
