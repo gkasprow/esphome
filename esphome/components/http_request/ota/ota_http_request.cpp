@@ -56,7 +56,7 @@ void OtaHttpRequestComponent::flash() {
   ESP_LOGI(TAG, "Bluetooth proxy exists, checking to disable");
   if (this->get_disable_bluetooth_proxy()) {
     ESP_LOGI(TAG, "Disable bluetooth proxy before update");
-    bluetooth_proxy::global_bluetooth_proxy->disable();
+    bluetooth_proxy::global_bluetooth_proxy->parent_->disable();
   }
 #endif
 #ifdef USE_OTA_STATE_CALLBACK
