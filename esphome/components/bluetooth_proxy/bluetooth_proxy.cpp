@@ -5,10 +5,6 @@
 
 #ifdef USE_ESP32
 
-#ifdef USE_OTA
-#include "esphome/components/ota/ota_backend.h"
-#endif
-
 namespace esphome {
 namespace bluetooth_proxy {
 
@@ -111,21 +107,6 @@ int BluetoothProxy::get_bluetooth_connections_free() {
   }
   return free;
 }
-
-#ifdef USE_OTA
-void BluetoothProxy::setup() {
-  ota::get_global_ota_callback()->add_on_state_callback(
-      [this](ota::OTAState state, float progress, uint8_t error, ota::OTAComponent *comp) {
-        if (state == ota::OTA_STARTED) {
-          for (auto *connection : this->connections_) {
-            if (connection->get_address() != 0) {
-              connection->disconnect();
-            }
-          }
-        }
-      });
-}
-#endif
 
 void BluetoothProxy::loop() {
   if (!api::global_api_server->is_connected() || this->api_connection_ == nullptr) {

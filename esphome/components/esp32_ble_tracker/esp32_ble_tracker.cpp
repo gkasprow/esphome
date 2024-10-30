@@ -66,7 +66,7 @@ void ESP32BLETracker::setup() {
         if (state == ota::OTA_STARTED) {
           this->stop_scan();
           for (auto *client : this->clients_) {
-            client->set_state(ClientState::DISCONNECTING);
+            client->disconnect();
           }
         }
       });
