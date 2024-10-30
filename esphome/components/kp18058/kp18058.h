@@ -5,57 +5,119 @@
 #include "esphome/core/component.h"
 #include "esphome/components/output/float_output.h"
 
+#include "softi2c.h"
 
 namespace esphome {
 namespace kp18058 {
 
+// KP18058 main component for controlling LED drivers over soft I2C
 class kp18058 : public Component {
-public:
-  kp18058() : data_pin_(nullptr), clock_pin_(nullptr), max_cw_current_(0), max_rgb_current_(0), channels{nullptr} {}
-  
+ public:
+  kp18058();
   void setup() override;
+
+  /**
+   * Dumps the configuration details, including pin and communication status.
+   * Outputs diagnostic information to ESPHome logs.
+   */
   void dump_config() override;
-  void set_data_pin(InternalGPIOPin *data_pin) { data_pin_ = data_pin; }
-  void set_clock_pin(InternalGPIOPin *clock_pin) { clock_pin_ = clock_pin; }
-  void set_output_channel(uint8_t channel, class kp18058_output* output) { channels[channel-1] = output; }
-  void set_cw_current(uint8_t max_cw_current) { max_cw_current_ = max_cw_current; }
-  void set_rgb_current(uint8_t max_rgb_current) { max_rgb_current_ = max_rgb_current; }
+
+  /**
+   * Sets the I2C data and clock pins for the soft I2C driver.
+   *
+   * @param data_pin Pointer to GPIOPin for data line.
+   * @param clock_pin Pointer to GPIOPin for clock line.
+   */
+  void set_i2c_pins(GPIOPin *data_pin, GPIOPin *clock_pin) { i2c_.set_pins(data_pin, clock_pin); }
+
+  /**
+   * Assigns an output channel to the kp18058 driver for LED control.
+   *
+   * @param channel The output channel to assign (1-5).
+   * @param output Pointer to the kp18058_output instance for this channel.
+   */
+  void set_output_channel(uint8_t channel, class kp18058_output *output) { channels_[channel - 1] = output; }
+
+  /**
+   * Sets the maximum current for the CW (cold-white) channels.
+   *
+   * @param max_cw_current Maximum allowed current for CW channels (in mA).
+   */
+  void set_cw_current(float max_cw_current) { max_cw_current_ = max_cw_current; }
+
+  /**
+   * Sets the maximum current for RGB channels.
+   *
+   * @param max_rgb_current Maximum allowed current for RGB channels (in mA).
+   */
+  void set_rgb_current(float max_rgb_current) { max_rgb_current_ = max_rgb_current; }
+
+  /**
+   * Programs the LED driver by sending I2C commands based on current channel settings.
+   * Ensures the driver is configured according to active channel values.
+   */
   void program_led_driver();
 
-protected:
-  InternalGPIOPin *data_pin_;
-  InternalGPIOPin *clock_pin_;
-  class kp18058_output *channels[5];
-  uint8_t max_cw_current_;
-  uint8_t max_rgb_current_;
+ protected:
+  float max_cw_current_;
+  float max_rgb_current_;
 
-private:
-   bool Soft_I2C_WriteByte(uint8_t value);
-   bool Soft_I2C_Start(uint8_t addr);
-   void Soft_I2C_Stop();
+ private:
+  class kp18058_output *channels_[5];
+  class softI2C i2c_;
+  bool i2c_ready_;
 };
 
-
+// class represents an output channel for the KP18058 LED driver
 class kp18058_output : public output::FloatOutput {
-public:
+ public:
+  /**
+   * Constructor for the kp18058_output class.
+   * Initializes the channel with default values.
+   */
   kp18058_output() : parent_(nullptr), value_(0) {}
+
+  /**
+   * Sets the parent kp18058 driver instance for this output channel.
+   *
+   * @param parent Pointer to the parent kp18058 instance.
+   */
   void set_parent(kp18058 *parent) { parent_ = parent; }
+
+  /**
+   * Retrieves the current grayscale value for this output channel.
+   *
+   * @return 10-bit grayscale value (0-1023) representing channel intensity.
+   */
   uint16_t get_value() { return this->value_; }
 
-protected:
-  void write_state(float state) override
-  {
-    if (state >= 1) state = 1;
-    else if (state <= 0) state = 0;
+ protected:
+  /**
+   * Overrides the write_state function to control LED brightness.
+   *
+   * @param state Float value representing desired brightness (0.0 to 1.0).
+   * Converts state to a 10-bit grayscale integer (0-1023) and triggers
+   * the parent class to program the LED driver.
+   */
+  void write_state(float state) override {
+    if (state >= 1)
+      state = 1;
+    else if (state <= 0)
+      state = 0;
+
+    // Convert brightness state (0.0 - 1.0) to 10-bit value (0 - 1023).
     value_ = static_cast<uint16_t>(roundf(state * 1023));
+
+    // Request parent to reprogram the LED driver with updated brightness values.
     this->parent_->program_led_driver();
   }
-
-  kp18058 *parent_;
+  
+  // 10-bit grayscale value representing intensity (0-1023) of the output.
   uint16_t value_;
+  
+  // Pointer to the parent kp18058 driver class for this output channel.
+  kp18058 *parent_;
 };
-
 
 }  // namespace kp18058
 }  // namespace esphome
-

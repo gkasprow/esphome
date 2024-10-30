@@ -1,159 +1,118 @@
 ﻿#include "kp18058.h"
+#include "message.h"
 
 namespace esphome {
 namespace kp18058 {
 
-static const uint8_t KP18058_DELAY = 4;
 static const char *const TAG = "kp18058";
-
+static const uint8_t I2C_MAX_RETRY = 3;
 #define BIT_CHECK(PIN, N) !!((PIN & (1 << N)))
 
-void usleep(int r) {
-  // delay function do 10*r nops, because rtos_delay_milliseconds is too much
-  for (volatile int i = 0; i < r; i++)
-    __asm__("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-}
-
-void kp18058::setup() {
-  this->data_pin_->setup();
-  this->clock_pin_->setup();
-  delayMicroseconds(KP18058_DELAY);
-  this->data_pin_->digital_write(false);
-  delayMicroseconds(KP18058_DELAY);
-  this->clock_pin_->digital_write(false);
-}
-
-void kp18058::dump_config() {
-  ESP_LOGCONFIG(TAG, "KP18058 LED Driver:");
-  LOG_PIN(           "  Data Pin: ", this->data_pin_);
-  LOG_PIN(           "  Clock Pin: ", this->clock_pin_);
-  ESP_LOGCONFIG(TAG, "  cw_current: %d", this->max_cw_current_);
-  ESP_LOGCONFIG(TAG, "  rgb_current: %d", this->max_rgb_current_);
-}
-
 uint8_t GetParityBit(uint8_t b) {
-  uint8_t sum;
-  int i;
-
-  sum = 0;
-  for (i = 1; i < 8; i++) {
+  uint8_t sum = 0;
+  for (int i = 1; i < 8; i++) {
     if (BIT_CHECK(b, i)) {
       sum++;
     }
   }
-  if (sum % 2 == 0) {
-    return 0;
+  return sum % 2;  // 0 for even, 1 for odd
+}
+
+kp18058::kp18058() : i2c_ready_(false), max_cw_current_(0), max_rgb_current_(0) {
+  for (int i = 0; i < 5; ++i) {
+    channels_[i] = nullptr;
   }
-  return 1;
+}
+
+void kp18058::setup() {
+  i2c_.setup();
+  i2c_ready_ = i2c_.reset();
+}
+
+void kp18058::dump_config() {
+  ESP_LOGCONFIG(TAG, "KP18058 LED Driver:");
+  LOG_PIN("  Data Pin: ", i2c_.get_data_pin());
+  LOG_PIN("  Clock Pin: ", i2c_.get_clock_pin());
+  ESP_LOGCONFIG(TAG, "  I2C Communication %s", i2c_ready_ ? "Initialized": "FAILED");
+  ESP_LOGCONFIG(TAG, "  CW max current: %.1f", this->max_cw_current_);
+  ESP_LOGCONFIG(TAG, "  RGB max current: %.1f", this->max_rgb_current_);
 }
 
 void kp18058::program_led_driver() {
-  bool bAllZero = true;
+   
+  if (!i2c_ready_) {
+    ESP_LOGI(TAG, "Reestablishing communication with KP18058.");
+    i2c_ready_ = i2c_.reset();
+    if (!i2c_ready_) {
+      ESP_LOGE(TAG, "KP18058 I2C Reset failed.");
+      return;
+    }
+  }
 
+  // returns true if All channels are zero or nullptr
+  auto areAllChannelsZero = [this]() {
+    for (int i = 0; i < 5; ++i) { 
+      if (channels_[i] != nullptr && channels_[i]->get_value() > 0) {
+        // If any channel is non-zero, return false
+        return false; 
+      }
+    }
+    return true; 
+  };
+
+  // Create the settings union
+  KP18058_Settings settings{};
+  
+  settings.address_identification = 1;  
+  settings.working_mode = areAllChannelsZero() ? STANDBY_MODE : RGBCW_MODE;
+  // Set byte address start. valid values are 0 - 13
+  // In this message always all bytes are transmited (starting from 0)
+  settings.start_byte_address = 0x00; 
+
+  // Set Line Compensation Mechanism
+  settings.line_compensation_enable = LC_DISABLE;
+  settings.line_comp_threshold = LC_THRESHOLD_260V;
+  settings.line_comp_slope = LC_SLOPE_10_PERCENT;
+  settings.rc_filter_enable = RC_FILTER_DISABLE;
+
+  // Set max current values 
+  settings.max_current_out4_5 = static_cast<uint8_t>(max_cw_current_/2.5) & 0x1F;
+  settings.max_current_out1_3 = static_cast<uint8_t>(max_rgb_current_/2.5) & 0x1F;
+
+  // set dimming method for RGB channels and chop dimming frequency
+  settings.chop_dimming_out1_3 = ANALOG_DIMMING;
+  settings.chop_dimming_frequency = CD_FREQUENCY_500HZ;
+
+  // Set grayscale values for each output channel
   for (int i = 0; i < 5; i++) {
-    if (channels[i]->get_value() > 0) {
-      bAllZero = false;
+    uint16_t useVal = (channels_[i] != nullptr) ? channels_[i]->get_value() : 0;
+    settings.channels[i].upper_grayscale = (useVal >> 5) & 0x1F;
+    settings.channels[i].lower_grayscale = useVal & 0x1F;
+  }
+
+  // Calculate parity bits for each byte
+  for (int i = 0; i < sizeof(KP18058_Settings); ++i) {
+    settings.bytes[i] |= GetParityBit(settings.bytes[i]);
+  }
+
+  // Send the I2C message
+  i2c_.start();
+  for (int i = 0; i < sizeof(KP18058_Settings); i++) {
+    // on error try to repeat the byte transmission I2C_MAX_RETRY times
+    bool write_succeeded;
+    for (int attempt = 0; attempt < I2C_MAX_RETRY; attempt++) {
+      write_succeeded = i2c_.write_byte(settings.bytes[i]);
+      if (write_succeeded) break; 
+    }
+    // if all tries failed break and stop sending the rest of the frame bytes
+    if (!write_succeeded) {
+      ESP_LOGE(TAG, "Failed to write byte %02d (0x%02X) after %d attempts", i, settings.bytes[i], I2C_MAX_RETRY);
+      i2c_ready_ = false;
+      break;
     }
   }
-
-  // RGB current
-  uint8_t byte2 = 
-    (channels[0]->get_value() || channels[1]->get_value() || channels[2]->get_value()) ? max_rgb_current_ : 1;
-  byte2 = byte2 << 1;
-  byte2 |= GetParityBit(byte2);
-
-  // Bit 7: RGB PWM, Bit 6: Unknown, Bit 5-1: CW current
-  uint8_t byte3 = (1 << 7) | (1 << 6) | (max_cw_current_ << 1);
-  byte3 |= GetParityBit(byte3);
-
-  if (bAllZero) {
-    Soft_I2C_Start(0x81);
-    Soft_I2C_WriteByte(0x00);
-    Soft_I2C_WriteByte(0x03);
-    Soft_I2C_WriteByte(byte3);
-    for (int i = 0; i < 10; i++)
-      Soft_I2C_WriteByte(0x00);
-  }
-  else {
-    Soft_I2C_Start(0xE1);
-    Soft_I2C_WriteByte(0x00);
-    Soft_I2C_WriteByte(byte2);
-    Soft_I2C_WriteByte(byte3);
-    for (int i = 0; i < 5; i++)
-    {
-      uint16_t useVal = channels[i]->get_value();
-	
-      uint8_t Byte_A;
-      Byte_A =  useVal & 0x1F;
-      Byte_A = Byte_A << 1;
-      Byte_A |= GetParityBit(Byte_A);
-	
-      uint8_t Byte_B;
-      Byte_B = (useVal >> 5) & 0x1F;
-      Byte_B = Byte_B << 1;
-      Byte_B |= GetParityBit(Byte_B);
-	
-      Soft_I2C_WriteByte(Byte_B);
-      Soft_I2C_WriteByte(Byte_A);
-    }
-  }
-  Soft_I2C_Stop();
+  i2c_.stop();
   return;
-}
-
-
-void Soft_I2C_SetLow(InternalGPIOPin *pin) {
-  // HAL_PIN_Setup_Output(pin);
-  // HAL_PIN_SetOutputValue(pin, 0);
-  pin->digital_write(false);
-}
-
-void Soft_I2C_SetHigh(InternalGPIOPin *pin) {
-  // HAL_PIN_Setup_Input_Pullup(pin);
-  pin->digital_write(true);
-}
-
-bool kp18058::Soft_I2C_WriteByte(uint8_t value)
-{
-  uint8_t curr;
-  uint8_t ack = 0;
-
-  for (curr = 0x80; curr != 0; curr >>= 1) {
-    if (curr & value) {
-      Soft_I2C_SetHigh(data_pin_);
-    } else {
-      Soft_I2C_SetLow(data_pin_);
-    }
-    Soft_I2C_SetHigh(clock_pin_);
-    usleep(KP18058_DELAY);
-    Soft_I2C_SetLow(clock_pin_);
-  }
-
-  // get Ack or Nak
-  Soft_I2C_SetHigh(data_pin_);
-  Soft_I2C_SetHigh(clock_pin_);
-  usleep(KP18058_DELAY / 2);
-  // ack = HAL_PIN_ReadDigitalInput(data_pin_);
-  Soft_I2C_SetLow(clock_pin_);
-  usleep(KP18058_DELAY / 2);
-  Soft_I2C_SetLow(data_pin_);
-  return (0 == ack);
-}
-
-bool kp18058::Soft_I2C_Start(uint8_t addr) {
-  Soft_I2C_SetLow(data_pin_);
-  usleep(KP18058_DELAY);
-  Soft_I2C_SetLow(clock_pin_);
-  return Soft_I2C_WriteByte(addr);
-}
-
-void kp18058::Soft_I2C_Stop() {
-  Soft_I2C_SetLow(data_pin_);
-  usleep(KP18058_DELAY);
-  Soft_I2C_SetHigh(clock_pin_);
-  usleep(KP18058_DELAY);
-  Soft_I2C_SetHigh(data_pin_);
-  usleep(KP18058_DELAY);
 }
 
 }  // namespace kp18058

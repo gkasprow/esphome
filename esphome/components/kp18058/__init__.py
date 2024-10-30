@@ -34,6 +34,5 @@ async def to_code(config):
     cg.add(var.set_rgb_current(config[CONF_RGB_CURRENT]))
 
     data = await cg.gpio_pin_expression(config[CONF_DATA_PIN])
-    cg.add(var.set_data_pin(data))
     clock = await cg.gpio_pin_expression(config[CONF_CLOCK_PIN])
-    cg.add(var.set_clock_pin(clock))
+    cg.add(var.set_i2c_pins(data,clock))

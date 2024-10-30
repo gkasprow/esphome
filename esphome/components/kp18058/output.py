@@ -12,7 +12,6 @@ CONF_KP18058_ID = "kp18058_id"
 # Storage for outputs, to be validated at the end
 _output_registry = {}
 
-
 def validate_unique_channels(config):
 
     kp18058_id = str(config[CONF_KP18058_ID])
