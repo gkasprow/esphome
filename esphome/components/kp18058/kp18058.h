@@ -75,7 +75,7 @@ class kp18058_output : public output::FloatOutput {
    * Constructor for the kp18058_output class.
    * Initializes the channel with default values.
    */
-  kp18058_output() : parent_(nullptr), value_(0) {}
+  kp18058_output() : value_(0), parent_(nullptr) {}
 
   /**
    * Sets the parent kp18058 driver instance for this output channel.

@@ -8,7 +8,7 @@ static const uint8_t SOFT_I2C_CLOCK_TIME = 50;
 
 void ns_sleep(int ns_delay) {
   // Create a delay by executing NOP instructions in a loop.
-  for (volatile int i = 0; i < ns_delay; i++)
+  for (volatile int i = 0; i < ns_delay; i += 1)
     __asm__("nop");
 }
 
