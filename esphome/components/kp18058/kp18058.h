@@ -111,10 +111,9 @@ class kp18058_output : public output::FloatOutput {
     // Request parent to reprogram the LED driver with updated brightness values.
     this->parent_->program_led_driver();
   }
-  
+
   // 10-bit grayscale value representing intensity (0-1023) of the output.
   uint16_t value_;
-  
   // Pointer to the parent kp18058 driver class for this output channel.
   kp18058 *parent_;
 };

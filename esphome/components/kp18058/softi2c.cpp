@@ -43,10 +43,9 @@ bool softI2C::reset() {
   // Final verification: both SDA and SCL should be high (bus idle)
   return (data_pin_->digital_read()) && (clock_pin_->digital_read());
 }
-  
-bool softI2C::write_byte(uint8_t value) {
 
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+bool softI2C::write_byte(uint8_t value) {
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
 
   for (uint8_t curr = 0x80; curr != 0; curr >>= 1) {
     if (curr & value) {
@@ -60,7 +59,7 @@ bool softI2C::write_byte(uint8_t value) {
     // Data is written to the register on the falling edge of SCL
     // it needs to be valid through at least HOLD TIME
     // waiting half a cycle assuming it is longer than HOLD_TIME
-    ns_sleep(SOFT_I2C_CLOCK_TIME/2);    
+    ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   }
 
   // Every time the transmission of 8bit data (one byte)
@@ -69,9 +68,9 @@ bool softI2C::write_byte(uint8_t value) {
   bool ack_received;
   set_high(data_pin_);
   set_high(clock_pin_);
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   ack_received = !data_pin_->digital_read();
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   set_low(clock_pin_);
 
   return ack_received;
@@ -81,19 +80,18 @@ void softI2C::start() {
   set_low(data_pin_);
   // It needs to be valid through at least HOLD TIME
   // Waiting half a cycle. Assuming it is longer than HOLD_TIME
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   set_low(clock_pin_);
-  return;
 }
 
 void softI2C::stop() {
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   set_low(data_pin_);
   // It needs to be valid through at least HOLD TIME
   // Waiting half a cycle. Assuming it is longer than HOLD_TIME
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   set_high(clock_pin_);
-  ns_sleep(SOFT_I2C_CLOCK_TIME/2);
+  ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   set_high(data_pin_);
 }
 
