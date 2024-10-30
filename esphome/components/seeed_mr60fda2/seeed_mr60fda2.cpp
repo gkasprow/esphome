@@ -336,15 +336,8 @@ void MR60FDA2Component::int_to_bytes_(uint32_t value, unsigned char *bytes) {
 // Send Heartbeat Packet Command
 void MR60FDA2Component::set_install_height(uint8_t index) {
   uint8_t send_data[13] = {0x01, 0x00, 0x00, 0x00, 0x04, 0x0E, 0x04, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00};
-  uint8_t data_frame[4] = {0x00, 0x00, 0x00, 0x00};
-
   float_to_bytes_(INSTALL_HEIGHT[index], &send_data[8]);
-
-  for (int i = 0; i < 4; i++) {
-    data_frame[i] = send_data[i + 8];
-  }
-
-  send_data[12] = calculate_checksum(data_frame, 4);
+  send_data[12] = calculate_checksum(send_data + 8, 4);
   this->send_query_(send_data, 13);
   ESP_LOGV(TAG, "SEND INSTALL HEIGHT FRAME: %s", format_hex_pretty(send_data, 13).c_str());
 }
