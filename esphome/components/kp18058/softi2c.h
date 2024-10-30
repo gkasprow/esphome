@@ -69,7 +69,7 @@ class softI2C {
    * @brief Initiates the start condition for I2C communication.
    *
    * This method pulls the data line (SDA) low while the clock line (SCL)
-   * is high, signaling the start of communication to the slave device.
+   * is high, signaling the start of communication to the device.
    */
   void start();
 
@@ -77,7 +77,7 @@ class softI2C {
    * @brief Initiates the stop condition for I2C communication.
    *
    * This method releases the data line (SDA) after setting the clock line (SCL) high,
-   * signaling the end of communication to the slave device.
+   * signaling the end of communication to the device.
    */
   void stop();
 
@@ -85,10 +85,10 @@ class softI2C {
    * @brief Writes a byte of data to the I2C bus.
    *
    * This method sends a byte by shifting each bit to the data line (SDA).
-   * After the byte is sent, it checks for an acknowledgment (ACK) from the slave device.
+   * After the byte is sent, it checks for an acknowledgment (ACK) from the device.
    *
    * @param value The byte value to be sent to the I2C bus.
-   * @return true if an acknowledgment (ACK) is received from the slave.
+   * @return true if an acknowledgment (ACK) is received from the device.
    * @return false if no acknowledgment (NACK) is received.
    */
   bool write_byte(uint8_t value);
