@@ -9,6 +9,7 @@ bluetooth_proxy:
 wifi:
   ssid: MySSID
   password: password1
+  verify_ssl: false
 
 http_request:
   useragent: esphome/tagreader
