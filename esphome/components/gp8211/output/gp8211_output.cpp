@@ -19,7 +19,10 @@ void GP8211Output::write_state(float state) {
 
   if (err != i2c::ERROR_OK) {
     ESP_LOGE(TAG, "Error writing to GP8211, code %d", err);
+    this->status_set_error();
+    return;
   }
+  this->status_clear_error();
 }
 
 }  // namespace gp8211
