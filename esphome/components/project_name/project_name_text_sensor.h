@@ -4,7 +4,7 @@
 #include "esphome/components/text_sensor/text_sensor.h"
 
 namespace esphome {
-namespace project_version {
+namespace project_name {
 
 class ProjectNameTextSensor : public text_sensor::TextSensor, public Component {
  public:
@@ -14,5 +14,5 @@ class ProjectNameTextSensor : public text_sensor::TextSensor, public Component {
   std::string unique_id() override;
 };
 
-}  // namespace project_version
+}  // namespace project_name
 }  // namespace esphome
