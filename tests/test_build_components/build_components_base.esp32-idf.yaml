@@ -6,8 +6,6 @@ esp32:
   board: nodemcu-32s
   framework:
     type: esp-idf
-    version: 5.1.4
-    release: "241024"
 
 logger:
   level: VERY_VERBOSE
