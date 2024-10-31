@@ -3,8 +3,8 @@ from esphome.components import text_sensor
 import esphome.config_validation as cv
 from esphome.const import ENTITY_CATEGORY_DIAGNOSTIC, ICON_NEW_BOX
 
-name_ns = cg.esphome_ns.namespace("project_name")
-ProjectNameTextSensor = name_ns.class_(
+project_name_ns = cg.esphome_ns.namespace("project_name")
+ProjectNameTextSensor = project_name_ns.class_(
     "ProjectNameTextSensor", text_sensor.TextSensor, cg.Component
 )
 
