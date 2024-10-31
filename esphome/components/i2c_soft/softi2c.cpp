@@ -1,7 +1,7 @@
 #include "softi2c.h"
 
 namespace esphome {
-namespace kp18058 {
+namespace i2c_soft {
 
 // Hold time is 250 ns
 static const uint8_t SOFT_I2C_CLOCK_TIME = 50;
@@ -12,15 +12,15 @@ void ns_sleep(int ns_delay) {
     __asm__("nop");
 }
 
-bool softI2C::reset() {
+bool SoftI2C::reset() {
   // Ensure SDA is released (high) to avoid conflict during reset
-  set_high(data_pin_);
+  set_high_(data_pin_);
 
   // Clock SCL up to 9 times to clear any stuck data
   for (int i = 0; i < 9; ++i) {
-    set_high(clock_pin_);
+    set_high_(clock_pin_);
     ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-    set_low(clock_pin_);
+    set_low_(clock_pin_);
     ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
 
     // Check if SDA is released (high) by the device during clocking
@@ -44,18 +44,18 @@ bool softI2C::reset() {
   return (data_pin_->digital_read()) && (clock_pin_->digital_read());
 }
 
-bool softI2C::write_byte(uint8_t value) {
+bool SoftI2C::write_byte(uint8_t value) {
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
 
   for (uint8_t curr = 0x80; curr != 0; curr >>= 1) {
     if (curr & value) {
-      set_high(data_pin_);
+      set_high_(data_pin_);
     } else {
-      set_low(data_pin_);
+      set_low_(data_pin_);
     }
-    set_high(clock_pin_);
+    set_high_(clock_pin_);
     ns_sleep(SOFT_I2C_CLOCK_TIME);
-    set_low(clock_pin_);
+    set_low_(clock_pin_);
     // Data is written to the register on the falling edge of SCL
     // it needs to be valid through at least HOLD TIME
     // waiting half a cycle assuming it is longer than HOLD_TIME
@@ -66,34 +66,34 @@ bool softI2C::write_byte(uint8_t value) {
   // is completed, in the ninth SCL, KP18058 internally
   // generates a response signal ACK
   bool ack_received;
-  set_high(data_pin_);
-  set_high(clock_pin_);
+  set_high_(data_pin_);
+  set_high_(clock_pin_);
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
   ack_received = !data_pin_->digital_read();
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-  set_low(clock_pin_);
+  set_low_(clock_pin_);
 
   return ack_received;
 }
 
-void softI2C::start() {
-  set_low(data_pin_);
+void SoftI2C::start() {
+  set_low_(data_pin_);
   // It needs to be valid through at least HOLD TIME
   // Waiting half a cycle. Assuming it is longer than HOLD_TIME
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-  set_low(clock_pin_);
+  set_low_(clock_pin_);
 }
 
-void softI2C::stop() {
+void SoftI2C::stop() {
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-  set_low(data_pin_);
+  set_low_(data_pin_);
   // It needs to be valid through at least HOLD TIME
   // Waiting half a cycle. Assuming it is longer than HOLD_TIME
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-  set_high(clock_pin_);
+  set_high_(clock_pin_);
   ns_sleep(SOFT_I2C_CLOCK_TIME / 2);
-  set_high(data_pin_);
+  set_high_(data_pin_);
 }
 
-}  // namespace kp18058
+}  // namespace i2c_soft
 }  // namespace esphome

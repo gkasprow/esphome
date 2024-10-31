@@ -6,7 +6,7 @@ from esphome.const import CONF_CHANNEL, CONF_ID
 from . import KP18058
 
 KP18058_ns = cg.esphome_ns.namespace("kp18058")
-DriverOutput = KP18058_ns.class_("kp18058_output", output.FloatOutput)
+DriverOutput = KP18058_ns.class_("KP18058_output", output.FloatOutput)
 
 CONF_KP18058_ID = "kp18058_id"
 

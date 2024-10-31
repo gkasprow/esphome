@@ -3,7 +3,7 @@
 #include "esphome/core/gpio.h"
 
 namespace esphome {
-namespace kp18058 {
+namespace i2c_soft {
 
 /**
  * @brief Class to implement a software I2C protocol.
@@ -11,9 +11,9 @@ namespace kp18058 {
  * This class allows communication with I2C devices using GPIO pins
  * to simulate I2C communication through software control.
  */
-class softI2C {
+class SoftI2C {
  public:
-  softI2C() : data_pin_(nullptr), clock_pin_(nullptr) {}
+  SoftI2C() : data_pin_(nullptr), clock_pin_(nullptr) {}
 
   /**
    * @brief Sets up the I2C pins.
@@ -101,7 +101,7 @@ class softI2C {
    *
    * @param pin Pointer to the GPIOPin object representing the pin to set low.
    */
-  void set_low(GPIOPin *pin) {
+  void set_low_(GPIOPin *pin) {
     pin->pin_mode(gpio::FLAG_OUTPUT);
     pin->digital_write(false);
   }
@@ -113,11 +113,11 @@ class softI2C {
    *
    * @param pin Pointer to the GPIOPin object representing the pin to set high.
    */
-  void set_high(GPIOPin *pin) { pin->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP); }
+  void set_high_(GPIOPin *pin) { pin->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP); }
 
   GPIOPin *data_pin_;   ///< Pointer to the GPIOPin object for the data line (SDA).
   GPIOPin *clock_pin_;  ///< Pointer to the GPIOPin object for the clock line (SCL).
 };
 
-}  // namespace kp18058
+}  // namespace i2c_soft
 }  // namespace esphome

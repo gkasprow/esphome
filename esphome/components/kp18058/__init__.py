@@ -3,6 +3,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_CLOCK_PIN, CONF_DATA_PIN, CONF_ID
 
+AUTO_LOAD = ["i2c_soft"]
 CODEOWNERS = ["@NewoPL"]
 
 MULTI_CONF = True
@@ -11,7 +12,7 @@ CONF_CW_CURRENT = "cw_current"
 CONF_RGB_CURRENT = "rgb_current"
 
 KP18058_ns = cg.esphome_ns.namespace("kp18058")
-KP18058 = KP18058_ns.class_("kp18058", cg.Component)
+KP18058 = KP18058_ns.class_("KP18058", cg.Component)
 
 CONFIG_SCHEMA = cv.Schema(
     {

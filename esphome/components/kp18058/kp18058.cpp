@@ -1,10 +1,10 @@
 ﻿#include "kp18058.h"
-#include "message.h"
+#include "kp18058_cfg.h"
 
 namespace esphome {
 namespace kp18058 {
 
-static const char *const TAG = "kp18058";
+static const char *const TAG = "KP18058";
 static const uint8_t I2C_MAX_RETRY = 3;
 #define BIT_CHECK(PIN, N) !!(((PIN) & (1 << (N))))
 
@@ -18,18 +18,18 @@ uint8_t get_parity_bit(uint8_t b) {
   return sum % 2;  // 0 for even, 1 for odd
 }
 
-kp18058::kp18058() : max_cw_current_(0), max_rgb_current_(0), i2c_ready_(false) {
+KP18058::KP18058() : max_cw_current_(0), max_rgb_current_(0), i2c_ready_(false) {
   for (auto &channel : channels_) {
     channel = nullptr;
   }
 }
 
-void kp18058::setup() {
+void KP18058::setup() {
   i2c_.setup();
   i2c_ready_ = i2c_.reset();
 }
 
-void kp18058::dump_config() {
+void KP18058::dump_config() {
   ESP_LOGCONFIG(TAG, "KP18058 LED Driver:");
   LOG_PIN("  Data Pin: ", i2c_.get_data_pin());
   LOG_PIN("  Clock Pin: ", i2c_.get_clock_pin());
@@ -38,7 +38,7 @@ void kp18058::dump_config() {
   ESP_LOGCONFIG(TAG, "  RGB max current: %.1f", this->max_rgb_current_);
 }
 
-void kp18058::program_led_driver() {
+void KP18058::program_led_driver() {
   if (!i2c_ready_) {
     ESP_LOGI(TAG, "Reestablishing communication with KP18058.");
     i2c_ready_ = i2c_.reset();
@@ -90,8 +90,8 @@ void kp18058::program_led_driver() {
   }
 
   // Calculate parity bits for each byte
-  for (int i = 0; i < sizeof(KP18058_Settings); ++i) {
-    settings.bytes[i] |= get_parity_bit(settings.bytes[i]);
+  for (auto &byte : settings.bytes) {
+    byte |= get_parity_bit(byte);
   }
 
   // Send the I2C message
