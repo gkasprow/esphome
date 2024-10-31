@@ -60,25 +60,25 @@ def validate_calibration(calibration_config):
     return calibration_config
 
 
-def calibration_schema(default_max_values):
-    return cv.All(
-        cv.Schema(
-            {
-                cv.Optional(CONF_X_MIN, default=0): cv.int_range(min=0, max=4095),
-                cv.Optional(CONF_X_MAX, default=default_max_values): cv.int_range(
-                    min=0, max=4095
-                ),
-                cv.Optional(CONF_Y_MIN, default=0): cv.int_range(min=0, max=4095),
-                cv.Optional(CONF_Y_MAX, default=default_max_values): cv.int_range(
-                    min=0, max=4095
-                ),
-            }
-        ),
-        validate_calibration,
+CALIBRATION_SCHEMA = cv.All(
+    cv.Schema(
+        {
+            cv.Required(CONF_X_MIN): cv.int_range(min=0, max=4095),
+            cv.Required(CONF_X_MAX): cv.int_range(min=0, max=4095),
+            cv.Required(CONF_Y_MIN): cv.int_range(min=0, max=4095),
+            cv.Required(CONF_Y_MAX): cv.int_range(min=0, max=4095),
+        }
+    ),
+    validate_calibration,
+)
+
+
+def touchscreen_schema(default_touch_timeout=cv.UNDEFINED, calibration_required=False):
+    calibration = (
+        cv.Required(CONF_CALIBRATION)
+        if calibration_required
+        else cv.Optional(CONF_CALIBRATION)
     )
-
-
-def touchscreen_schema(default_touch_timeout):
     return cv.Schema(
         {
             cv.GenerateID(CONF_DISPLAY): cv.use_id(display.Display),
@@ -93,7 +93,7 @@ def touchscreen_schema(default_touch_timeout):
                 cv.positive_time_period_milliseconds,
                 cv.Range(max=cv.TimePeriod(milliseconds=65535)),
             ),
-            cv.Optional(CONF_CALIBRATION): calibration_schema(0),
+            calibration: CALIBRATION_SCHEMA,
             cv.Optional(CONF_ON_TOUCH): automation.validate_automation(single=True),
             cv.Optional(CONF_ON_UPDATE): automation.validate_automation(single=True),
             cv.Optional(CONF_ON_RELEASE): automation.validate_automation(single=True),
