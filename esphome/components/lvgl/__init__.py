@@ -16,13 +16,13 @@ from esphome.const import (
     CONF_TYPE,
 )
 from esphome.core import CORE, ID
-from esphome.cpp_generator import MockObj
+from esphome.cpp_generator import CallExpression, MockObj, RawExpression
 from esphome.final_validate import full_config
 from esphome.helpers import write_file_if_changed
 
 from . import defines as df, helpers, lv_validation as lvalid
 from .automation import disp_update, focused_widgets, update_to_code
-from .defines import add_define
+from .defines import CONF_LVGL_INDEX, add_define
 from .encoders import ENCODERS_CONFIG, encoders_to_code, initial_focus_to_code
 from .gradient import GRADIENT_SCHEMA, gradients_to_code
 from .hello_world import get_hello_world
@@ -86,6 +86,7 @@ DEPENDENCIES = ["display"]
 AUTO_LOAD = ["key_provider"]
 CODEOWNERS = ["@clydebarrow"]
 LOGGER = logging.getLogger(__name__)
+MULTI_CONF = True
 
 for w_type in (
     label_spec,
@@ -152,11 +153,34 @@ def generate_lv_conf_h():
     return LV_CONF_H_FORMAT.format("\n".join(definitions))
 
 
+def multi_conf_validate(configs: list[dict]):
+    base_config = configs[0]
+    base_config[df.CONF_LVGL_INDEX] = 0
+    for index, config in enumerate(configs[1:]):
+        config[df.CONF_LVGL_INDEX] = index + 1
+        for item in (
+            df.CONF_LOG_LEVEL,
+            df.CONF_COLOR_DEPTH,
+            df.CONF_BYTE_ORDER,
+            df.CONF_TRANSPARENCY_KEY,
+        ):
+            if base_config[item] != config[item]:
+                raise cv.Invalid(
+                    f"Config item '{item}' must be the same for all LVGL instances"
+                )
+
+
 def final_validation(config):
     if pages := config.get(CONF_PAGES):
         if all(p[df.CONF_SKIP] for p in pages):
             raise cv.Invalid("At least one page must not be skipped")
     global_config = full_config.get()
+    lvgl_id = config[CONF_ID]
+    if CONF_LVGL_INDEX not in config:
+        all_lvgl = global_config.get_config_for_path(
+            global_config.get_path_for_id(lvgl_id)[:-2]
+        )
+        multi_conf_validate(all_lvgl)
     for display_id in config[df.CONF_DISPLAYS]:
         path = global_config.get_path_for_id(display_id)[:-1]
         display = global_config.get_config_for_path(path)
@@ -187,44 +211,68 @@ def final_validation(config):
 
 
 async def to_code(config):
-    cg.add_library("lvgl/lvgl", "8.4.0")
-    cg.add_define("USE_LVGL")
-    # suppress default enabling of extra widgets
-    add_define("_LV_KCONFIG_PRESENT")
-    # Always enable - lots of things use it.
-    add_define("LV_DRAW_COMPLEX", "1")
-    add_define("LV_TICK_CUSTOM", "1")
-    add_define("LV_TICK_CUSTOM_INCLUDE", '"esphome/components/lvgl/lvgl_hal.h"')
-    add_define("LV_TICK_CUSTOM_SYS_TIME_EXPR", "(lv_millis())")
-    add_define("LV_MEM_CUSTOM", "1")
-    add_define("LV_MEM_CUSTOM_ALLOC", "lv_custom_mem_alloc")
-    add_define("LV_MEM_CUSTOM_FREE", "lv_custom_mem_free")
-    add_define("LV_MEM_CUSTOM_REALLOC", "lv_custom_mem_realloc")
-    add_define("LV_MEM_CUSTOM_INCLUDE", '"esphome/components/lvgl/lvgl_hal.h"')
+    # Global configuration
+    if config[df.CONF_LVGL_INDEX] == 0:
+        cg.add_library("lvgl/lvgl", "8.4.0")
+        cg.add_define("USE_LVGL")
+        # suppress default enabling of extra widgets
+        add_define("_LV_KCONFIG_PRESENT")
+        # Always enable - lots of things use it.
+        add_define("LV_DRAW_COMPLEX", "1")
+        add_define("LV_TICK_CUSTOM", "1")
+        add_define("LV_TICK_CUSTOM_INCLUDE", '"esphome/components/lvgl/lvgl_hal.h"')
+        add_define("LV_TICK_CUSTOM_SYS_TIME_EXPR", "(lv_millis())")
+        add_define("LV_MEM_CUSTOM", "1")
+        add_define("LV_MEM_CUSTOM_ALLOC", "lv_custom_mem_alloc")
+        add_define("LV_MEM_CUSTOM_FREE", "lv_custom_mem_free")
+        add_define("LV_MEM_CUSTOM_REALLOC", "lv_custom_mem_realloc")
+        add_define("LV_MEM_CUSTOM_INCLUDE", '"esphome/components/lvgl/lvgl_hal.h"')
 
-    add_define(
-        "LV_LOG_LEVEL", f"LV_LOG_LEVEL_{df.LV_LOG_LEVELS[config[df.CONF_LOG_LEVEL]]}"
-    )
-    cg.add_define(
-        "LVGL_LOG_LEVEL",
-        cg.RawExpression(f"ESPHOME_LOG_LEVEL_{config[df.CONF_LOG_LEVEL]}"),
-    )
-    add_define("LV_COLOR_DEPTH", config[df.CONF_COLOR_DEPTH])
-    for font in helpers.lv_fonts_used:
-        add_define(f"LV_FONT_{font.upper()}")
-
-    if config[df.CONF_COLOR_DEPTH] == 16:
         add_define(
-            "LV_COLOR_16_SWAP",
-            "1" if config[df.CONF_BYTE_ORDER] == "big_endian" else "0",
+            "LV_LOG_LEVEL",
+            f"LV_LOG_LEVEL_{df.LV_LOG_LEVELS[config[df.CONF_LOG_LEVEL]]}",
         )
-    add_define(
-        "LV_COLOR_CHROMA_KEY",
-        await lvalid.lv_color.process(config[df.CONF_TRANSPARENCY_KEY]),
-    )
-    cg.add_build_flag("-Isrc")
+        cg.add_define(
+            "LVGL_LOG_LEVEL",
+            cg.RawExpression(f"ESPHOME_LOG_LEVEL_{config[df.CONF_LOG_LEVEL]}"),
+        )
+        add_define("LV_COLOR_DEPTH", config[df.CONF_COLOR_DEPTH])
+        for font in helpers.lv_fonts_used:
+            add_define(f"LV_FONT_{font.upper()}")
 
-    cg.add_global(lvgl_ns.using)
+        if config[df.CONF_COLOR_DEPTH] == 16:
+            add_define(
+                "LV_COLOR_16_SWAP",
+                "1" if config[df.CONF_BYTE_ORDER] == "big_endian" else "0",
+            )
+        add_define(
+            "LV_COLOR_CHROMA_KEY",
+            await lvalid.lv_color.process(config[df.CONF_TRANSPARENCY_KEY]),
+        )
+        cg.add_build_flag("-Isrc")
+
+        cg.add_global(lvgl_ns.using)
+        for font in helpers.esphome_fonts_used:
+            await cg.get_variable(font)
+            cg.new_Pvariable(ID(f"{font}_engine", True, type=FontEngine), MockObj(font))
+        default_font = config[df.CONF_DEFAULT_FONT]
+        if not lvalid.is_lv_font(default_font):
+            add_define(
+                "LV_FONT_CUSTOM_DECLARE", f"LV_FONT_DECLARE(*{df.DEFAULT_ESPHOME_FONT})"
+            )
+            globfont_id = ID(
+                df.DEFAULT_ESPHOME_FONT,
+                True,
+                type=lv_font_t.operator("ptr").operator("const"),
+            )
+            cg.new_variable(
+                globfont_id, MockObj(await lvalid.lv_font.process(default_font))
+            )
+            add_define("LV_FONT_DEFAULT", df.DEFAULT_ESPHOME_FONT)
+        else:
+            add_define("LV_FONT_DEFAULT", await lvalid.lv_font.process(default_font))
+        cg.add(CallExpression(RawExpression("lvgl::LvglInit")))
+
     frac = config[CONF_BUFFER_SIZE]
     if frac >= 0.75:
         frac = 1
@@ -246,26 +294,6 @@ async def to_code(config):
     await cg.register_component(lv_component, config)
     Widget.create(config[CONF_ID], lv_component, obj_spec, config)
 
-    for font in helpers.esphome_fonts_used:
-        await cg.get_variable(font)
-        cg.new_Pvariable(ID(f"{font}_engine", True, type=FontEngine), MockObj(font))
-    default_font = config[df.CONF_DEFAULT_FONT]
-    if not lvalid.is_lv_font(default_font):
-        add_define(
-            "LV_FONT_CUSTOM_DECLARE", f"LV_FONT_DECLARE(*{df.DEFAULT_ESPHOME_FONT})"
-        )
-        globfont_id = ID(
-            df.DEFAULT_ESPHOME_FONT,
-            True,
-            type=lv_font_t.operator("ptr").operator("const"),
-        )
-        cg.new_variable(
-            globfont_id, MockObj(await lvalid.lv_font.process(default_font))
-        )
-        add_define("LV_FONT_DEFAULT", df.DEFAULT_ESPHOME_FONT)
-    else:
-        add_define("LV_FONT_DEFAULT", await lvalid.lv_font.process(default_font))
-
     lv_scr_act = get_scr_act(lv_component)
     async with LvContext(lv_component):
         await touchscreens_to_code(lv_component, config)
@@ -282,7 +310,8 @@ async def to_code(config):
     # Set this directly since we are limited in how many methods can be added to the Widget class.
     Widget.widgets_completed = True
     async with LvContext(lv_component):
-        await generate_triggers(lv_component)
+        if config[df.CONF_LVGL_INDEX] == 0:
+            await generate_triggers(lv_component)
         await generate_page_triggers(lv_component, config)
         await initial_focus_to_code(config)
         for conf in config.get(CONF_ON_IDLE, ()):
@@ -298,16 +327,18 @@ async def to_code(config):
             )
             await build_automation(resume_trigger, [], conf)
 
-    for comp in helpers.lvgl_components_required:
-        cg.add_define(f"USE_LVGL_{comp.upper()}")
-    if "transform_angle" in styles_used:
-        add_define("LV_COLOR_SCREEN_TRANSP", "1")
-    for use in helpers.lv_uses:
-        add_define(f"LV_USE_{use.upper()}")
-    lv_conf_h_file = CORE.relative_src_path(LV_CONF_FILENAME)
-    write_file_if_changed(lv_conf_h_file, generate_lv_conf_h())
-    cg.add_build_flag("-DLV_CONF_H=1")
-    cg.add_build_flag(f'-DLV_CONF_PATH="{LV_CONF_FILENAME}"')
+    # This must be done after all widgets are created
+    if config[df.CONF_LVGL_INDEX] == 0:
+        for comp in helpers.lvgl_components_required:
+            cg.add_define(f"USE_LVGL_{comp.upper()}")
+        if "transform_angle" in styles_used:
+            add_define("LV_COLOR_SCREEN_TRANSP", "1")
+        for use in helpers.lv_uses:
+            add_define(f"LV_USE_{use.upper()}")
+        lv_conf_h_file = CORE.relative_src_path(LV_CONF_FILENAME)
+        write_file_if_changed(lv_conf_h_file, generate_lv_conf_h())
+        cg.add_build_flag("-DLV_CONF_H=1")
+        cg.add_build_flag(f'-DLV_CONF_PATH="{LV_CONF_FILENAME}"')
 
 
 def display_schema(config):

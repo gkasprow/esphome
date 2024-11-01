@@ -114,6 +114,15 @@ class FontEngine {
 void lv_animimg_stop(lv_obj_t *obj);
 #endif  // USE_LVGL_ANIMIMG
 
+/**
+ * Initialize the LVGL library and register custom events.
+ */
+inline void LvglInit() {
+  lv_init();
+  lv_update_event = static_cast<lv_event_code_t>(lv_event_register_id());
+  lv_api_event = static_cast<lv_event_code_t>(lv_event_register_id());
+}
+
 class LvglComponent : public PollingComponent {
   constexpr static const char *const TAG = "lvgl";
 
@@ -231,7 +240,7 @@ template<typename... Ts> class LvglCondition : public Condition<Ts...>, public P
 #ifdef USE_LVGL_TOUCHSCREEN
 class LVTouchListener : public touchscreen::TouchListener, public Parented<LvglComponent> {
  public:
-  LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time);
+  LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time, LvglComponent *parent);
   void update(const touchscreen::TouchPoints_t &tpoints) override;
   void release() override {
     touch_pressed_ = false;

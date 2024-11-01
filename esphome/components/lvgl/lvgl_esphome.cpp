@@ -218,8 +218,10 @@ PauseTrigger::PauseTrigger(LvglComponent *parent, TemplatableValue<bool> paused)
 }
 
 #ifdef USE_LVGL_TOUCHSCREEN
-LVTouchListener::LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time) {
+LVTouchListener::LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time, LvglComponent *parent) {
+  this->set_parent(parent);
   lv_indev_drv_init(&this->drv_);
+  this->drv_.disp = parent->get_disp();
   this->drv_.long_press_repeat_time = long_press_repeat_time;
   this->drv_.long_press_time = long_press_time;
   this->drv_.type = LV_INDEV_TYPE_POINTER;
@@ -235,6 +237,7 @@ LVTouchListener::LVTouchListener(uint16_t long_press_time, uint16_t long_press_r
     }
   };
 }
+
 void LVTouchListener::update(const touchscreen::TouchPoints_t &tpoints) {
   this->touch_pressed_ = !this->parent_->is_paused() && !tpoints.empty();
   if (this->touch_pressed_)
@@ -405,9 +408,6 @@ LvglComponent::LvglComponent(std::vector<display::Display *> displays, float buf
       buffer_frac_(buffer_frac),
       full_refresh_(full_refresh),
       resume_on_input_(resume_on_input) {
-  lv_init();
-  lv_update_event = static_cast<lv_event_code_t>(lv_event_register_id());
-  lv_api_event = static_cast<lv_event_code_t>(lv_event_register_id());
   auto *display = this->displays_[0];
   size_t buffer_pixels = display->get_width() * display->get_height() / this->buffer_frac_;
   auto buf_bytes = buffer_pixels * LV_COLOR_DEPTH / 8;
