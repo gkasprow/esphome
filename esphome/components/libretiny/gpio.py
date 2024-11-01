@@ -1,8 +1,8 @@
 import logging
 
+from esphome import pins
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome import pins
 from esphome.const import (
     CONF_ANALOG,
     CONF_ID,
@@ -105,6 +105,8 @@ def _translate_pin(value):
         )
     if isinstance(value, int):
         return value
+    if isinstance(value, list):
+        raise cv.Invalid("A pin schema can't be a list.")
     try:
         return int(value)
     except ValueError:
