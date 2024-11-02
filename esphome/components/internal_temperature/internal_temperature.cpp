@@ -29,11 +29,12 @@ namespace esphome {
 namespace internal_temperature {
 
 static const char *const TAG = "internal_temperature";
-#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)) && \
-    (defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
-     defined(USE_ESP32_VARIANT_ESP32S3))
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#if defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
+    defined(USE_ESP32_VARIANT_ESP32S3)
 static temperature_sensor_handle_t tsensNew = NULL;
-#endif
+#endif // USE_ESP32_VARIANT
+#endif // ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 
 void InternalTemperatureSensor::update() {
   float temperature = NAN;
@@ -93,9 +94,9 @@ void InternalTemperatureSensor::update() {
 }
 
 void InternalTemperatureSensor::setup() {
-#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)) && \
-    (defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
-     defined(USE_ESP32_VARIANT_ESP32S3))
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#if defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
+    defined(USE_ESP32_VARIANT_ESP32S3)
   ESP_LOGCONFIG(TAG, "Setting up temperature sensor...");
 
   temperature_sensor_config_t tsens_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
@@ -113,6 +114,7 @@ void InternalTemperatureSensor::setup() {
     this->mark_failed();
     return;
   }
+#endif  // USE_ESP32_VARIANT
 #endif  // ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 }
 
