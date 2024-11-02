@@ -448,7 +448,7 @@ class Display : public PollingComponent {
    * @param time The time to format.
    */
   void strftime(int x, int y, BaseFont *font, Color color, Color background, TextAlign align, const char *format,
-                ESPTime time) __attribute__((format(strftime, 7, 0)));
+                ESPTime time) __attribute__((format(strftime, 8, 0)));
 
   /** Evaluate the strftime-format `format` and print the result with the top left at [x,y] with `font`.
    *
