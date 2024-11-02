@@ -447,6 +447,20 @@ class Display : public PollingComponent {
    * @param format The strftime format to use.
    * @param time The time to format.
    */
+  void strftime(int x, int y, BaseFont *font, Color color, Color background TextAlign align, const char *format, 
+                ESPTime time)
+      __attribute__((format(strftime, 7, 0)));
+
+  /** Evaluate the strftime-format `format` and print the result with the top left at [x,y] with `font`.
+   *
+   * @param x The x coordinate of the upper left corner.
+   * @param y The y coordinate of the upper left corner.
+   * @param font The font to draw the text with.
+   * @param color The color to draw the text with.
+   * @param background The background color to draw the text with.
+   * @param format The strftime format to use.
+   * @param time The time to format.
+   */
   void strftime(int x, int y, BaseFont *font, Color color, TextAlign align, const char *format, ESPTime time)
       __attribute__((format(strftime, 7, 0)));
 
