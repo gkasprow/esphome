@@ -29,8 +29,9 @@ namespace esphome {
 namespace internal_temperature {
 
 static const char *const TAG = "internal_temperature";
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0) && (defined(USE_ESP32_VARIANT_ESP32C3) || \
-    defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || defined(USE_ESP32_VARIANT_ESP32S3))
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0) && \
+    (defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
+     defined(USE_ESP32_VARIANT_ESP32S3))
 static temperature_sensor_handle_t tsensNew = NULL;
 #endif
 
@@ -60,7 +61,7 @@ void InternalTemperatureSensor::update() {
   esp_err_t result = temperature_sensor_get_celsius(tsensNew, &temperature);
   success = (result == ESP_OK);
   if (!success) {
-      ESP_LOGE(TAG, "Failed to get temperature: %d", result);
+    ESP_LOGE(TAG, "Failed to get temperature: %d", result);
   }
 #endif  // ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
 #endif  // USE_ESP32_VARIANT
@@ -92,8 +93,9 @@ void InternalTemperatureSensor::update() {
 }
 
 void InternalTemperatureSensor::setup() {
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0) && (defined(USE_ESP32_VARIANT_ESP32C3) || \
-    defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || defined(USE_ESP32_VARIANT_ESP32S3))
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0) && \
+    (defined(USE_ESP32_VARIANT_ESP32C3) || defined(USE_ESP32_VARIANT_ESP32C6) || defined(USE_ESP32_VARIANT_ESP32S2) || \
+     defined(USE_ESP32_VARIANT_ESP32S3))
   ESP_LOGCONFIG(TAG, "Setting up temperature sensor...");
 
   temperature_sensor_config_t tsens_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
@@ -107,9 +109,9 @@ void InternalTemperatureSensor::setup() {
 
   result = temperature_sensor_enable(tsensNew);
   if (result != ESP_OK) {
-      ESP_LOGE(TAG, "Failed to enable temperature sensor: %d", result);
-      this->mark_failed();
-      return;
+    ESP_LOGE(TAG, "Failed to enable temperature sensor: %d", result);
+    this->mark_failed();
+    return;
   }
 #endif  // ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 }
