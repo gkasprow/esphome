@@ -1636,7 +1636,7 @@ class GenerateID(Optional):
 
 def _get_priority_default(*args):
     for arg in args:
-        if arg is not None:
+        if arg is not vol.UNDEFINED:
             return arg
     return vol.UNDEFINED
 
@@ -1664,7 +1664,7 @@ class SplitDefault(Optional):
 
         for platform_key, priority in priority_mapping.items():
             prioritized_default = _get_priority_default(
-                *[kwargs.get(p) for p in [platform_key] + priority]
+                *[kwargs.get(p, vol.UNDEFINED) for p in [platform_key] + priority]
             )
             self._defaults[platform_key] = vol.default_factory(prioritized_default)
 
