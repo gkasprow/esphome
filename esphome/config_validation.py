@@ -1634,7 +1634,7 @@ class GenerateID(Optional):
         super().__init__(key, default=lambda: None)
 
 
-def _get_platform_key(*args):
+def _get_default_key(*args):
     key = [CORE.target_platform]
     key.extend(args)
     return ["_".join(key)]
@@ -1662,10 +1662,10 @@ class SplitDefault(Optional):
             variant = get_esp32_variant().replace(VARIANT_ESP32, "").lower()
             framework = CORE.target_framework.replace("esp-", "")
             if variant:
-                keys += _get_platform_key(variant, framework)
-                keys += _get_platform_key(variant)
-            keys += _get_platform_key(framework)
-        keys += _get_platform_key()
+                keys += _get_default_key(variant, framework)
+                keys += _get_default_key(variant)
+            keys += _get_default_key(framework)
+        keys += _get_default_key()
         keys += [vol.UNDEFINED]
         for key in keys:
             if self._defaults.get(key) is not None:
