@@ -166,7 +166,9 @@ void MQTTClientComponent::dump_config() {
     ESP_LOGCONFIG(TAG, "  Availability: '%s'", this->availability_.topic.c_str());
   }
 }
-bool MQTTClientComponent::can_proceed() { return network::is_disabled() || this->state_ == MQTT_CLIENT_DISABLED || this->is_connected(); }
+bool MQTTClientComponent::can_proceed() {
+  return network::is_disabled() || this->state_ == MQTT_CLIENT_DISABLED || this->is_connected();
+}
 
 void MQTTClientComponent::start_dnslookup_() {
   for (auto &subscription : this->subscriptions_) {
