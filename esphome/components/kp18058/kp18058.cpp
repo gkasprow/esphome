@@ -60,7 +60,7 @@ void KP18058::program_led_driver() {
   };
 
   // Create the settings struct
-  KP18058_Settings settings{};
+  KP18058Settings settings{};
 
   settings.address_identification = 1;
   settings.working_mode = all_channels_zero() ? STANDBY_MODE : RGBCW_MODE;
@@ -91,13 +91,13 @@ void KP18058::program_led_driver() {
 
   // Calculate parity bits for each byte
   uint8_t *settings_bytes = reinterpret_cast<uint8_t *>(&settings);
-  for (size_t i = 0; i < sizeof(KP18058_Settings); i++) {
+  for (size_t i = 0; i < sizeof(KP18058Settings); i++) {
     settings_bytes[i] |= get_parity_bit(settings_bytes[i]);
   }
 
   // Send the I2C message
   i2c_.start();
-  for (size_t i = 0; i < sizeof(KP18058_Settings); i++) {
+  for (size_t i = 0; i < sizeof(KP18058Settings); i++) {
     // On error, try to repeat the byte transmission I2C_MAX_RETRY times
     bool write_succeeded;
     for (int attempt = 0; attempt < I2C_MAX_RETRY; attempt++) {

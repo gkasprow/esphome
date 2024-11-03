@@ -94,7 +94,7 @@ enum CDFrequency : uint8_t {
 /**
  * @brief the structure of the I2C message for configuring the KP18058 LED driver settings.
  */
-struct KP18058_Settings {
+struct KP18058Settings {
   // Byte 0
   uint8_t byte0_parity_bit : 1;
   uint8_t start_byte_address : 4;
@@ -132,8 +132,8 @@ struct KP18058_Settings {
 
 #pragma pack(pop)
 
-// Ensures that KP18058_Settings size is exactly 14 bytes during compilation
-static_assert(sizeof(KP18058_Settings) == 14, "Size of KP18058_Settings must be exactly 14 bytes");
+// Ensures that KP18058Settings size is exactly 14 bytes during compilation
+static_assert(sizeof(KP18058Settings) == 14, "Size of KP18058Settings must be exactly 14 bytes");
 
 }  // namespace kp18058
 }  // namespace esphome
