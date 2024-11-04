@@ -9,7 +9,6 @@
 
 #include "utils.h"
 
-#define USE_WEBSERVER  // jank linting doesn't replicate the build env
 #include "esphome/components/web_server/web_server.h"
 #include "esphome/components/web_server/list_entities.h"
 
@@ -502,7 +501,8 @@ void AsyncEventSourceResponse::deferrable_send_state(void *source, const char *e
   process_deferred_queue_();
 
   if (!event_buffer_.empty() || !deferred_queue_.empty()) {
-    // outgoing event buffer or deferred queue still not empty which means downstream tcp send buffer full, no point trying to send first
+    // outgoing event buffer or deferred queue still not empty which means downstream tcp send buffer full, no point
+    // trying to send first
     deq_push_back_with_dedup_(source, message_generator);
   } else {
     std::string message = message_generator(web_server_, source);
