@@ -85,7 +85,59 @@ std::string DebugComponent::get_reset_reason_() {
     defined(USE_ESP32_VARIANT_ESP32S3) || defined(USE_ESP32_VARIANT_ESP32C6)
     case RTC_SW_CPU_RESET:
 #endif
-      reset_reason = "Software Reset CPU";
+      switch(esp_reset_reason()) {
+        case ESP_RST_UNKNOWN:
+          reset_reason = "Software Reset CPU (Reset reason can not be determined)";
+          break
+        case ESP_RST_POWERON:
+          reset_reason = "Software Reset CPU (Reset due to power-on event)";
+          break
+        case ESP_RST_EXT:
+          reset_reason = "Software Reset CPU (Reset by external pin)";
+          break
+        case ESP_RST_SW:
+          reset_reason = "Software Reset CPU (Software reset via esp_restart)";
+          break
+        case ESP_RST_PANIC:
+          reset_reason = "Software Reset CPU (Software reset due to exception/panic)";
+          break
+        case ESP_RST_INT_WDT:
+          reset_reason = "Software Reset CPU (Reset due to interrupt watchdog)";
+          break
+        case ESP_RST_TASK_WDT:
+          reset_reason = "Software Reset CPU (Reset due to task watchdog)";
+          break
+        case ESP_RST_WDT:
+          reset_reason = "Software Reset CPU (Reset due to other watchdogs)";
+          break
+        case ESP_RST_DEEPSLEEP:
+          reset_reason = "Software Reset CPU (Reset after exiting deep sleep mode)";
+          break
+        case ESP_RST_BROWNOUT:
+          reset_reason = "Software Reset CPU (Brownout reset)";
+          break
+        case ESP_RST_SDIO:
+          reset_reason = "Software Reset CPU (Reset over SDIO)";
+          break
+        case ESP_RST_USB:
+          reset_reason = "Software Reset CPU (Reset by USB peripheral)";
+          break
+        case ESP_RST_JTAG:
+          reset_reason = "Software Reset CPU (Reset by JTAG)";
+          break
+        case ESP_RST_EFUSE:
+          reset_reason = "Software Reset CPU (Reset due to efuse error)";
+          break
+        case ESP_RST_PWR_GLITCH:
+          reset_reason = "Software Reset CPU (Reset due to power glitch detected)";
+          break
+        case ESP_RST_CPU_LOCKUP:
+          reset_reason = "Software Reset CPU (Reset due to CPU lock up (double exception))";
+          break
+        default:
+          reset_reason = "Software Reset CPU";
+          break
+      }
       break;
     case RTCWDT_CPU_RESET:
       reset_reason = "RTC Watch Dog Reset CPU";
