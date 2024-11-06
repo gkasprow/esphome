@@ -3,6 +3,8 @@
 namespace esphome {
 namespace opentherm {
 
+static const char *const TAG = "opentherm.number";
+
 void OpenthermNumber::control(float value) {
   this->publish_state(value);
 
@@ -28,20 +30,19 @@ void OpenthermNumber::setup() {
 }
 
 void OpenthermNumber::dump_config() {
-  const char *tag = "opentherm.number";
-  ESP_LOGCONFIG(tag, "%s%s '%s'", "", LOG_STR_LITERAL("OpenTherm Number"), this->get_name().c_str());
+  ESP_LOGCONFIG(TAG, "%s%s '%s'", "", LOG_STR_LITERAL("OpenTherm Number"), this->get_name().c_str());
   if (!this->get_icon().empty()) {
-    ESP_LOGCONFIG(tag, "%s  Icon: '%s'", "", this->get_icon().c_str());
+    ESP_LOGCONFIG(TAG, "%s  Icon: '%s'", "", this->get_icon().c_str());
   }
   if (!this->traits.get_unit_of_measurement().empty()) {
-    ESP_LOGCONFIG(tag, "%s  Unit of Measurement: '%s'", "", this->traits.get_unit_of_measurement().c_str());
+    ESP_LOGCONFIG(TAG, "%s  Unit of Measurement: '%s'", "", this->traits.get_unit_of_measurement().c_str());
   }
   if (!this->traits.get_device_class().empty()) {
-    ESP_LOGCONFIG(tag, "%s  Device Class: '%s'", "", this->traits.get_device_class().c_str());
+    ESP_LOGCONFIG(TAG, "%s  Device Class: '%s'", "", this->traits.get_device_class().c_str());
   }
-  ESP_LOGCONFIG(tag, "  Restore value: %d", this->restore_value_);
-  ESP_LOGCONFIG(tag, "  Initial value: %.2f", this->initial_value_);
-  ESP_LOGCONFIG(tag, "  Current value: %.2f", this->state);
+  ESP_LOGCONFIG(TAG, "  Restore value: %d", this->restore_value_);
+  ESP_LOGCONFIG(TAG, "  Initial value: %.2f", this->initial_value_);
+  ESP_LOGCONFIG(TAG, "  Current value: %.2f", this->state);
 }
 
 }  // namespace opentherm

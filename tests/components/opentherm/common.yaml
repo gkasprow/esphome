@@ -12,7 +12,7 @@ opentherm:
   cooling_enable: false
   otc_active: false
   ch2_active: true
-  t_room: ch_room_temperature
+  t_room: t_boiler # We are testing compilability only, so plugging in a random sensor
   summer_mode_active: true
   dhw_block: true
   sync_mode: true
@@ -157,4 +157,3 @@ switch:
       name: "Boiler Outside temperature compensation active"
     ch2_active:
       name: "Boiler Central Heating 2 active"
-
