@@ -129,23 +129,16 @@ void AirConditioner::do_follow_me(float temperature, bool beeper) {
     return;
   }
 
-  // Round the temperature
-  long int rounded_temp = std::lroundf(temperature);
-
-  // Check if rounded temperature is within the uint8_t range
-  if (rounded_temp < 0 || rounded_temp > UINT8_MAX) {
-    ESP_LOGW(Constants::TAG, "Rounded temperature out of range: %ld", rounded_temp);
-    return;
-  }
-
-  // Safely cast to uint8_t after all checks
-  uint8_t rounded_temp_uint8 = static_cast<uint8_t>(rounded_temp);
+  // Round and convert temperature to long, then clamp and convert it to uint8_t
+  uint8_t temp_uint8 = static_cast<uint8_t>(std::max(0L, 
+                                                     std::min(static_cast<long>(UINT8_MAX), 
+                                                              std::lroundf(temperature))));
 
   ESP_LOGD(Constants::TAG, "Follow me action called with temperature: %f °C, rounded to: %u °C", temperature,
-           rounded_temp_uint8);
+           temp_uint8);
 
   // Create and transmit the data
-  IrFollowMeData data(rounded_temp_uint8, beeper);
+  IrFollowMeData data(temp_uint8, beeper);
   this->transmitter_.transmit(data);
 #else
   ESP_LOGW(Constants::TAG, "Action needs remote_transmitter component");
