@@ -4,6 +4,9 @@
 #ifdef USE_BINARY_SENSOR
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #endif  // USE_BINARY_SENSOR
+#ifdef USE_LVGL_IMAGE
+#include "esphome/components/image/image.h"
+#endif  // USE_LVGL_IMAGE
 #ifdef USE_LVGL_ROTARY_ENCODER
 #include "esphome/components/rotary_encoder/rotary_encoder.h"
 #endif  // USE_LVGL_ROTARY_ENCODER
@@ -46,6 +49,14 @@ static const display::ColorBitness LV_BITNESS = display::ColorBitness::COLOR_BIT
 #else   // LV_COLOR_DEPTH
 static const display::ColorBitness LV_BITNESS = display::ColorBitness::COLOR_BITNESS_332;
 #endif  // LV_COLOR_DEPTH
+
+#ifdef USE_LVGL_IMAGE
+// Shortcut / overload, so that the source of an image can easily be updated
+// from within a lambda.
+inline void lv_img_set_src(lv_obj_t *obj, esphome::image::Image *image) {
+  lv_img_set_src(obj, image->get_lv_img_dsc());
+}
+#endif  // USE_LVGL_IMAGE
 
 // Parent class for things that wrap an LVGL object
 class LvCompound {
@@ -135,10 +146,14 @@ class LvglComponent : public PollingComponent {
     }
   }
 
-  void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event);
-  void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2);
-  void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2,
-                    lv_event_code_t event3);
+  /**
+   * Initialize the LVGL library and register custom events.
+   */
+  static void esphome_lvgl_init();
+  static void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event);
+  static void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2);
+  static void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2,
+                           lv_event_code_t event3);
   void add_page(LvPageType *page);
   void show_page(size_t index, lv_scr_load_anim_t anim, uint32_t time);
   void show_next_page(lv_scr_load_anim_t anim, uint32_t time);
@@ -220,7 +235,7 @@ template<typename... Ts> class LvglCondition : public Condition<Ts...>, public P
 #ifdef USE_LVGL_TOUCHSCREEN
 class LVTouchListener : public touchscreen::TouchListener, public Parented<LvglComponent> {
  public:
-  LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time);
+  LVTouchListener(uint16_t long_press_time, uint16_t long_press_repeat_time, LvglComponent *parent);
   void update(const touchscreen::TouchPoints_t &tpoints) override;
   void release() override {
     touch_pressed_ = false;
