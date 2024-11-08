@@ -125,8 +125,8 @@ void AirConditioner::do_follow_me(float temperature, bool beeper) {
 #ifdef USE_REMOTE_TRANSMITTER
   // Check if temperature is finite (not NaN or infinite)
   if (!std::isfinite(temperature)) {
-      ESP_LOGW(Constants::TAG, "Follow me action requires a finite temperature, got: %f", temperature);
-      return;
+    ESP_LOGW(Constants::TAG, "Follow me action requires a finite temperature, got: %f", temperature);
+    return;
   }
 
   // Round the temperature
@@ -134,16 +134,15 @@ void AirConditioner::do_follow_me(float temperature, bool beeper) {
 
   // Check if rounded temperature is within the uint8_t range
   if (rounded_temp < 0 || rounded_temp > UINT8_MAX) {
-      ESP_LOGW(Constants::TAG, "Rounded temperature out of range: %ld", rounded_temp);
-      return;
+    ESP_LOGW(Constants::TAG, "Rounded temperature out of range: %ld", rounded_temp);
+    return;
   }
 
   // Safely cast to uint8_t after all checks
   uint8_t rounded_temp_uint8 = static_cast<uint8_t>(rounded_temp);
 
-  ESP_LOGD(Constants::TAG, "Follow me action called with temperature: %f, sending rounded temperature: %u", temperature, rounded_temp_uint8);
-
-
+  ESP_LOGD(Constants::TAG, "Follow me action called with temperature: %f, sending rounded temperature: %u", temperature,
+           rounded_temp_uint8);
   // Create and transmit the data
   IrFollowMeData data(rounded_temp_uint8, beeper);
   this->transmitter_.transmit(data);
