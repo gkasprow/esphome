@@ -32,9 +32,9 @@ RUN \
         python3-setuptools=66.1.1-1 \
         python3-venv=3.11.2-1+b1 \
         python3-wheel=0.38.4-2 \
-        iputils-ping=3:20221126-1 \
+        iputils-ping=3:20221126-1+deb12u1 \
         git=1:2.39.5-0+deb12u1 \
-        curl=7.88.1-10+deb12u7 \
+        curl=7.88.1-10+deb12u8 \
         openssh-client=1:9.2p1-2+deb12u3 \
         python3-cffi=1.15.1-5 \
         libcairo2=1.16.0-7 \
