@@ -13,11 +13,12 @@
 namespace esphome {
 namespace i2s_audio {
 
-static const size_t DMA_BUFFER_SIZE = 512;
+static const uint8_t DMA_BUFFER_DURATION_MS = 15;
 static const size_t DMA_BUFFERS_COUNT = 4;
-static const size_t FRAMES_IN_ALL_DMA_BUFFERS = DMA_BUFFER_SIZE * DMA_BUFFERS_COUNT;
-static const size_t RING_BUFFER_SAMPLES = 8192;
-static const size_t TASK_DELAY_MS = 10;
+
+static const size_t TASK_DELAY_MS = DMA_BUFFER_DURATION_MS * DMA_BUFFERS_COUNT / 2;
+static const uint32_t RING_BUFFER_DURATION_MS = 2 * DMA_BUFFER_DURATION_MS * DMA_BUFFERS_COUNT;
+
 static const size_t TASK_STACK_SIZE = 4096;
 static const ssize_t TASK_PRIORITY = 23;
 
@@ -244,10 +245,12 @@ void I2SAudioSpeaker::speaker_task(void *params) {
   const ssize_t bytes_per_sample = audio_stream_info.get_bytes_per_sample();
   const uint8_t number_of_channels = audio_stream_info.channels;
 
-  const size_t dma_buffers_size = FRAMES_IN_ALL_DMA_BUFFERS * bytes_per_sample * number_of_channels;
+  const size_t dma_buffers_size = DMA_BUFFERS_COUNT * DMA_BUFFER_DURATION_MS * this_speaker->sample_rate_ / 1000 *
+                                  bytes_per_sample * number_of_channels;
+  const size_t ring_buffer_size =
+      RING_BUFFER_DURATION_MS * this_speaker->sample_rate_ / 1000 * bytes_per_sample * number_of_channels;
 
-  if (this_speaker->send_esp_err_to_event_group_(
-          this_speaker->allocate_buffers_(dma_buffers_size, RING_BUFFER_SAMPLES * bytes_per_sample))) {
+  if (this_speaker->send_esp_err_to_event_group_(this_speaker->allocate_buffers_(dma_buffers_size, ring_buffer_size))) {
     // Failed to allocate buffers
     xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::ERR_ESP_NO_MEM);
     this_speaker->delete_task_(dma_buffers_size);
@@ -419,6 +422,8 @@ esp_err_t I2SAudioSpeaker::start_i2s_driver_() {
     return ESP_ERR_INVALID_STATE;
   }
 
+  int dma_buffer_length = DMA_BUFFER_DURATION_MS * this->sample_rate_ / 1000;
+
   i2s_driver_config_t config = {
     .mode = (i2s_mode_t) (this->i2s_mode_ | I2S_MODE_TX),
     .sample_rate = this->sample_rate_,
@@ -427,7 +432,7 @@ esp_err_t I2SAudioSpeaker::start_i2s_driver_() {
     .communication_format = this->i2s_comm_fmt_,
     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
     .dma_buf_count = DMA_BUFFERS_COUNT,
-    .dma_buf_len = DMA_BUFFER_SIZE,
+    .dma_buf_len = dma_buffer_length,
     .use_apll = this->use_apll_,
     .tx_desc_auto_clear = true,
     .fixed_mclk = I2S_PIN_NO_CHANGE,
