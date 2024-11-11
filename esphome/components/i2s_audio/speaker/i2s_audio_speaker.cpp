@@ -406,8 +406,8 @@ esp_err_t I2SAudioSpeaker::allocate_buffers_(size_t data_buffer_size, size_t rin
   }
 
   if (this->audio_ring_buffer_.use_count() == 0) {
-    // Allocate ring buffer. Moves the created unique_ptr to a shared_ptr to ensure it isn't improperly deallocated.
-    this->audio_ring_buffer_ = std::move(RingBuffer::create(ring_buffer_size));
+    // Allocate ring buffer. Uses a shared_ptr to ensure it isn't improperly deallocated.
+    this->audio_ring_buffer_ = RingBuffer::create(ring_buffer_size);
   }
 
   if (this->audio_ring_buffer_ == nullptr) {
