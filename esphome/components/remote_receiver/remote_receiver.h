@@ -5,11 +5,15 @@
 
 #include <cinttypes>
 
+#ifdef USE_ESP32
+#include <driver/rmt_rx.h>
+#endif
+
 namespace esphome {
 namespace remote_receiver {
 
-#if defined(USE_ESP8266) || defined(USE_LIBRETINY)
 struct RemoteReceiverComponentStore {
+#if defined(USE_ESP8266) || defined(USE_LIBRETINY)
   static void gpio_intr(RemoteReceiverComponentStore *arg);
 
   /// Stores the time (in micros) that the leading/falling edge happened at
@@ -24,8 +28,14 @@ struct RemoteReceiverComponentStore {
   uint32_t buffer_size{1000};
   uint32_t filter_us{10};
   ISRInternalGPIOPin pin;
-};
+#elif defined(USE_ESP32)
+  volatile bool error{false};
+  volatile bool done{false};
+  uint32_t *buffer{nullptr};
+  rmt_rx_done_event_data_t data;
+  rmt_receive_config_t config;
 #endif
+};
 
 class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
                                 public Component
@@ -33,14 +43,12 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
     ,
                                 public remote_base::RemoteRMTChannel
 #endif
+
 {
  public:
 #ifdef USE_ESP32
   RemoteReceiverComponent(InternalGPIOPin *pin, uint8_t mem_block_num = 1)
       : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(mem_block_num) {}
-
-  RemoteReceiverComponent(InternalGPIOPin *pin, rmt_channel_t channel, uint8_t mem_block_num = 1)
-      : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(channel, mem_block_num) {}
 #else
   RemoteReceiverComponent(InternalGPIOPin *pin) : RemoteReceiverBase(pin) {}
 #endif
@@ -55,16 +63,14 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
 
  protected:
 #ifdef USE_ESP32
-  void decode_rmt_(rmt_item32_t *item, size_t len);
-  RingbufHandle_t ringbuf_;
+  void decode_rmt_(rmt_symbol_word_t *item, size_t item_count);
+  rmt_channel_handle_t channel_{NULL};
   esp_err_t error_code_{ESP_OK};
   std::string error_string_{""};
 #endif
 
-#if defined(USE_ESP8266) || defined(USE_LIBRETINY)
   RemoteReceiverComponentStore store_;
   HighFrequencyLoopRequester high_freq_;
-#endif
 
   uint32_t buffer_size_{};
   uint32_t filter_us_{10};

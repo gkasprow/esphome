@@ -2,64 +2,71 @@
 #include "esphome/core/log.h"
 
 #ifdef USE_ESP32
-#include <driver/rmt.h>
 
 namespace esphome {
 namespace remote_receiver {
 
 static const char *const TAG = "remote_receiver.esp32";
 
+static bool IRAM_ATTR HOT rmt_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *data,
+                                       void *user_data) {
+  RemoteReceiverComponentStore *store = (RemoteReceiverComponentStore *) user_data;
+  store->data = *data;
+  store->done = true;
+  return false;
+}
+
 void RemoteReceiverComponent::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Remote Receiver...");
   this->pin_->setup();
-  rmt_config_t rmt{};
-  this->config_rmt(rmt);
-  rmt.gpio_num = gpio_num_t(this->pin_->get_pin());
-  rmt.rmt_mode = RMT_MODE_RX;
   if (this->filter_us_ == 0) {
-    rmt.rx_config.filter_en = false;
+    this->store_.config.signal_range_min_ns = 0;
   } else {
-    rmt.rx_config.filter_en = true;
-    rmt.rx_config.filter_ticks_thresh = static_cast<uint8_t>(
-        std::min(this->from_microseconds_(this->filter_us_) * this->clock_divider_, (uint32_t) 255));
+    this->store_.config.signal_range_min_ns = 500;  // std::min(this->filter_us_, (uint32_t) 255) * 1000;
   }
-  rmt.rx_config.idle_threshold =
-      static_cast<uint16_t>(std::min(this->from_microseconds_(this->idle_us_), (uint32_t) 65535));
+  this->store_.config.signal_range_max_ns = std::min(this->idle_us_, (uint32_t) 65535) * 1000;
 
-  esp_err_t error = rmt_config(&rmt);
+  rmt_rx_channel_config_t rmt{};
+  rmt.clk_src = RMT_CLK_SRC_DEFAULT;
+  rmt.resolution_hz = 1 * 1000 * 1000;
+  rmt.mem_block_symbols = 64 * this->mem_block_num_;
+  rmt.gpio_num = gpio_num_t(this->pin_->get_pin());
+  esp_err_t error = rmt_new_rx_channel(&rmt, &this->channel_);
   if (error != ESP_OK) {
     this->error_code_ = error;
-    this->error_string_ = "in rmt_config";
+    this->error_string_ = "in rmt_new_rx_channel";
+    this->mark_failed();
+    return;
+  }
+  error = rmt_enable(this->channel_);
+  if (error != ESP_OK) {
+    this->error_code_ = error;
+    this->error_string_ = "in rmt_enable";
     this->mark_failed();
     return;
   }
 
-  error = rmt_driver_install(this->channel_, this->buffer_size_, 0);
+  rmt_rx_event_callbacks_t callbacks{};
+  callbacks.on_recv_done = rmt_callback;
+  error = rmt_rx_register_event_callbacks(this->channel_, &callbacks, &this->store_);
   if (error != ESP_OK) {
     this->error_code_ = error;
-    if (error == ESP_ERR_INVALID_STATE) {
-      this->error_string_ = str_sprintf("RMT channel %i is already in use by another component", this->channel_);
-    } else {
-      this->error_string_ = "in rmt_driver_install";
-    }
+    this->error_string_ = "in rmt_rx_register_event_callbacks";
     this->mark_failed();
     return;
   }
-  error = rmt_get_ringbuf_handle(this->channel_, &this->ringbuf_);
+
+  this->store_.buffer = new uint32_t[this->buffer_size_ / 4];
+  error = rmt_receive(this->channel_, this->store_.buffer, 64 * this->mem_block_num_ * sizeof(rmt_symbol_word_t),
+                      &this->store_.config);
   if (error != ESP_OK) {
     this->error_code_ = error;
-    this->error_string_ = "in rmt_get_ringbuf_handle";
-    this->mark_failed();
-    return;
-  }
-  error = rmt_rx_start(this->channel_, true);
-  if (error != ESP_OK) {
-    this->error_code_ = error;
-    this->error_string_ = "in rmt_rx_start";
+    this->error_string_ = "in rmt_receive";
     this->mark_failed();
     return;
   }
 }
+
 void RemoteReceiverComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "Remote Receiver:");
   LOG_PIN("  Pin: ", this->pin_);
@@ -67,7 +74,6 @@ void RemoteReceiverComponent::dump_config() {
     ESP_LOGW(TAG, "Remote Receiver Signal starts with a HIGH value. Usually this means you have to "
                   "invert the signal using 'inverted: True' in the pin schema!");
   }
-  ESP_LOGCONFIG(TAG, "  Channel: %d", this->channel_);
   ESP_LOGCONFIG(TAG, "  RMT memory blocks: %d", this->mem_block_num_);
   ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
   ESP_LOGCONFIG(TAG, "  Tolerance: %" PRIu32 "%s", this->tolerance_,
@@ -81,25 +87,22 @@ void RemoteReceiverComponent::dump_config() {
 }
 
 void RemoteReceiverComponent::loop() {
-  size_t len = 0;
-  auto *item = (rmt_item32_t *) xRingbufferReceive(this->ringbuf_, &len, 0);
-  if (item != nullptr) {
-    this->decode_rmt_(item, len);
-    vRingbufferReturnItem(this->ringbuf_, item);
-
-    if (this->temp_.empty())
-      return;
-
-    this->temp_.push_back(-this->idle_us_);
-    this->call_listeners_dumpers_();
+  if (this->store_.done) {
+    this->decode_rmt_((rmt_symbol_word_t *) this->store_.buffer, this->store_.data.num_symbols);
+    this->store_.done = false;
+    rmt_receive(this->channel_, this->store_.buffer, sizeof(rmt_symbol_word_t) * 64 * 4, &this->store_.config);
+    if (!this->temp_.empty()) {
+      this->temp_.push_back(-this->idle_us_);
+      this->call_listeners_dumpers_();
+    }
   }
 }
-void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
+
+void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t item_count) {
   bool prev_level = false;
   uint32_t prev_length = 0;
   this->temp_.clear();
   int32_t multiplier = this->pin_->is_inverted() ? -1 : 1;
-  size_t item_count = len / sizeof(rmt_item32_t);
   uint32_t filter_ticks = this->from_microseconds_(this->filter_us_);
 
   ESP_LOGVV(TAG, "START:");

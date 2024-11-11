@@ -5,6 +5,10 @@
 
 #include <vector>
 
+#ifdef USE_ESP32
+#include <driver/rmt_tx.h>
+#endif
+
 namespace esphome {
 namespace remote_transmitter {
 
@@ -19,9 +23,6 @@ class RemoteTransmitterComponent : public remote_base::RemoteTransmitterBase,
 #ifdef USE_ESP32
   RemoteTransmitterComponent(InternalGPIOPin *pin, uint8_t mem_block_num = 1)
       : remote_base::RemoteTransmitterBase(pin), remote_base::RemoteRMTChannel(mem_block_num) {}
-
-  RemoteTransmitterComponent(InternalGPIOPin *pin, rmt_channel_t channel, uint8_t mem_block_num = 1)
-      : remote_base::RemoteTransmitterBase(pin), remote_base::RemoteRMTChannel(channel, mem_block_num) {}
 #else
   explicit RemoteTransmitterComponent(InternalGPIOPin *pin) : remote_base::RemoteTransmitterBase(pin) {}
 #endif
@@ -54,7 +55,9 @@ class RemoteTransmitterComponent : public remote_base::RemoteTransmitterBase,
 
   uint32_t current_carrier_frequency_{38000};
   bool initialized_{false};
-  std::vector<rmt_item32_t> rmt_temp_;
+  rmt_channel_handle_t channel_{NULL};
+  rmt_encoder_handle_t encoder_{NULL};
+  std::vector<rmt_symbol_word_t> rmt_temp_;
   esp_err_t error_code_{ESP_OK};
   std::string error_string_{""};
   bool inverted_{false};
