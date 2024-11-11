@@ -123,7 +123,7 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   uint8_t *data_buffer_;
   std::shared_ptr<RingBuffer> audio_ring_buffer_;
 
-  uint32_t timeout_;
+  optional<uint32_t> timeout_;
   uint8_t dout_pin_;
 
   bool task_created_{false};

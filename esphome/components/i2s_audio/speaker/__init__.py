@@ -2,7 +2,7 @@ from esphome import pins
 import esphome.codegen as cg
 from esphome.components import esp32, speaker
 import esphome.config_validation as cv
-from esphome.const import CONF_CHANNEL, CONF_ID, CONF_MODE, CONF_TIMEOUT
+from esphome.const import CONF_CHANNEL, CONF_DISABLED, CONF_ID, CONF_MODE, CONF_TIMEOUT
 
 from .. import (
     CONF_I2S_DOUT_PIN,
@@ -72,9 +72,10 @@ BASE_SCHEMA = (
     )
     .extend(
         {
-            cv.Optional(
-                CONF_TIMEOUT, default="500ms"
-            ): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_TIMEOUT, default="500ms"): cv.Any(
+                cv.positive_time_period_milliseconds,
+                cv.one_of(CONF_DISABLED, lower=True),
+            ),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -116,4 +117,5 @@ async def to_code(config):
     else:
         cg.add(var.set_dout_pin(config[CONF_I2S_DOUT_PIN]))
         cg.add(var.set_i2s_comm_fmt(config[CONF_I2S_COMM_FMT]))
-    cg.add(var.set_timeout(config[CONF_TIMEOUT]))
+    if config[CONF_TIMEOUT] != CONF_DISABLED:
+        cg.add(var.set_timeout(config[CONF_TIMEOUT]))

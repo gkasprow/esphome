@@ -267,7 +267,8 @@ void I2SAudioSpeaker::speaker_task(void *params) {
     uint32_t last_data_received_time = millis();
     bool tx_dma_underflow = false;
 
-    while ((millis() - last_data_received_time) <= this_speaker->timeout_) {
+    while (!this_speaker->timeout_.has_value() ||
+           (millis() - last_data_received_time) <= this_speaker->timeout_.value()) {
       event_group_bits = xEventGroupGetBits(this_speaker->event_group_);
 
       if (event_group_bits & SpeakerEventGroupBits::COMMAND_STOP) {
