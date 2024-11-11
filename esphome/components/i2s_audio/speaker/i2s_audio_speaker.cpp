@@ -208,7 +208,10 @@ size_t I2SAudioSpeaker::play(const uint8_t *data, size_t length, TickType_t tick
   }
 
   size_t bytes_written = 0;
-  if (this->audio_ring_buffer_.use_count() == 1) {
+  if ((this->state_ == speaker::STATE_RUNNING) && (this->audio_ring_buffer_.use_count() == 1)) {
+    // Only one owner of the ring buffer (the speaker task), so the ring buffer is allocated and no other components are
+    // attempting to write to it.
+
     // Temporarily share ownership of the ring buffer so it won't be deallocated while writing
     std::shared_ptr<RingBuffer> temp_ring_buffer = this->audio_ring_buffer_;
     bytes_written = temp_ring_buffer->write_without_replacement((void *) data, length, ticks_to_wait);
