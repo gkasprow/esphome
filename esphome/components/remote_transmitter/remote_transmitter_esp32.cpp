@@ -28,14 +28,14 @@ void RemoteTransmitterComponent::dump_config() {
 }
 
 void RemoteTransmitterComponent::configure_rmt_() {
+  esp_err_t error;
   rmt_tx_channel_config_t config{};
   config.clk_src = RMT_CLK_SRC_DEFAULT;
   config.resolution_hz = 1 * 1000 * 1000;
   config.gpio_num = gpio_num_t(this->pin_->get_pin());
   config.mem_block_symbols = 64 * this->mem_block_num_;
   config.trans_queue_depth = 1;
-
-  esp_err_t error = rmt_new_tx_channel(&config, &this->channel_);
+  error = rmt_new_tx_channel(&config, &this->channel_);
   if (error != ESP_OK) {
     this->error_code_ = error;
     this->error_string_ = "in rmt_new_tx_channel";
