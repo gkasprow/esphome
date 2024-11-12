@@ -70,8 +70,6 @@ void RemoteTransmitterComponent::configure_rmt_() {
     this->mark_failed();
     return;
   }
-
-  // TODO: Carrier
 }
 
 void RemoteTransmitterComponent::send_internal(uint32_t send_times, uint32_t send_wait) {

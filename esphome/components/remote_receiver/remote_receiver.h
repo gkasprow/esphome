@@ -29,11 +29,15 @@ struct RemoteReceiverComponentStore {
   uint32_t filter_us{10};
   ISRInternalGPIOPin pin;
 #elif defined(USE_ESP32)
-  volatile bool error{false};
-  volatile bool done{false};
-  uint32_t *buffer{nullptr};
+  uint8_t *buffer{nullptr};
+  volatile uint32_t buffer_write_at{0};
+  uint32_t buffer_read_at{0};
+  uint32_t buffer_size{1000};
+  uint32_t max_size{0};
   rmt_rx_done_event_data_t data;
   rmt_receive_config_t config;
+  rmt_channel_handle_t channel;
+  esp_err_t error{ESP_OK};
 #endif
 };
 

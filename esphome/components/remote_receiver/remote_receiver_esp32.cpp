@@ -11,8 +11,15 @@ static const char *const TAG = "remote_receiver.esp32";
 static bool IRAM_ATTR HOT rmt_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *data,
                                        void *user_data) {
   RemoteReceiverComponentStore *store = (RemoteReceiverComponentStore *) user_data;
-  store->data = *data;
-  store->done = true;
+  uint32_t next =
+      store->buffer_write_at + sizeof(rmt_rx_done_event_data_t) + data->num_symbols * sizeof(rmt_symbol_word_t);
+  if ((next + store->max_size) > store->buffer_size) {
+    next = 0;
+  }
+  store->error = rmt_receive(store->channel, store->buffer + next + sizeof(rmt_rx_done_event_data_t),
+                             sizeof(rmt_symbol_word_t) * 64 * 4, &store->config);
+  *(rmt_rx_done_event_data_t *) (store->buffer + store->buffer_write_at) = *data;
+  store->buffer_write_at = next;
   return false;
 }
 
@@ -56,7 +63,12 @@ void RemoteReceiverComponent::setup() {
     return;
   }
 
-  this->store_.buffer = new uint32_t[this->buffer_size_ / 4];
+  this->store_.channel = this->channel_;
+  this->store_.buffer = (uint8_t *) new uint32_t[this->buffer_size_ / 4];
+  this->store_.buffer_write_at = 0;
+  this->store_.buffer_read_at = 0;
+  this->store_.buffer_size = this->buffer_size_;
+  this->store_.max_size = 64 * this->mem_block_num_ * sizeof(rmt_symbol_word_t) + sizeof(rmt_rx_done_event_data_t);
   error = rmt_receive(this->channel_, this->store_.buffer, 64 * this->mem_block_num_ * sizeof(rmt_symbol_word_t),
                       &this->store_.config);
   if (error != ESP_OK) {
@@ -87,10 +99,19 @@ void RemoteReceiverComponent::dump_config() {
 }
 
 void RemoteReceiverComponent::loop() {
-  if (this->store_.done) {
-    this->decode_rmt_((rmt_symbol_word_t *) this->store_.buffer, this->store_.data.num_symbols);
-    this->store_.done = false;
-    rmt_receive(this->channel_, this->store_.buffer, sizeof(rmt_symbol_word_t) * 64 * 4, &this->store_.config);
+  if (this->store_.error != ESP_OK) {
+    this->error_code_ = this->store_.error;
+    this->error_string_ = "in rmt_callback";
+    this->mark_failed();
+    return;
+  }
+  if (this->store_.buffer_write_at != this->store_.buffer_read_at) {
+    rmt_rx_done_event_data_t *data = (rmt_rx_done_event_data_t *) (this->store_.buffer + this->store_.buffer_read_at);
+    this->decode_rmt_(data->received_symbols, data->num_symbols);
+    this->store_.buffer_read_at += sizeof(rmt_rx_done_event_data_t) + data->num_symbols * sizeof(rmt_symbol_word_t);
+    if ((this->store_.buffer_read_at + this->store_.max_size) > this->store_.buffer_size) {
+      this->store_.buffer_read_at = 0;
+    }
     if (!this->temp_.empty()) {
       this->temp_.push_back(-this->idle_us_);
       this->call_listeners_dumpers_();
