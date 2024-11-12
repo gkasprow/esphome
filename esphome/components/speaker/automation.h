@@ -20,12 +20,14 @@ template<typename... Ts> class PlayAction : public Action<Ts...>, public Parente
   }
 
   void play(Ts... x) override {
-    if (this->static_) {
-      this->parent_->play(this->data_static_);
-    } else {
-      auto val = this->data_func_(x...);
-      this->parent_->play(val);
+    auto val = data_static_;
+
+    if (!this->static_) {
+      val = this->data_func_(x...);
     }
+    auto streamer = this->parent_->start();
+    streamer->stream(val.data(), val.size());
+    delete streamer;
   }
 
  protected:
@@ -62,11 +64,6 @@ template<typename... Ts> class MuteOffAction : public Action<Ts...> {
 template<typename... Ts> class StopAction : public Action<Ts...>, public Parented<Speaker> {
  public:
   void play(Ts... x) override { this->parent_->stop(); }
-};
-
-template<typename... Ts> class FinishAction : public Action<Ts...>, public Parented<Speaker> {
- public:
-  void play(Ts... x) override { this->parent_->finish(); }
 };
 
 template<typename... Ts> class IsPlayingCondition : public Condition<Ts...>, public Parented<Speaker> {

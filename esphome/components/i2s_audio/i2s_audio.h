@@ -60,9 +60,6 @@ class I2SAudioComponent : public Component {
  protected:
   Mutex lock_;
 
-  I2SAudioIn *audio_in_{nullptr};
-  I2SAudioOut *audio_out_{nullptr};
-
   int mclk_pin_{I2S_PIN_NO_CHANGE};
   int bclk_pin_{I2S_PIN_NO_CHANGE};
   int lrclk_pin_;

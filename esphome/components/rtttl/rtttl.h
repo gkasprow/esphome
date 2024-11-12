@@ -8,6 +8,7 @@
 #endif
 
 #ifdef USE_SPEAKER
+#include "esphome/components/audio/audio.h"
 #include "esphome/components/speaker/speaker.h"
 #endif
 
@@ -87,6 +88,7 @@ class Rtttl : public Component {
 
 #ifdef USE_SPEAKER
   speaker::Speaker *speaker_{nullptr};
+  audio::AudioStreamer *streamer_{nullptr};
   int sample_rate_{16000};
   int samples_per_wave_{0};
   int samples_sent_{0};

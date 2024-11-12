@@ -34,19 +34,6 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
 #endif
   void set_i2s_comm_fmt(i2s_comm_format_t mode) { this->i2s_comm_fmt_ = mode; }
 
-  void start() override;
-  void stop() override;
-  void finish() override;
-
-  /// @brief Plays the provided audio data.
-  /// Starts the speaker task, if necessary. Writes the audio data to the ring buffer.
-  /// @param data Audio data in the format set by the parent speaker classes ``set_audio_stream_info`` method.
-  /// @param length The length of the audio data in bytes.
-  /// @param ticks_to_wait The FreeRTOS ticks to wait before writing as much data as possible to the ring buffer.
-  /// @return The number of bytes that were actually written to the ring buffer.
-  size_t play(const uint8_t *data, size_t length, TickType_t ticks_to_wait) override;
-  size_t play(const uint8_t *data, size_t length) override { return play(data, length, 0); }
-
   bool has_buffered_data() const override;
 
   /// @brief Sets the volume of the speaker. Uses the speaker's configured audio dac component. If unavailble, it is
@@ -61,7 +48,24 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   /// @param mute_state true for muting, false for unmuting
   void set_mute_state(bool mute_state) override;
 
+  size_t get_dma_buffers_size();
+  size_t get_ring_buffer_size();
+
  protected:
+  /// @brief Try to start the speaker .
+  /// @return The true when every thing was setup correctly.
+  bool starting(const audio::AudioStreamInfo &audio_stream_info) override;
+  /// @brief Sends a stop command to the speaker task via event_group_.
+  void stopping() override;
+
+  /// @brief Plays the provided audio data.
+  /// Starts the speaker task, if necessary. Writes the audio data to the ring buffer.
+  /// @param data Audio data in the format set by the parent speaker classes ``set_audio_stream_info`` method.
+  /// @param length The length of the audio data in bytes.
+  /// @param ticks_to_wait The FreeRTOS ticks to wait before writing as much data as possible to the ring buffer.
+  /// @return The number of bytes that were actually written to the ring buffer.
+  size_t streaming(const uint8_t *data, size_t size, TickType_t ticks_to_wait) override;
+
   /// @brief Function for the FreeRTOS task handling audio output.
   /// After receiving the COMMAND_START signal, allocates space for the buffers, starts the I2S driver, and reads
   /// audio from the ring buffer and writes audio to the I2S port. Stops immmiately after receiving the COMMAND_STOP
@@ -71,10 +75,6 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   /// event_group_.
   /// @param params I2SAudioSpeaker component
   static void speaker_task(void *params);
-
-  /// @brief Sends a stop command to the speaker task via event_group_.
-  /// @param wait_on_empty If false, sends the COMMAND_STOP signal. If true, sends the COMMAND_STOP_GRACEFULLY signal.
-  void stop_(bool wait_on_empty);
 
   /// @brief Sets the corresponding ERR_ESP event group bits.
   /// @param err esp_err_t error code.
@@ -86,7 +86,7 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   /// @param ring_buffer_size Number of bytes to allocate for the ring buffer.
   /// @return ESP_ERR_NO_MEM if either buffer fails to allocate
   ///         ESP_OK if successful
-  esp_err_t allocate_buffers_(size_t data_buffer_size, size_t ring_buffer_size);
+  bool allocate_buffers_();
 
   /// @brief Starts the ESP32 I2S driver.
   /// Attempts to lock the I2S port, starts the I2S driver, and sets the data out pin. If it fails, it will unlock
@@ -112,7 +112,7 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   /// Deallocates the data_buffer_ and audio_ring_buffer_, if necessary, and deletes the task. Should only be called by
   /// the speaker_task itself.
   /// @param buffer_size The allocated size of the data_buffer_.
-  void delete_task_(size_t buffer_size);
+  void delete_task_();
 
   TaskHandle_t speaker_task_handle_{nullptr};
   EventGroupHandle_t event_group_{nullptr};
@@ -123,7 +123,7 @@ class I2SAudioSpeaker : public I2SAudioOut, public speaker::Speaker, public Comp
   uint32_t timeout_;
   uint8_t dout_pin_;
 
-  bool task_created_{false};
+  bool stream_created_{false};
 
   int16_t q15_volume_factor_{INT16_MAX};
 

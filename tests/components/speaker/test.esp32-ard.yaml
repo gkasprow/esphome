@@ -11,8 +11,7 @@ esphome:
       - if:
           condition: speaker.is_playing
           then:
-            - speaker.finish:
-      - speaker.stop:
+            - speaker.stop:
 
 i2s_audio:
   i2s_lrclk_pin: 16

@@ -191,6 +191,8 @@ void MicroWakeWord::stop() {
 }
 
 void MicroWakeWord::set_state_(State state) {
+  if (this->state_ == state)
+    return;
   ESP_LOGD(TAG, "State changed from %s to %s", LOG_STR_ARG(micro_wake_word_state_to_string(this->state_)),
            LOG_STR_ARG(micro_wake_word_state_to_string(state)));
   this->state_ = state;
