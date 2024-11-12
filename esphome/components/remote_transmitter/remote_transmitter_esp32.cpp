@@ -30,8 +30,8 @@ void RemoteTransmitterComponent::dump_config() {
 void RemoteTransmitterComponent::configure_rmt_() {
   rmt_tx_channel_config_t config{};
   config.clk_src = RMT_CLK_SRC_DEFAULT;
-  config.resolution_hz = 1 * 1000 * 1000,  // 1 MHz resolution
-      config.gpio_num = gpio_num_t(this->pin_->get_pin());
+  config.resolution_hz = 1 * 1000 * 1000;
+  config.gpio_num = gpio_num_t(this->pin_->get_pin());
   config.mem_block_symbols = 64 * this->mem_block_num_;
   config.trans_queue_depth = 1;
 
@@ -43,8 +43,8 @@ void RemoteTransmitterComponent::configure_rmt_() {
     return;
   }
 
-  rmt_copy_encoder_config_t asdf;
-  error = rmt_new_copy_encoder(&asdf, &this->encoder_);
+  rmt_copy_encoder_config_t encoder{};
+  error = rmt_new_copy_encoder(&encoder, &this->encoder_);
   if (error != ESP_OK) {
     this->error_code_ = error;
     this->error_string_ = "in rmt_new_copy_encoder";
@@ -53,8 +53,14 @@ void RemoteTransmitterComponent::configure_rmt_() {
   }
 
   rmt_carrier_config_t carrier{};
-  carrier.frequency_hz = 0;
-  carrier.duty_cycle = 100.0;
+  if (this->current_carrier_frequency_ == 0 || this->carrier_duty_percent_ == 100) {
+    carrier.frequency_hz = 0;
+    carrier.duty_cycle = 100.0f;
+  } else {
+    carrier.frequency_hz = this->current_carrier_frequency_;
+    carrier.duty_cycle = this->carrier_duty_percent_;
+  }
+  carrier.flags.polarity_active_low = this->inverted_;
   error = rmt_apply_carrier(this->channel_, &carrier);
   if (error != ESP_OK) {
     this->error_code_ = error;

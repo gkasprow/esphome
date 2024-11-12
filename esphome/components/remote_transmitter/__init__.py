@@ -31,10 +31,7 @@ CONFIG_SCHEMA = cv.Schema(
 
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
-    if (rmt_channel := config.get(CONF_RMT_CHANNEL, None)) is not None:
-        var = cg.new_Pvariable(config[CONF_ID], pin, rmt_channel)
-    else:
-        var = cg.new_Pvariable(config[CONF_ID], pin)
+    var = cg.new_Pvariable(config[CONF_ID], pin)
     await cg.register_component(var, config)
 
     cg.add(var.set_carrier_duty_percent(config[CONF_CARRIER_DUTY_PERCENT]))
