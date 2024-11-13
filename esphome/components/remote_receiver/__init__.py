@@ -1,18 +1,18 @@
-import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome import pins
-from esphome.components import remote_base, esp32_rmt
+import esphome.codegen as cg
+from esphome.components import esp32_rmt, remote_base
+import esphome.config_validation as cv
 from esphome.const import (
     CONF_BUFFER_SIZE,
     CONF_DUMP,
     CONF_FILTER,
     CONF_ID,
     CONF_IDLE,
+    CONF_MEMORY_BLOCKS,
     CONF_PIN,
+    CONF_RMT_CHANNEL,
     CONF_TOLERANCE,
     CONF_TYPE,
-    CONF_MEMORY_BLOCKS,
-    CONF_RMT_CHANNEL,
     CONF_VALUE,
 )
 from esphome.core import CORE, TimePeriod
@@ -115,12 +115,7 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
     if CORE.is_esp32:
-        if (rmt_channel := config.get(CONF_RMT_CHANNEL, None)) is not None:
-            var = cg.new_Pvariable(
-                config[CONF_ID], pin, rmt_channel, config[CONF_MEMORY_BLOCKS]
-            )
-        else:
-            var = cg.new_Pvariable(config[CONF_ID], pin, config[CONF_MEMORY_BLOCKS])
+        var = cg.new_Pvariable(config[CONF_ID], pin, config[CONF_MEMORY_BLOCKS])
         cg.add(var.set_clock_divider(config[CONF_CLOCK_DIVIDER]))
     else:
         var = cg.new_Pvariable(config[CONF_ID], pin)

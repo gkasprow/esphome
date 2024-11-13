@@ -29,15 +29,17 @@ struct RemoteReceiverComponentStore {
   uint32_t filter_us{10};
   ISRInternalGPIOPin pin;
 #elif defined(USE_ESP32)
-  uint8_t *buffer{nullptr};
+  /// Stores RMT symbols and rx done event data
+  volatile uint8_t *buffer{nullptr};
+  /// The position last written to
   volatile uint32_t buffer_write_at{0};
+  /// The position last read from
   uint32_t buffer_read_at{0};
   uint32_t buffer_size{1000};
-  uint32_t max_size{0};
-  rmt_rx_done_event_data_t data;
+  uint32_t receive_size{0};
+  esp_err_t error{ESP_OK};
   rmt_receive_config_t config;
   rmt_channel_handle_t channel;
-  esp_err_t error{ESP_OK};
 #endif
 };
 
