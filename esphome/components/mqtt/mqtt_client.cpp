@@ -690,29 +690,6 @@ void MQTTClientComponent::add_ssl_fingerprint(const std::array<uint8_t, SHA1_SIZ
 
 MQTTClientComponent *global_mqtt_client = nullptr;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-// MQTTMessageTrigger
-MQTTMessageTrigger::MQTTMessageTrigger(std::string topic) : topic_(std::move(topic)) {}
-void MQTTMessageTrigger::set_qos(uint8_t qos) { this->qos_ = qos; }
-void MQTTMessageTrigger::set_payload(const std::string &payload) { this->payload_ = payload; }
-void MQTTMessageTrigger::setup() {
-  global_mqtt_client->subscribe(
-      this->topic_,
-      [this](const std::string &topic, const std::string &payload) {
-        if (this->payload_.has_value() && payload != *this->payload_) {
-          return;
-        }
-
-        this->trigger(payload);
-      },
-      this->qos_);
-}
-void MQTTMessageTrigger::dump_config() {
-  ESP_LOGCONFIG(TAG, "MQTT Message Trigger:");
-  ESP_LOGCONFIG(TAG, "  Topic: '%s'", this->topic_.c_str());
-  ESP_LOGCONFIG(TAG, "  QoS: %u", this->qos_);
-}
-float MQTTMessageTrigger::get_setup_priority() const { return setup_priority::AFTER_CONNECTION; }
-
 }  // namespace mqtt
 }  // namespace esphome
 

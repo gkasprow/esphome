@@ -332,26 +332,39 @@ class MQTTClientComponent : public Component {
 
 extern MQTTClientComponent *global_mqtt_client;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-class MQTTMessageTrigger : public Trigger<std::string>, public Component {
- public:
-  explicit MQTTMessageTrigger(std::string topic);
 
-  void set_qos(uint8_t qos);
-  void set_payload(const std::string &payload);
-  void setup() override;
-  void dump_config() override;
-  float get_setup_priority() const override;
+class MQTTMessageTrigger : public Trigger<std::string> {
+ public:
+  void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos, const std::string &payload_) {
+    parent->subscribe(
+      topic,
+      [this, payload_](const std::string &topic, const std::string &payload) {
+        if (payload != payload_) {
+          return;
+        }
+
+        this->trigger(payload);
+      },
+      qos);
+  }
+
+  void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos) {
+    parent->subscribe(
+      topic,
+      [this](const std::string &topic, const std::string &payload) {
+        this->trigger(payload);
+      },
+      qos);
+  }
 
  protected:
-  std::string topic_;
-  uint8_t qos_{0};
-  optional<std::string> payload_;
+  MQTTClientComponent *parent_;
 };
 
 class MQTTJsonMessageTrigger : public Trigger<JsonObjectConst> {
  public:
-  explicit MQTTJsonMessageTrigger(const std::string &topic, uint8_t qos) {
-    global_mqtt_client->subscribe_json(
+  void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos) {
+    parent->subscribe_json(
         topic, [this](const std::string &topic, JsonObject root) { this->trigger(root); }, qos);
   }
 };
@@ -417,6 +430,41 @@ template<typename... Ts> class MQTTConnectedCondition : public Condition<Ts...> 
 
  protected:
   MQTTClientComponent *parent_;
+};
+
+template<typename... Ts> class MQTTSubscribeAction : public Action<Ts...> {
+ public:
+  MQTTSubscribeAction(MQTTClientComponent *parent) : parent_(parent) {}
+  TEMPLATABLE_VALUE(std::string, topic)
+  TEMPLATABLE_VALUE(uint8_t, qos)
+  TEMPLATABLE_VALUE(std::string, payload)
+
+  MQTTMessageTrigger *get_trigger() { return this->trigger_; }
+  
+  void play(Ts... x) override {
+    this->trigger_->subscribe(this->parent_, this->topic_.value(x...), this->qos_.value(x...), this->payload_.value(x...));
+  }
+
+  protected:
+    MQTTClientComponent *parent_;
+    MQTTMessageTrigger *trigger_ = new MQTTMessageTrigger();
+};
+
+template<typename... Ts> class MQTTSubscribeJsonAction : public Action<Ts...> {
+ public:
+  MQTTSubscribeJsonAction(MQTTClientComponent *parent) : parent_(parent) {}
+  TEMPLATABLE_VALUE(std::string, topic)
+  TEMPLATABLE_VALUE(uint8_t, qos)
+
+  MQTTJsonMessageTrigger *get_trigger() { return this->trigger_; }
+
+  void play(Ts... x) override {
+    this->trigger_->subscribe(this->parent_, this->topic_.value(x...), this->qos_.value(x...));
+  }
+
+ protected:
+  MQTTClientComponent *parent_;
+  MQTTJsonMessageTrigger *trigger_ = new MQTTJsonMessageTrigger();
 };
 
 template<typename... Ts> class MQTTEnableAction : public Action<Ts...> {

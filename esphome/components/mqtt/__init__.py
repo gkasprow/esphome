@@ -64,6 +64,7 @@ def AUTO_LOAD():
     return ["json"]
 
 
+CONF_MQTT_CLIENT_ID = "mqtt_client_id"
 CONF_DISCOVER_IP = "discover_ip"
 CONF_IDF_SEND_ASYNC = "idf_send_async"
 CONF_SKIP_CERT_CN_CHECK = "skip_cert_cn_check"
@@ -102,8 +103,11 @@ MQTTPublishAction = mqtt_ns.class_("MQTTPublishAction", automation.Action)
 MQTTPublishJsonAction = mqtt_ns.class_("MQTTPublishJsonAction", automation.Action)
 MQTTEnableAction = mqtt_ns.class_("MQTTEnableAction", automation.Action)
 MQTTDisableAction = mqtt_ns.class_("MQTTDisableAction", automation.Action)
+MQTTSubscribeAction = mqtt_ns.class_("MQTTSubscribeAction", automation.Action)
+MQTTSubscribeJsonAction = mqtt_ns.class_("MQTTSubscribeJsonAction", automation.Action)
+MQTTUnsubscribeAction = mqtt_ns.class_("MQTTUnsubscribeAction", automation.Action)
 MQTTMessageTrigger = mqtt_ns.class_(
-    "MQTTMessageTrigger", automation.Trigger.template(cg.std_string), cg.Component
+    "MQTTMessageTrigger", automation.Trigger.template(cg.std_string)
 )
 MQTTJsonMessageTrigger = mqtt_ns.class_(
     "MQTTJsonMessageTrigger", automation.Trigger.template(cg.JsonObjectConst)
@@ -430,15 +434,16 @@ async def to_code(config):
     # end esp-idf
 
     for conf in config.get(CONF_ON_MESSAGE, []):
-        trig = cg.new_Pvariable(conf[CONF_TRIGGER_ID], conf[CONF_TOPIC])
-        cg.add(trig.set_qos(conf[CONF_QOS]))
+        trig = cg.new_Pvariable(conf[CONF_TRIGGER_ID])
         if CONF_PAYLOAD in conf:
-            cg.add(trig.set_payload(conf[CONF_PAYLOAD]))
-        await cg.register_component(trig, conf)
+            cg.add(trig.subscribe(var, conf[CONF_TOPIC], conf[CONF_QOS], conf[CONF_PAYLOAD]))
+        else:
+            cg.add(trig.subscribe(var, conf[CONF_TOPIC], conf[CONF_QOS]))
         await automation.build_automation(trig, [(cg.std_string, "x")], conf)
 
     for conf in config.get(CONF_ON_JSON_MESSAGE, []):
-        trig = cg.new_Pvariable(conf[CONF_TRIGGER_ID], conf[CONF_TOPIC], conf[CONF_QOS])
+        trig = cg.new_Pvariable(conf[CONF_TRIGGER_ID])
+        cg.add(trig.subscribe(var, conf[CONF_TOPIC], conf[CONF_QOS]))
         await automation.build_automation(trig, [(cg.JsonObjectConst, "x")], conf)
 
     for conf in config.get(CONF_ON_CONNECT, []):
@@ -588,3 +593,55 @@ async def mqtt_enable_to_code(config, action_id, template_arg, args):
 async def mqtt_disable_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     return cg.new_Pvariable(action_id, template_arg, paren)
+
+
+@automation.register_action(
+    "mqtt.subscribe",
+    MQTTSubscribeAction,
+    automation.validate_automation(
+        {
+            cv.GenerateID(CONF_MQTT_CLIENT_ID): cv.use_id(MQTTClientComponent),
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(MQTTMessageTrigger),
+            cv.Required(CONF_TOPIC): cv.templatable(cv.subscribe_topic),
+            cv.Optional(CONF_QOS, default=0): cv.templatable(cv.mqtt_qos),
+            cv.Optional(CONF_PAYLOAD): cv.templatable(cv.string_strict),
+        },
+        single=True
+    ),
+)
+async def mqtt_subscribe_to_code(config, action_id, template_arg, args):
+    paren = await cg.get_variable(config[CONF_MQTT_CLIENT_ID])
+    var = cg.new_Pvariable(action_id, template_arg, paren)
+    template_ = await cg.templatable(config[CONF_TOPIC], args, cg.std_string)
+    cg.add(var.set_topic(template_))
+    template_ = await cg.templatable(config[CONF_QOS], args, cg.uint8)
+    cg.add(var.set_qos(template_))
+    if CONF_PAYLOAD in config:
+        template_ = await cg.templatable(config[CONF_PAYLOAD], args, cg.std_string)
+        cg.add(var.set_payload(template_))
+    await automation.build_automation(var.get_trigger(), [(cg.std_string, "x")], config)
+    return var
+
+
+@automation.register_action(
+    "mqtt.subscribe_json",
+    MQTTSubscribeJsonAction,
+    automation.validate_automation(
+        {
+            cv.GenerateID(CONF_MQTT_CLIENT_ID): cv.use_id(MQTTClientComponent),
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(MQTTJsonMessageTrigger),
+            cv.Required(CONF_TOPIC): cv.templatable(cv.subscribe_topic),
+            cv.Optional(CONF_QOS, default=0): cv.templatable(cv.mqtt_qos),
+        },
+        single=True
+    ),
+)
+async def mqtt_subscribe_json_to_code(config, action_id, template_arg, args):
+    paren = await cg.get_variable(config[CONF_MQTT_CLIENT_ID])
+    var = cg.new_Pvariable(action_id, template_arg, paren)
+    template_ = await cg.templatable(config[CONF_TOPIC], args, cg.std_string)
+    cg.add(var.set_topic(template_))
+    template_ = await cg.templatable(config[CONF_QOS], args, cg.uint8)
+    cg.add(var.set_qos(template_))
+    await automation.build_automation(var.get_trigger(), [(cg.JsonObjectConst, "x")], config)
+    return var
