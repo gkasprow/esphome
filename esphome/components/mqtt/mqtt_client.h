@@ -332,7 +332,6 @@ class MQTTClientComponent : public Component {
 
 extern MQTTClientComponent *global_mqtt_client;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-
 class MQTTMessageTrigger : public Trigger<std::string> {
  public:
   void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos, const std::string &payload_) {
