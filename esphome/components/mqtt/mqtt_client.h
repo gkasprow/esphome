@@ -337,24 +337,21 @@ class MQTTMessageTrigger : public Trigger<std::string> {
  public:
   void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos, const std::string &payload_) {
     parent->subscribe(
-      topic,
-      [this, payload_](const std::string &topic, const std::string &payload) {
-        if (payload != payload_) {
-          return;
-        }
+        topic,
+        [this, payload_](const std::string &topic, const std::string &payload) {
+          if (payload != payload_) {
+            return;
+          }
 
-        this->trigger(payload);
-      },
-      qos);
+          this->trigger(payload);
+        },
+        qos);
   }
 
   void subscribe(MQTTClientComponent *parent, const std::string &topic, uint8_t qos) {
     parent->subscribe(
       topic,
-      [this](const std::string &topic, const std::string &payload) {
-        this->trigger(payload);
-      },
-      qos);
+      [this](const std::string &topic, const std::string &payload) { this->trigger(payload); }, qos);
   }
 
  protected:
@@ -440,14 +437,15 @@ template<typename... Ts> class MQTTSubscribeAction : public Action<Ts...> {
   TEMPLATABLE_VALUE(std::string, payload)
 
   MQTTMessageTrigger *get_trigger() { return this->trigger_; }
-  
+
   void play(Ts... x) override {
-    this->trigger_->subscribe(this->parent_, this->topic_.value(x...), this->qos_.value(x...), this->payload_.value(x...));
+    this->trigger_->subscribe(this->parent_, this->topic_.value(x...), this->qos_.value(x...),
+                              this->payload_.value(x...));
   }
 
-  protected:
-    MQTTClientComponent *parent_;
-    MQTTMessageTrigger *trigger_ = new MQTTMessageTrigger();
+ protected:
+  MQTTClientComponent *parent_;
+  MQTTMessageTrigger *trigger_ = new MQTTMessageTrigger();
 };
 
 template<typename... Ts> class MQTTSubscribeJsonAction : public Action<Ts...> {

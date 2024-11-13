@@ -436,7 +436,11 @@ async def to_code(config):
     for conf in config.get(CONF_ON_MESSAGE, []):
         trig = cg.new_Pvariable(conf[CONF_TRIGGER_ID])
         if CONF_PAYLOAD in conf:
-            cg.add(trig.subscribe(var, conf[CONF_TOPIC], conf[CONF_QOS], conf[CONF_PAYLOAD]))
+            cg.add(
+                trig.subscribe(
+                    var, conf[CONF_TOPIC], conf[CONF_QOS], conf[CONF_PAYLOAD]
+                )
+            )
         else:
             cg.add(trig.subscribe(var, conf[CONF_TOPIC], conf[CONF_QOS]))
         await automation.build_automation(trig, [(cg.std_string, "x")], conf)
@@ -606,7 +610,7 @@ async def mqtt_disable_to_code(config, action_id, template_arg, args):
             cv.Optional(CONF_QOS, default=0): cv.templatable(cv.mqtt_qos),
             cv.Optional(CONF_PAYLOAD): cv.templatable(cv.string_strict),
         },
-        single=True
+        single=True,
     ),
 )
 async def mqtt_subscribe_to_code(config, action_id, template_arg, args):
@@ -619,7 +623,9 @@ async def mqtt_subscribe_to_code(config, action_id, template_arg, args):
     if CONF_PAYLOAD in config:
         template_ = await cg.templatable(config[CONF_PAYLOAD], args, cg.std_string)
         cg.add(var.set_payload(template_))
-    await automation.build_automation(var.get_trigger(), [(cg.std_string, "x")], config)
+    await automation.build_automation(
+        var.get_trigger(), [(cg.std_string, "x")], config
+    )
     return var
 
 
@@ -633,7 +639,7 @@ async def mqtt_subscribe_to_code(config, action_id, template_arg, args):
             cv.Required(CONF_TOPIC): cv.templatable(cv.subscribe_topic),
             cv.Optional(CONF_QOS, default=0): cv.templatable(cv.mqtt_qos),
         },
-        single=True
+        single=True,
     ),
 )
 async def mqtt_subscribe_json_to_code(config, action_id, template_arg, args):
@@ -643,5 +649,7 @@ async def mqtt_subscribe_json_to_code(config, action_id, template_arg, args):
     cg.add(var.set_topic(template_))
     template_ = await cg.templatable(config[CONF_QOS], args, cg.uint8)
     cg.add(var.set_qos(template_))
-    await automation.build_automation(var.get_trigger(), [(cg.JsonObjectConst, "x")], config)
+    await automation.build_automation(
+        var.get_trigger(), [(cg.JsonObjectConst, "x")], config
+    )
     return var
