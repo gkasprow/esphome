@@ -623,9 +623,7 @@ async def mqtt_subscribe_to_code(config, action_id, template_arg, args):
     if CONF_PAYLOAD in config:
         template_ = await cg.templatable(config[CONF_PAYLOAD], args, cg.std_string)
         cg.add(var.set_payload(template_))
-    await automation.build_automation(
-        var.get_trigger(), [(cg.std_string, "x")], config
-    )
+    await automation.build_automation(var.get_trigger(), [(cg.std_string, "x")], config)
     return var
 
 
