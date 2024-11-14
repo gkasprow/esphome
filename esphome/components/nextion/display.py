@@ -9,11 +9,11 @@ from esphome.const import (
     CONF_BRIGHTNESS,
     CONF_TRIGGER_ID,
     CONF_ON_TOUCH,
-    CONF_ON_BUFFER_OVERFLOW,
 )
 from esphome.core import CORE
 from . import Nextion, nextion_ns, nextion_ref
 from .base_component import (
+    CONF_ON_BUFFER_OVERFLOW,
     CONF_ON_SLEEP,
     CONF_ON_WAKE,
     CONF_ON_SETUP,
@@ -72,7 +72,9 @@ CONFIG_SCHEMA = (
             ),
             cv.Optional(CONF_ON_BUFFER_OVERFLOW): automation.validate_automation(
                 {
-                    cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BufferOverflowTrigger),
+                    cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(
+                        BufferOverflowTrigger
+                    ),
                 }
             ),
             cv.Optional(CONF_TOUCH_SLEEP_TIMEOUT): cv.int_range(min=3, max=65535),
