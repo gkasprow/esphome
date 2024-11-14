@@ -9,7 +9,6 @@ from esphome.const import (
     CONF_BRIGHTNESS,
     CONF_TRIGGER_ID,
     CONF_ON_TOUCH,
-    CONF_ON_BUFFER_OVERFLOW,
 )
 from esphome.core import CORE
 from . import Nextion, nextion_ns, nextion_ref
