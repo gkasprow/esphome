@@ -34,7 +34,7 @@ struct RemoteReceiverComponentStore {
   /// The position last written to
   volatile uint32_t buffer_write{0};
   /// The position last read from
-  uint32_t buffer_read{0};
+  volatile uint32_t buffer_read{0};
   bool overflow{false};
   uint32_t buffer_size{1000};
   uint32_t receive_size{0};
