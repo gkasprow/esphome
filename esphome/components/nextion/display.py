@@ -37,7 +37,9 @@ SleepTrigger = nextion_ns.class_("SleepTrigger", automation.Trigger.template())
 WakeTrigger = nextion_ns.class_("WakeTrigger", automation.Trigger.template())
 PageTrigger = nextion_ns.class_("PageTrigger", automation.Trigger.template())
 TouchTrigger = nextion_ns.class_("TouchTrigger", automation.Trigger.template())
-BufferOverflowTrigger = nextion_ns.class_("BufferOverflowTrigger", automation.Trigger.template())
+BufferOverflowTrigger = nextion_ns.class_(
+    "BufferOverflowTrigger", automation.Trigger.template()
+)
 
 CONFIG_SCHEMA = (
     display.BASIC_DISPLAY_SCHEMA.extend(
