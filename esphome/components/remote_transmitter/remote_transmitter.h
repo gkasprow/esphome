@@ -34,6 +34,8 @@ class RemoteTransmitterComponent : public remote_base::RemoteTransmitterBase,
 
   void set_carrier_duty_percent(uint8_t carrier_duty_percent) { this->carrier_duty_percent_ = carrier_duty_percent; }
 
+  void set_one_wire(bool one_wire) { this->one_wire_ = one_wire; }
+
   Trigger<> *get_transmit_trigger() const { return this->transmit_trigger_; };
   Trigger<> *get_complete_trigger() const { return this->complete_trigger_; };
 
@@ -55,6 +57,7 @@ class RemoteTransmitterComponent : public remote_base::RemoteTransmitterBase,
 
   uint32_t current_carrier_frequency_{38000};
   bool initialized_{false};
+  bool one_wire_{false};
   rmt_channel_handle_t channel_{NULL};
   rmt_encoder_handle_t encoder_{NULL};
   std::vector<rmt_symbol_word_t> rmt_temp_;

@@ -18,6 +18,7 @@ void RemoteTransmitterComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "Remote Transmitter...");
   ESP_LOGCONFIG(TAG, "  RMT memory blocks: %d", this->mem_block_num_);
   ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
+  ESP_LOGCONFIG(TAG, "  One wire: %s", this->one_wire_ ? "true" : "false");
   LOG_PIN("  Pin: ", this->pin_);
 
   if (this->current_carrier_frequency_ != 0 && this->carrier_duty_percent_ != 100) {
@@ -37,9 +38,10 @@ void RemoteTransmitterComponent::configure_rmt_() {
   channel.gpio_num = gpio_num_t(this->pin_->get_pin());
   channel.mem_block_symbols = 64 * this->mem_block_num_;
   channel.trans_queue_depth = 1;
-  // TODO: add support for a rx/tx 1-wire gpio
-  // channel.flags.io_loop_back = 1;
-  // channel.flags.io_od_mode = 1;
+  if (this->one_wire_) {
+    channel.flags.io_loop_back = 1;
+    channel.flags.io_od_mode = 1;
+  }
   esp_err_t error = rmt_new_tx_channel(&channel, &this->channel_);
   if (error != ESP_OK) {
     this->error_code_ = error;

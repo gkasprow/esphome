@@ -8,6 +8,7 @@ AUTO_LOAD = ["remote_base"]
 
 CONF_ON_TRANSMIT = "on_transmit"
 CONF_ON_COMPLETE = "on_complete"
+CONF_ONE_WIRE = "one_wire"
 
 remote_transmitter_ns = cg.esphome_ns.namespace("remote_transmitter")
 RemoteTransmitterComponent = remote_transmitter_ns.class_(
@@ -22,6 +23,7 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Required(CONF_CARRIER_DUTY_PERCENT): cv.All(
             cv.percentage_int, cv.Range(min=1, max=100)
         ),
+        cv.Optional(CONF_ONE_WIRE): cv.boolean,
         cv.Optional(CONF_RMT_CHANNEL): esp32_rmt.validate_rmt_channel(tx=True),
         cv.Optional(CONF_ON_TRANSMIT): automation.validate_automation(single=True),
         cv.Optional(CONF_ON_COMPLETE): automation.validate_automation(single=True),
@@ -35,6 +37,9 @@ async def to_code(config):
     await cg.register_component(var, config)
 
     cg.add(var.set_carrier_duty_percent(config[CONF_CARRIER_DUTY_PERCENT]))
+
+    if one_wite_config := config.get(CONF_ONE_WIRE):
+        cg.add(var.set_one_wire(one_wite_config))
 
     if on_transmit_config := config.get(CONF_ON_TRANSMIT):
         await automation.build_automation(
