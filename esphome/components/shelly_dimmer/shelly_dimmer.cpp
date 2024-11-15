@@ -170,7 +170,7 @@ void ShellyDimmer::write_state(light::LightState *state) {
   // Also check whether we have calibration data and wheteher edge values were requested.
   if (!this->calibrating_ && this->calibration_data_[0] != 0.0f && brightness != 0 && brightness != 1.0f) {
     // We have calibration data, find the nearest range and remap value
-    int pos;
+    uint32_t pos;
     for (pos = 0; pos < this->calibration_data_.size(); ++pos) {
       if (this->calibration_data_[pos] < brightness) {
         break;
@@ -600,7 +600,7 @@ void ShellyDimmer::perform_calibration_measurement_() {
   this->calibration_measurements_[this->calibration_measurement_cnt_] = this->power_sensor_->state;
   this->calibration_measurement_cnt_++;
 
-  if (this->calibration_measurement_cnt_ >= this->calibration_measurements_.size()) {
+  if ((uint32_t)this->calibration_measurement_cnt_ >= this->calibration_measurements_.size()) {
     this->complete_calibration_step_();
   }
 }
@@ -623,7 +623,7 @@ void ShellyDimmer::complete_calibration_step_() {
   this->calibration_measurements_.fill(0);
 
   // If all measurements collected, finish calibration
-  if (this->calibration_step_ >= this->calibration_data_.size()) {
+  if ((uint32_t)this->calibration_step_ >= this->calibration_data_.size()) {
     this->complete_calibration_();
     return;
   }
