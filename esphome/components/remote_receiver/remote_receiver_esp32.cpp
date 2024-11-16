@@ -159,7 +159,7 @@ void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t item_c
   this->temp_.reserve(item_count * 2);  // each RMT item has 2 pulses
   for (size_t i = 0; i < item_count; i++) {
     if (item[i].duration0 == 0u) {
-      // Do nothing
+      break;
     } else if ((bool(item[i].level0) == prev_level) || (item[i].duration0 < filter_ticks)) {
       prev_length += item[i].duration0;
     } else {
@@ -175,7 +175,7 @@ void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t item_c
     }
 
     if (item[i].duration1 == 0u) {
-      // Do nothing
+      break;
     } else if ((bool(item[i].level1) == prev_level) || (item[i].duration1 < filter_ticks)) {
       prev_length += item[i].duration1;
     } else {
