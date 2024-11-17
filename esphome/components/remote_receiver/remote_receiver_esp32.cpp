@@ -90,12 +90,12 @@ void RemoteReceiverComponent::loop() {
     if (this->temp_.empty())
       return;
 
-    this->temp_.push_back(-this->idle_us_);
     this->call_listeners_dumpers_();
   }
 }
 void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
   bool prev_level = false;
+  bool idle_level = false;
   uint32_t prev_length = 0;
   this->temp_.clear();
   int32_t multiplier = this->pin_->is_inverted() ? -1 : 1;
@@ -124,8 +124,12 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
   this->temp_.reserve(item_count * 2);  // each RMT item has 2 pulses
   for (size_t i = 0; i < item_count; i++) {
     if (item[i].duration0 == 0u) {
-      // Do nothing
-    } else if ((bool(item[i].level0) == prev_level) || (item[i].duration0 < filter_ticks)) {
+      break;
+    } else if (item[i].duration0 < filter_ticks) {
+      if (!this->temp_.empty()) {
+        prev_length += item[i].duration0;
+      }
+    } else if (bool(item[i].level0) == prev_level) {
       prev_length += item[i].duration0;
     } else {
       if (prev_length > 0) {
@@ -138,10 +142,15 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
       prev_level = bool(item[i].level0);
       prev_length = item[i].duration0;
     }
+    idle_level = !bool(item[i].level0);
 
     if (item[i].duration1 == 0u) {
-      // Do nothing
-    } else if ((bool(item[i].level1) == prev_level) || (item[i].duration1 < filter_ticks)) {
+      break;
+    } else if (item[i].duration1 < filter_ticks) {
+      if (!this->temp_.empty()) {
+        prev_length += item[i].duration1;
+      }
+    } else if (bool(item[i].level1) == prev_level) {
       prev_length += item[i].duration1;
     } else {
       if (prev_length > 0) {
@@ -154,12 +163,20 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t len) {
       prev_level = bool(item[i].level1);
       prev_length = item[i].duration1;
     }
+    idle_level = !bool(item[i].level1);
   }
-  if (prev_length > 0) {
+  if (prev_length >= filter_ticks && prev_level != idle_level) {
     if (prev_level) {
       this->temp_.push_back(this->to_microseconds_(prev_length) * multiplier);
     } else {
       this->temp_.push_back(-int32_t(this->to_microseconds_(prev_length)) * multiplier);
+    }
+  }
+  if (!this->temp_.empty()) {
+    if (idle_level) {
+      this->temp_.push_back(this->idle_us_ * multiplier);
+    } else {
+      this->temp_.push_back(-this->idle_us_ * multiplier);
     }
   }
 }
