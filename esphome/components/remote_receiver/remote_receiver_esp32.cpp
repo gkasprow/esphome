@@ -113,7 +113,7 @@ void RemoteReceiverComponent::loop() {
     ESP_LOGW(TAG, "RMT buffer overflow!");
     this->store_.overflow = false;
   }
-  if (this->store_.buffer_write != this->store_.buffer_read) {
+  while (this->store_.buffer_write != this->store_.buffer_read) {
     rmt_rx_done_event_data_t *event = (rmt_rx_done_event_data_t *) (this->store_.buffer + this->store_.buffer_read);
     uint32_t event_size = sizeof(rmt_rx_done_event_data_t);
     uint32_t next_read = this->store_.buffer_read + event_size + event->num_symbols * sizeof(rmt_symbol_word_t);
