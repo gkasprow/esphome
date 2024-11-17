@@ -39,7 +39,7 @@ espnow:
           [
             packet.get_payload(),
             packet.get_peer_code().c_str(),
-            packet.command,
+            packet.get_command(),
             packet.rssi,
           ]
 
@@ -48,7 +48,7 @@ espnow:
       then:
         - logger.log:
             format: "Broadcast Received from: '%s' RSSI: %d: %s"
-            args: [packet.get_peer_code().c_str(), packet.rssi]
+            args: [packet.get_peer_code().c_str(), packet.rssi, packet.get_payload()]
 
 interval:
   - interval: 10sec

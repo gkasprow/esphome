@@ -27,7 +27,9 @@ ESPNowReceiveTrigger = espnow_ns.class_(
 ESPNowNewPeerTrigger = espnow_ns.class_(
     "ESPNowNewPeerTrigger", automation.Trigger.template()
 )
-
+ESPNowBroadcaseTrigger = espnow_ns.class_(
+    "ESPNowBroadcaseTrigger", automation.Trigger.template()
+)
 SendAction = espnow_ns.class_("SendAction", automation.Action)
 NewPeerAction = espnow_ns.class_("NewPeerAction", automation.Action)
 DelPeerAction = espnow_ns.class_("DelPeerAction", automation.Action)
@@ -37,6 +39,7 @@ CONF_CONFORMATION_TIMEOUT = "conformation_timeout"
 CONF_ESPNOW = "espnow"
 CONF_RETRIES = "retries"
 CONF_ON_RECEIVE = "on_receive"
+CONF_ON_BROADCAST = "on_broadcast"
 CONF_ON_SENT = "on_sent"
 CONF_ON_NEW_PEER = "on_new_peer"
 CONF_PEER = "peer"
@@ -115,10 +118,16 @@ CONFIG_SCHEMA = cv.Schema(
                 cv.Optional(CONF_COMMAND): cv.Range(min=16, max=255),
             }
         ),
+        cv.Optional(CONF_ON_BROADCAST): automation.validate_automation(
+            {
+                cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ESPNowBroadcaseTrigger),
+                cv.Optional(CONF_COMMAND): cv.Range(min=0, max=255),
+            }
+        ),
         cv.Optional(CONF_ON_SENT): automation.validate_automation(
             {
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ESPNowSentTrigger),
-                cv.Optional(CONF_COMMAND): cv.Range(min=16, max=255),
+                cv.Optional(CONF_COMMAND): cv.Range(min=0, max=255),
             }
         ),
         cv.Optional(CONF_ON_NEW_PEER): automation.validate_automation(
@@ -162,6 +171,14 @@ async def to_code(config):
         )
 
     for conf in config.get(CONF_ON_RECEIVE, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        if CONF_COMMAND in conf:
+            cg.add(trigger.set_command(conf[CONF_COMMAND]))
+        await automation.build_automation(
+            trigger, [(ESPNowPacketConst, "packet")], conf
+        )
+
+    for conf in config.get(CONF_ON_BROADCAST, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         if CONF_COMMAND in conf:
             cg.add(trigger.set_command(conf[CONF_COMMAND]))

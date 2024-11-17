@@ -191,7 +191,7 @@ class ESPNowDefaultProtocol : public ESPNowProtocol {
     this->on_broadcast_.add(std::move(callback));
   }
 
-  void on_broadcast(const ESPNowPacket &packet) override {
+  bool on_broadcast(const ESPNowPacket &packet) override {
     this->on_broadcast_.call(packet);
     return this->on_broadcast_.size() > 0;
   };
@@ -207,7 +207,7 @@ class ESPNowDefaultProtocol : public ESPNowProtocol {
   void add_on_peer_callback(std::function<void(const ESPNowPacket)> &&callback) {
     this->on_new_peer_.add(std::move(callback));
   }
-  void on_new_peer(const ESPNowPacket &packet) override {
+  bool on_new_peer(const ESPNowPacket &packet) override {
     this->on_new_peer_.call(packet);
     return this->on_new_peer_.size() > 0;
   };
