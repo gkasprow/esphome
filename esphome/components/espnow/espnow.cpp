@@ -68,7 +68,7 @@ void ESPNowComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "  Auto add new peers: %s.", this->auto_add_peer_ ? "Yes" : "No");
 
   ESP_LOGCONFIG(TAG, "  Use sent status: %s.", this->use_sent_check_ ? "Yes" : "No");
-  ESP_LOGCONFIG(TAG, "  Conversation timeout: %" PRIx32 "ms.", this->conformation_timeout_);
+  ESP_LOGCONFIG(TAG, "  Convermation timeout: %" PRIx32 "ms.", this->conformation_timeout_);
   ESP_LOGCONFIG(TAG, "  Send retries: %d.", this->retries_);
 }
 
@@ -340,7 +340,7 @@ bool ESPNowComponent::send(ESPNowPacket packet) {
   } else if (!packet.is_valid()) {
     ESP_LOGE(TAG, "This Packet is invalid: %s (%d.%d)", packet.get_peer_code().c_str(), packet.get_sequents(),
              packet.attempts);
-  } else if (this->use_sent_check_ && packet.peer != ESPNOW_BROADCAST_ADDR) {
+  } else if (this->use_sent_check_) {
     ESP_LOGV(TAG, "Placing %s (%d.%d) into send buffer. Used: %d of %d", packet.get_peer_code().c_str(),
              packet.get_sequents(), packet.attempts, this->send_queue_used(), SEND_BUFFER_SIZE);
     xQueueSendToBack(this->send_queue_, (void *) &packet, 10);
