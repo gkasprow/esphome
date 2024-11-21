@@ -116,9 +116,6 @@ CONF_ESP8266_RESTORE_FROM_FLASH = "esp8266_restore_from_flash"
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
-            cv.Optional(CONF_MIN_VERSION, default=ESPHOME_VERSION): cv.All(
-                cv.version_number, cv.validate_esphome_version
-            ),
             cv.Required(CONF_NAME): cv.valid_name,
             cv.Optional(CONF_FRIENDLY_NAME, ""): cv.string,
             cv.Optional(CONF_AREA, ""): cv.string,
@@ -164,6 +161,9 @@ CONFIG_SCHEMA = cv.All(
                     ),
                 }
             ),
+            cv.Optional(CONF_MIN_VERSION, default=ESPHOME_VERSION): cv.All(
+                cv.version_number, cv.validate_esphome_version
+            ),
             cv.Optional(
                 CONF_COMPILE_PROCESS_LIMIT, default=_compile_process_limit_default
             ): cv.int_range(min=1, max=multiprocessing.cpu_count()),
@@ -184,6 +184,9 @@ PRELOAD_CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_ESP8266_RESTORE_FROM_FLASH): cv.valid,
         cv.Optional(CONF_BOARD_FLASH_MODE): cv.valid,
         cv.Optional(CONF_ARDUINO_VERSION): cv.valid,
+        cv.Optional(CONF_MIN_VERSION, default=ESPHOME_VERSION): cv.All(
+            cv.version_number, cv.validate_esphome_version
+        ),
     },
     extra=cv.ALLOW_EXTRA,
 )
