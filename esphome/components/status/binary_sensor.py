@@ -5,7 +5,8 @@ from esphome.const import (
     DEVICE_CLASS_CONNECTIVITY,
     ENTITY_CATEGORY_DIAGNOSTIC,
 )
-from . import CONF_STATUS_ID
+
+DEPENDENCIES = ["network"]
 
 status_ns = cg.esphome_ns.namespace("status")
 StatusBinarySensor = status_ns.class_(
