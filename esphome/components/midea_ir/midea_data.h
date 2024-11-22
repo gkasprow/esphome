@@ -1,6 +1,7 @@
 #pragma once
 
-// TODO: make base, why? Because this file can be used by midea component also. See esphome/components/midea/ir_transmitter.h
+// TODO: make base, why? Because this file can be used by midea component also. See
+// esphome/components/midea/ir_transmitter.h
 
 #include "esphome/components/remote_base/midea_protocol.h"
 #include "esphome/components/climate/climate_mode.h"
