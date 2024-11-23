@@ -1,8 +1,13 @@
-from esphome import automation
+from esphome import automation, core
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.const import CONF_COMMAND, CONF_ID, CONF_PAYLOAD, CONF_TRIGGER_ID
-from esphome.core import CORE
+from esphome.const import (
+    CONF_COMMAND,
+    CONF_ID,
+    CONF_MAC_ADDRESS,
+    CONF_PAYLOAD,
+    CONF_TRIGGER_ID,
+)
 
 CODEOWNERS = ["@nielsnl68", "@jesserockz"]
 
@@ -13,7 +18,7 @@ ESPNowProtocol = espnow_ns.class_("ESPNowProtocol")
 ESPNowListener = espnow_ns.class_("ESPNowListener")
 
 ESPNowPacket = espnow_ns.class_("ESPNowPacket")
-ESPNowPeer = espnow_ns.class_("Peer")
+ESPNowPeer = cg.uint64
 
 ESPNowPacketConst = ESPNowPacket.operator("const")
 
@@ -36,7 +41,7 @@ SendAction = espnow_ns.class_("SendAction", automation.Action)
 NewPeerAction = espnow_ns.class_("NewPeerAction", automation.Action)
 DelPeerAction = espnow_ns.class_("DelPeerAction", automation.Action)
 SetKeeperAction = espnow_ns.class_("SetKeeperAction", automation.Action)
-
+SetStaticPeerAction = espnow_ns.class_("SetStaticPeerAction", automation.Action)
 
 CONF_AUTO_ADD_PEER = "auto_add_peer"
 CONF_CONFORMATION_TIMEOUT = "conformation_timeout"
@@ -47,21 +52,19 @@ CONF_ON_BROADCAST = "on_broadcast"
 CONF_ON_SENT = "on_sent"
 CONF_ON_NEW_PEER = "on_new_peer"
 CONF_PEER = "peer"
-CONF_PEERS = "peers"
+CONF_PEER_ID = "peer_id"
+CONF_PREDEFINED_PEERS = "predefined_peers"
 CONF_USE_SENT_CHECK = "use_sent_check"
 CONF_WIFI_CHANNEL = "wifi_channel"
 CONF_PROTOCOL_MODE = "protocol_mode"
-CONF_KEEPER = "keeper"
-
-CONF_MAC_CHARS = "0123456789-AbCdEfGhIjKlMnOpQrStUvWxYz+aBcDeFgHiJkLmNoPqRsTuVwXyZ"
 
 validate_command = cv.Range(min=1, max=250)
 
 ESPNowProtocol_mode = espnow_ns.enum("ESPNowProtocol_mode")
 ENUM_MODE = {
-    "universal": ESPNowProtocol_mode.universal,
-    "keeper": ESPNowProtocol_mode.keeper,
-    "drudge": ESPNowProtocol_mode.drudge,
+    "universal": ESPNowProtocol_mode.pm_universal,
+    "keeper": ESPNowProtocol_mode.pm_keeper,
+    "drudge": ESPNowProtocol_mode.pm_drudge,
 }
 
 
@@ -75,48 +78,19 @@ def validate_raw_data(value):
     )
 
 
-def convert_mac_address(value):
-    parts = value.split(":")
-    if len(parts) != 6:
-        raise cv.Invalid("MAC Address must consist of 6 : (colon) separated parts")
-    parts_int = 0
-    if any(len(part) != 2 for part in parts):
-        raise cv.Invalid("MAC Address must be format XX:XX:XX:XX:XX:XX")
-    for part in parts:
-        try:
-            parts_int = (parts_int << 8) + int(part, 16)
-        except ValueError:
-            # pylint: disable=raise-missing-from
-            raise cv.Invalid(
-                "MAC Address parts must be hexadecimal values from 00 to FF"
-            )
-    return parts_int
+def espnow_hex(mac_address):
+    it = reversed(mac_address.parts)
+    num = "".join(f"{part:02X}" for part in it)
+    return cg.RawExpression(f"0x{num}ULL")
 
 
-def validate_peer(value):
-    if isinstance(value, (int)):
-        return value
-
-    value = cv.string_strict(value)
-
-    if value.lower() == CONF_KEEPER:
-        return 0x0
-
-    if value.find(":") != -1:
-        return convert_mac_address(value)
-
-    if len(value) == 8:
-        mac = 0
-        for x in range(8, 0, -1):
-            n = CONF_MAC_CHARS.find(value[x - 1])
-            if n == -1:
-                raise cv.Invalid(f"peer code is invalid. ({value}|{x})")
-            mac = (mac << 6) + n
-        return mac
-
-    raise cv.Invalid(
-        f"peer code '{value}' needs to be 8 characters width, or a valid Mac address or a hexidacimal value of 12 chars width starting with '0x'"
-    )
+DEFINE_PEER_CONFIG = cv.maybe_simple_value(
+    {
+        cv.Optional(CONF_PEER_ID): cv.declare_id(ESPNowPeer),
+        cv.Required(CONF_MAC_ADDRESS): cv.mac_address,
+    },
+    key=CONF_MAC_ADDRESS,
+)
 
 
 CONFIG_SCHEMA = cv.Schema(
@@ -126,10 +100,10 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_AUTO_ADD_PEER, default=False): cv.boolean,
         cv.Optional(CONF_USE_SENT_CHECK, default=True): cv.boolean,
         cv.Optional(
-            CONF_CONFORMATION_TIMEOUT, default="5000ms"
+            CONF_CONFORMATION_TIMEOUT, default="5s"
         ): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_RETRIES, default=5): cv.int_range(min=1, max=10),
-        cv.Optional(CONF_KEEPER): cv.templatable(validate_peer),
+        cv.Optional(CONF_PREDEFINED_PEERS): cv.ensure_list(DEFINE_PEER_CONFIG),
         cv.Optional(CONF_ON_RECEIVE): automation.validate_automation(
             {
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ESPNowReceiveTrigger),
@@ -154,7 +128,6 @@ CONFIG_SCHEMA = cv.Schema(
                 cv.Optional(CONF_COMMAND): validate_command,
             }
         ),
-        cv.Optional(CONF_PEERS): cv.ensure_list(validate_peer),
     },
     cv.only_on_esp32,
 ).extend(cv.COMPONENT_SCHEMA)
@@ -164,7 +137,7 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    if CORE.using_arduino:
+    if core.CORE.using_arduino:
         cg.add_library("WiFi", None)
 
     cg.add_define("USE_ESPNOW")
@@ -175,12 +148,11 @@ async def to_code(config):
     cg.add(var.set_conformation_timeout(config[CONF_CONFORMATION_TIMEOUT]))
     cg.add(var.set_retries(config[CONF_RETRIES]))
 
-    if CONF_KEEPER in config:
-        template_ = await cg.templatable(config[CONF_KEEPER], [], cg.uint64)
-        cg.add(var.set_keeper(template_))
-
-    for conf in config.get(CONF_PEERS, []):
-        cg.add(var.add_peer(conf))
+    for conf in config.get(CONF_PREDEFINED_PEERS, []):
+        mac = espnow_hex(conf.get(CONF_MAC_ADDRESS))
+        if CONF_PEER_ID in conf:
+            cg.new_variable(conf[CONF_PEER_ID], mac)
+        cg.add(var.add_peer(mac))
 
     for conf in config.get(CONF_ON_SENT, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
@@ -233,6 +205,25 @@ async def register_protocol(var, config):
         cg.add(var.set_protocol_mode(config[CONF_PROTOCOL_MODE]))
 
 
+def validate_peer(value):
+    if isinstance(value, cv.Lambda):
+        return cv.returning_lambda(value)
+    if value.find(":") != -1:
+        return cv.mac_address(value)
+    return cv.use_id(ESPNowPeer)(value)
+
+
+async def register_peer(var, config, args):
+    peer = config.get(CONF_MAC_ADDRESS, 0xFFFFFFFFFFFF)
+    if isinstance(peer, core.MACAddress):
+        peer = espnow_hex(peer)
+    if isinstance(peer, core.ID):
+        peer = await cg.get_variable(peer)
+
+    template_ = await cg.templatable(peer, args, cg.uint64)
+    cg.add(var.set_mac_address(template_))
+
+
 @automation.register_action(
     "espnow.broadcast",
     SendAction,
@@ -240,7 +231,7 @@ async def register_protocol(var, config):
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
             cv.Required(CONF_PAYLOAD): cv.templatable(validate_raw_data),
-            cv.Optional(CONF_COMMAND, default=0): cv.templatable(validate_command),
+            cv.Optional(CONF_COMMAND): cv.templatable(validate_command),
         },
         key=CONF_PAYLOAD,
     ),
@@ -251,9 +242,9 @@ async def register_protocol(var, config):
     cv.Schema(
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
-            cv.Required(CONF_PEER): cv.templatable(validate_peer),
+            cv.Required(CONF_MAC_ADDRESS): validate_peer,
             cv.Required(CONF_PAYLOAD): cv.templatable(validate_raw_data),
-            cv.Optional(CONF_COMMAND, default=0): cv.templatable(validate_command),
+            cv.Optional(CONF_COMMAND): cv.templatable(validate_command),
         }
     ),
 )
@@ -261,13 +252,11 @@ async def send_action(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
 
-    peer = config.get(CONF_PEER, 0xFFFFFFFFFFFF)
-    template_ = await cg.templatable(peer, args, cg.uint64)
-    cg.add(var.set_peer(template_))
+    await register_peer(var, config, args)
 
-    command = config.get(CONF_COMMAND, 0)
-    template_ = await cg.templatable(command, args, cg.uint8)
-    cg.add(var.set_command(template_))
+    if command := config.get(CONF_COMMAND):
+        template_ = await cg.templatable(command, args, cg.uint8)
+        cg.add(var.set_command(template_))
 
     data = config.get(CONF_PAYLOAD, [])
     if isinstance(data, bytes):
@@ -281,14 +270,14 @@ async def send_action(config, action_id, template_arg, args):
 
 
 @automation.register_action(
-    "espnow.peer.new",
+    "espnow.peer.add",
     NewPeerAction,
     cv.maybe_simple_value(
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
-            cv.Required(CONF_PEER): cv.templatable(validate_peer),
+            cv.Required(CONF_MAC_ADDRESS): validate_peer,
         },
-        key=CONF_PEER,
+        key=CONF_MAC_ADDRESS,
     ),
 )
 @automation.register_action(
@@ -297,25 +286,29 @@ async def send_action(config, action_id, template_arg, args):
     cv.maybe_simple_value(
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
-            cv.Required(CONF_PEER): cv.templatable(validate_peer),
+            cv.Required(CONF_MAC_ADDRESS): validate_peer,
         },
-        key=CONF_PEER,
+        key=CONF_MAC_ADDRESS,
     ),
 )
 @automation.register_action(
-    "espnow.keeper.set",
-    SetKeeperAction,
-    cv.maybe_simple_value(
+    "espnow.static.peer",
+    SetStaticPeerAction,
+    cv.Schema(
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
-            cv.Required(CONF_PEER): cv.templatable(validate_peer),
-        },
-        key=CONF_PEER,
+            cv.Required(CONF_PEER_ID): cv.use_id(ESPNowPeer),
+            cv.Required(CONF_MAC_ADDRESS): validate_peer,
+        }
     ),
 )
 async def peer_action(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
-    template_ = await cg.templatable(config[CONF_PEER], args, cg.uint64)
-    cg.add(var.set_peer(template_))
+    if peer_id := config.get(CONF_PEER_ID):
+        peer = await cg.get_variable(peer_id)
+        cg.add(var.set_peer_id(peer))
+
+    await register_peer(var, config, args)
+
     return var

@@ -7,6 +7,7 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
+#include "esp_mac.h"
 #include <esp_now.h>
 
 #include <array>
@@ -32,15 +33,17 @@ static const uint8_t ESPNOW_COMMAND_ACK = 0x06;
 static const uint8_t ESPNOW_COMMAND_NAK = 0x15;
 static const uint8_t ESPNOW_COMMAND_RESEND = 0x05;
 
-static const char chars[] = "0123456789-AbCdEfGhIjKlMnOpQrStUvWxYz+aBcDeFgHiJkLmNoPqRsTuVwXyZ";
 static const uint64_t FAILED = 0;
+
+struct ESPNowPacket;
 
 template<typename T> std::string espnow_i2h(T i) { return sprintf("%04x", i); }
 
 std::string espnow_rdm(std::string::size_type length);
 
-std::string espnow_encode_peer(uint64_t peer);
-uint64_t espnow_decode_peer(std::string peer);
+std::string peer_str(const uint64_t peer);
+
+void show_packet(const std::string &title, const ESPNowPacket &packet);
 
 struct ESPNowPacket {
   uint64_t peer{0};
@@ -107,7 +110,7 @@ struct ESPNowPacket {
   inline bool is_peer(const uint8_t *peer) const { return memcmp(peer, this->get_peer(), 6) == 0; }
 
   inline uint8_t *get_peer() const { return (uint8_t *) &(this->peer); }
-  inline std::string get_peer_code() const { return espnow_encode_peer(this->peer); }
+  inline std::string get_peer_code() const { return peer_str(this->peer); }
 
   inline uint32_t get_protocol() const { return this->content.prefix.protocol & 0x00FFFFFF; }
   inline void set_protocol(uint32_t protocol) {
@@ -140,7 +143,7 @@ struct ESPNowPacket {
 
 class ESPNowComponent;
 
-enum ESPNowProtocol_mode { universal, keeper, drudge };
+enum ESPNowProtocol_mode { pm_universal, pm_keeper, pm_drudge };
 
 class ESPNowProtocol : public Parented<ESPNowComponent> {
  public:
@@ -148,7 +151,7 @@ class ESPNowProtocol : public Parented<ESPNowComponent> {
   ESPNowProtocol_mode get_protocol_mode() { return this->protocol_mode_; }
 
  protected:
-  ESPNowProtocol_mode protocol_mode_{universal};
+  ESPNowProtocol_mode protocol_mode_{pm_universal};
 
  public:
   virtual uint32_t get_protocol_id() = 0;
@@ -189,11 +192,11 @@ class ESPNowProtocol : public Parented<ESPNowComponent> {
   std::map<uint64_t, uint8_t> next_sequents_{};
   std::string get_mode_name_() {
     switch (this->protocol_mode_) {
-      case universal:
+      case pm_universal:
         return "Universal";
-      case keeper:
+      case pm_keeper:
         return "Keeper";
-      case drudge:
+      case pm_drudge:
         return "Drudge";
     }
   }
@@ -259,8 +262,7 @@ class ESPNowComponent : public Component {
   void set_conformation_timeout(uint32_t timeout) { this->conformation_timeout_ = timeout; }
   void set_retries(uint8_t value) { this->retries_ = value; }
   void set_pairing_protocol(ESPNowProtocol *pairing_protocol) { this->pairing_protocol_ = pairing_protocol; }
-  void set_keeper(uint64_t keeper) { this->keeper_ = keeper; }
-  uint64_t get_keeper() { return this->keeper_; }
+
   uint64_t get_own_peer_address() { return this->own_peer_address_; }
 
   void setup() override;
@@ -290,8 +292,6 @@ class ESPNowComponent : public Component {
 
   ESPNowDefaultProtocol *get_default_protocol();
 
-  void show_packet(const std::string &title, const ESPNowPacket &packet);
-
   static void espnow_task(void *params);
 
  protected:
@@ -302,7 +302,6 @@ class ESPNowComponent : public Component {
   uint8_t wifi_channel_{0};
   uint32_t conformation_timeout_{5000};
   uint8_t retries_{5};
-  uint64_t keeper_{0};
 
   bool auto_add_peer_{false};
   bool use_sent_check_{true};
@@ -326,49 +325,55 @@ class ESPNowComponent : public Component {
   static ESPNowComponent *static_;  // NOLINT
 };
 
+/*********************************  Actions **************************************/
 template<typename... Ts> class SendAction : public Action<Ts...>, public Parented<ESPNowComponent> {
- public:
-  TEMPLATABLE_VALUE(uint64_t, peer);
+  TEMPLATABLE_VALUE(uint64_t, mac_address);
   TEMPLATABLE_VALUE(uint8_t, command);
   TEMPLATABLE_VALUE(std::vector<uint8_t>, payload);
 
+ public:
   void play(Ts... x) override {
-    uint64_t peer = this->peer_.value(x...);
+    uint64_t peer = this->mac_address_.value(x...);
     uint8_t command = this->command_.value(x...);
     std::vector<uint8_t> payload = this->payload_.value(x...);
-    ESP_LOGVV("SendAction", "send to 0x%12llx, command %d, payload size: %d", peer, command, payload.size());
-
     this->parent_->get_default_protocol()->send(peer, payload.data(), payload.size(), command);
   }
 };
 
 template<typename... Ts> class NewPeerAction : public Action<Ts...>, public Parented<ESPNowComponent> {
  public:
-  TEMPLATABLE_VALUE(uint64_t, peer);
+  TEMPLATABLE_VALUE(uint64_t, mac_address);
   void play(Ts... x) override {
-    auto peer = this->peer_.value(x...);
-    parent_->add_peer(peer);
+    uint64_t mac_address = this->mac_address_.value(x...);
+    parent_->add_peer(mac_address);
   }
 };
 
 template<typename... Ts> class DelPeerAction : public Action<Ts...>, public Parented<ESPNowComponent> {
  public:
-  TEMPLATABLE_VALUE(uint64_t, peer);
+  TEMPLATABLE_VALUE(uint64_t, mac_address);
   void play(Ts... x) override {
-    auto peer = this->peer_.value(x...);
-    parent_->del_peer(peer);
+    uint64_t mac_address = this->mac_address_.value(x...);
+    parent_->del_peer(mac_address);
   }
 };
 
-template<typename... Ts> class SetKeeperAction : public Action<Ts...>, public Parented<ESPNowComponent> {
+template<typename... Ts> class SetStaticPeerAction : public Action<Ts...>, public Parented<ESPNowComponent> {
  public:
-  TEMPLATABLE_VALUE(uint64_t, peer);
+  TEMPLATABLE_VALUE(uint64_t, mac_address);
+  void set_peer_id(uint64_t &peer_id) { this->peer_id_ = &peer_id; }
   void play(Ts... x) override {
-    auto peer = this->peer_.value(x...);
-    parent_->set_keeper(peer);
+    uint64_t mac_address = this->mac_address_.value(x...);
+    *(this->peer_id_) = mac_address;
+    if (mac_address != 0)
+      parent_->add_peer(mac_address);
   }
+
+ protected:
+  uint64_t *peer_id_;
 };
 
+/*********************************  triggers **************************************/
 class ESPNowSentTrigger : public Trigger<const ESPNowPacket, bool> {
  public:
   explicit ESPNowSentTrigger(ESPNowComponent *parent) {

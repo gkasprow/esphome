@@ -7,7 +7,8 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
-    # version: 5.1.5
+    # version: 5.2.1
+    # platform_version: 6.6.0
 
 esphome:
   name: "${name}"
@@ -27,11 +28,18 @@ esphome:
 logger:
   level: verbose
 
+globals:
+  - id: hub_address
+    type: uint64_t
+    initial_value: "0xE86BEA23CD98"
+    restore_value: yes
+
 espnow:
   auto_add_peer: true
-  peers:
-    - FF:FF:FF:FF:FF:FF
-  keeper: rmT7YF9o
+  predefined_peers:
+    - peer_id: keeper
+      mac_address: E8:6B:EA:23:CD:98
+
   on_receive:
     - logger.log:
         format: "Received: '%s' from '%s' command: %d RSSI: %d"
@@ -65,12 +73,30 @@ interval:
   - interval: 5sec
     then:
       - espnow.send:
-          peer: keeper
-          payload: "tesing the test"
+          mac_address: keeper
+          payload: "Used static keeper value"
+          command: 222
+      - espnow.send:
+          mac_address: E8:6B:EA:23:CD:98
+          payload: "used fixed mac address"
+          command: 123
+      - espnow.send:
+          # dynamic peer address
+          mac_address: !lambda return keeper;
+          payload: "use keeper dynamicly "
+          command: 62
+      - espnow.send:
+          mac_address: !lambda return id(hub_address);
+          payload: "Using a global numberic value dynamicly"
+          command: 132
 
 binary_sensor:
   - platform: gpio
     pin: GPIO39
     name: Button
     on_click:
-      - espnow.peer.del: rmT7YF9o
+      - espnow.static.peer:
+          peer_id: keeper
+          mac_address: 80:6B:EA:23:CD:87
+      - espnow.peer.add: 80:6B:EA:23:AA:BB
+      - espnow.peer.del: 80:6B:EA:23:AA:BB
