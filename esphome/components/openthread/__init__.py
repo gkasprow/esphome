@@ -56,6 +56,10 @@ def set_sdkconfig_options(config):
             "CONFIG_OPENTHREAD_NETWORK_PSKC", f"{config[CONF_PSKC]}"
         )
 
+    if CONF_FORCE_DATASET in config:
+        if config[CONF_FORCE_DATASET]:
+            cg.add_define("CONFIG_OPENTHREAD_FORCE_DATASET")
+
     add_idf_sdkconfig_option("CONFIG_OPENTHREAD_DNS64_CLIENT", True)
     add_idf_sdkconfig_option("CONFIG_OPENTHREAD_SRP_CLIENT", True)
     add_idf_sdkconfig_option("CONFIG_OPENTHREAD_SRP_CLIENT_MAX_SERVICES", 5)
