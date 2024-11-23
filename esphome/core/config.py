@@ -184,6 +184,9 @@ PRELOAD_CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_ESP8266_RESTORE_FROM_FLASH): cv.valid,
         cv.Optional(CONF_BOARD_FLASH_MODE): cv.valid,
         cv.Optional(CONF_ARDUINO_VERSION): cv.valid,
+        cv.Optional(CONF_MIN_VERSION, default=ESPHOME_VERSION): cv.All(
+            cv.version_number, cv.validate_esphome_version
+        ),
     },
     extra=cv.ALLOW_EXTRA,
 )
@@ -318,6 +321,8 @@ async def add_includes(includes):
 async def _add_platformio_options(pio_options):
     # Add includes at the very end, so that they override everything
     for key, val in pio_options.items():
+        if key == "build_flags" and not isinstance(val, list):
+            val = [val]
         cg.add_platformio_option(key, val)
 
 
