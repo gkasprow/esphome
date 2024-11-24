@@ -1,5 +1,6 @@
 from typing import Any
 
+import logging
 from esphome import automation
 import esphome.codegen as cg
 import esphome.config_validation as cv
@@ -21,7 +22,12 @@ CONF_CH2_ACTIVE = "ch2_active"
 CONF_SUMMER_MODE_ACTIVE = "summer_mode_active"
 CONF_DHW_BLOCK = "dhw_block"
 CONF_SYNC_MODE = "sync_mode"
-CONF_OPENTHERM_VERSION = "opentherm_version"
+CONF_CONTROLLER_PRODUCT_TYPE = "controller_product_type"
+CONF_CONTROLLER_PRODUCT_VERSION = "controller_product_version"
+CONF_OPENTHERM_VERSION = "opentherm_version"  # Deprecated, will be removed
+CONF_OPENTHERM_VERSION_CONTROLLER = "opentherm_version_controller"
+CONF_CONTROLLER_ID = "controller_id"
+CONF_CONTROLLER_CONFIGURATION = "controller_configuration"
 CONF_BEFORE_SEND = "before_send"
 CONF_BEFORE_PROCESS_RESPONSE = "before_process_response"
 
@@ -34,6 +40,8 @@ BeforeProcessResponseTrigger = generate.opentherm_ns.class_(
     "BeforeProcessResponseTrigger",
     automation.Trigger.template(generate.OpenthermData.operator("ref")),
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
@@ -103,6 +111,12 @@ async def to_code(config: dict[str, Any]) -> None:
             )
             input_sensors.append(key)
         else:
+            if key == CONF_OPENTHERM_VERSION:
+                _LOGGER.warning(
+                    f"{CONF_OPENTHERM_VERSION} is deprecated and will be removed in esphome 2025.2.\n"
+                    f"Please remove this property and set {CONF_OPENTHERM_VERSION_CONTROLLER} in number: "
+                    f"section."
+                )
             cg.add(getattr(var, f"set_{key}")(value))
 
     if len(input_sensors) > 0:

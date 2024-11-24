@@ -7,7 +7,7 @@
 namespace esphome {
 namespace opentherm {
 
-class BeforeSendTrigger : public Trigger<OpenthermData&> {
+class BeforeSendTrigger : public Trigger<OpenthermData &> {
  public:
   BeforeSendTrigger(OpenthermHub *hub) {
     hub->add_on_before_send_callback([this](OpenthermData &x) { this->trigger(x); });

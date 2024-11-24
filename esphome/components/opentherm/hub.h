@@ -62,11 +62,12 @@ class OpenthermHub : public Component {
   std::vector<MessageId> initial_messages_;
   // and the repeating messages which are sent repeatedly to update various sensors
   // and boiler parameters (like the setpoint).
-  std::vector<MessageId> repeating_messages_;
+  std::unordered_set<MessageId> repeating_messages_;
   // Indicates if we are still working on the initial requests or not
   bool sending_initial_ = true;
   // Index for the current request in one of the _requests sets.
-  std::vector<MessageId>::const_iterator current_message_iterator_;
+  std::vector<MessageId>::const_iterator initial_message_iterator_;
+  std::unordered_set<MessageId>::const_iterator repeating_message_iterator_;
 
   uint32_t last_conversation_start_ = 0;
   uint32_t last_conversation_end_ = 0;
@@ -94,6 +95,9 @@ class OpenthermHub : public Component {
   bool check_timings_(uint32_t cur_time);
   bool should_skip_loop_(uint32_t cur_time) const;
   void sync_loop_();
+
+  void reorder_initial_messages_();
+  void add_initial_message_if_exists_(MessageId id, std::unordered_set<MessageId> &messages);
 
   template<typename F> bool spin_wait_(uint32_t timeout, F func) {
     auto start_time = millis();
@@ -136,7 +140,7 @@ class OpenthermHub : public Component {
   // requests will slow down communication with the boiler. Each request may take up to 1 second,
   // so with all sensors enabled, it may take about half a minute before a change in setpoint
   // will be processed.
-  void add_repeating_message(MessageId message_id) { this->repeating_messages_.push_back(message_id); }
+  void add_repeating_message(MessageId message_id) { this->repeating_messages_.insert(message_id); }
 
   // There are seven status variables, which can either be set as a simple variable,
   // or using a switch. ch_enable and dhw_enable default to true, the others to false.
