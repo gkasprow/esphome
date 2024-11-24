@@ -46,6 +46,10 @@ std::string peer_str(const uint64_t peer);
 
 void show_packet(const std::string &title, const ESPNowPacket &packet);
 
+struct ESPNowPeer {
+  int8_t channel{-1};
+};
+
 struct ESPNowPacket {
   uint64_t peer{0};
   uint8_t rssi{0};
@@ -66,40 +70,8 @@ struct ESPNowPacket {
   // Create packet to be send.
 
   inline ESPNowPacket(uint64_t peer, const uint8_t *data, uint8_t size, uint32_t protocol,
-                      uint8_t command = 0) ESPHOME_ALWAYS_INLINE {
-    if (size > MAX_ESPNOW_DATA_SIZE) {
-      ESP_LOGE("ESPNowPacket", "Payload size is to large. It should be less then %d instead it is %d",
-               MAX_ESPNOW_DATA_SIZE, size);  // nolint
-      return;
-    }
-    if (peer == 0ull) {
-      ESP_LOGE("ESPNowPacket", "No Peer defined.");
-      return;
-    }
-
-    this->peer = peer;
-    this->is_broadcast = (peer == ESPNOW_BROADCAST_ADDR);
-
-    this->set_protocol(protocol);
-    if (command != 0) {
-      this->set_command(command);
-    }
-    this->size = size;
-    std::memcpy(this->get_payload(), data, size);
-  }
-
-  inline ESPNowPacket(const uint8_t *peer, const uint8_t *data, uint8_t size) ESPHOME_ALWAYS_INLINE {
-    if (size > MAX_ESPNOW_DATA_SIZE + this->prefix_size()) {
-      ESP_LOGE("ESPNowPacket", "Received Payload size is to large. It should be less then %d instead it is %d",
-               MAX_ESPNOW_DATA_SIZE + this->prefix_size(), size);  // nolint
-      return;
-    }
-
-    this->set_peer(peer);
-
-    this->size = size - this->prefix_size();
-    std::memcpy(this->get_content(), data, size);
-  }
+                      uint8_t command = 0) ESPHOME_ALWAYS_INLINE;
+  inline ESPNowPacket(const uint8_t *peer, const uint8_t *data, uint8_t size) ESPHOME_ALWAYS_INLINE;
 
   uint8_t prefix_size() const { return sizeof(this->content.prefix); }
 
@@ -268,6 +240,7 @@ class ESPNowComponent : public Component {
 
   void setup() override;
   void loop() override;
+  bool can_proceed() override;
 
   bool is_paired(uint64_t to_peer);
 
@@ -295,6 +268,8 @@ class ESPNowComponent : public Component {
 
   static void espnow_task(void *params);
 
+  void handle_internal_commands(ESPNowPacket packet);
+
  protected:
   bool validate_channel_(uint8_t channel);
   ESPNowProtocol *get_protocol_(uint32_t protocol);
@@ -321,7 +296,8 @@ class ESPNowComponent : public Component {
   QueueHandle_t send_queue_{};
 
   std::map<uint32_t, ESPNowProtocol *> protocols_{};
-  std::vector<uint64_t> peers_{};
+  std::map<uint64_t, ESPNowPeer> peers_{};
+
   bool task_running_{false};
   static ESPNowComponent *static_;  // NOLINT
 };
@@ -377,6 +353,25 @@ template<typename... Ts> class SetStaticPeerAction : public Action<Ts...>, publi
 
  protected:
   uint64_t *peer_id_;
+};
+
+class ChangeChannel {
+ public:
+  // could be made inline with C++17
+  static const char *const TAG;
+};
+
+template<typename... Ts> class ChangeChannelAction : public Action<Ts...>, public Parented<ESPNowComponent> {
+ public:
+  TEMPLATABLE_VALUE(int8_t, channel);
+  void play(Ts... x) override {
+#ifdef USE_WIFI
+    esph_log_e(ChangeChannel::TAG, "Manual changing the channel is not possible with WIFI enabled.");
+#else
+    int8_t value = this->channel_.value(x...);
+    parent_->set_wifi_channel(value);
+#endif
+  }
 };
 
 /*********************************  triggers **************************************/
