@@ -7,8 +7,9 @@ espnow:
   auto_add_peer: true
   peers:
     - FF:FF:FF:FF:FF:FF
-    - 0xFFFFFFFFFFFF
-    - ZZZZZZZZ
+    - peer_id: keeper
+      mac_address: 11:22:33:44:55:66
+      wifi_channel: 2
   on_receive:
     - logger.log:
         format: "Received: '%s' from '%s' command: %d RSSI: %d"
@@ -39,8 +40,22 @@ interval:
           payload: "hallo everyone"
           command: 123
       - espnow.send:
+          mac_address: keeper
           payload: "hallo everyone"
-          command: 123
+          command: 230
+      - espnow.send:
+          mac_address: 44:55:66:77:88:33:22
+          payload: "hallo everyone"
+          command: 230
+      - espnow.send:
+          # dynamic peer address
+          mac_address: !lambda return keeper;
+          payload: "use keeper dynamicly "
+          command: 62
+      - espnow.send:
+          mac_address: !lambda return id(hub_address);
+          payload: "Using a global numberic value dynamicly"
+          command: 132
 
 binary_sensor:
   - platform: gpio
@@ -48,5 +63,6 @@ binary_sensor:
     name: Button
     on_click:
       - espnow.peer.new:
-          peer: kGf7Ii0t
-      - espnow.peer.del: kGf7Ii0t
+          mac_address: 22:44:66:88:AA:CC
+          wifi_channel: 3
+      - espnow.peer.del: 22:44:66:88:AA:CC
