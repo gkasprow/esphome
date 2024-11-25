@@ -62,7 +62,7 @@ binary_sensor:
     pin: GPIO39
     name: Button
     on_click:
-      - espnow.peer.new:
+      - espnow.peer.add:
           mac_address: 22:44:66:88:AA:CC
           wifi_channel: 3
       - espnow.peer.del: 22:44:66:88:AA:CC
