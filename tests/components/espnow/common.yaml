@@ -44,7 +44,7 @@ interval:
           payload: "hallo everyone"
           command: 230
       - espnow.send:
-          mac_address: 44:55:66:77:88:33:22
+          mac_address: 44:55:66:77:88:33
           payload: "hallo everyone"
           command: 230
       - espnow.send:
