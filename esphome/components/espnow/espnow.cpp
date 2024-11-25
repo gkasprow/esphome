@@ -191,7 +191,7 @@ void ESPNowComponent::loop() {
 #ifdef USE_WIFI
   int32_t new_channel = wifi::global_wifi_component->get_wifi_channel();
   if (new_channel != this->wifi_channel_) {
-    this->defer([this, new_channel]() { this->change_channel(new_channel); });
+    this->defer([this, new_channel]() { this->set_wifi_channel(new_channel); });
   }
 #endif
 }

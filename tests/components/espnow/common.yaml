@@ -36,7 +36,7 @@ espnow:
 interval:
   - interval: 10sec
     then:
-      - espnow.broatcast:
+      - espnow.broadcast:
           payload: "hallo everyone"
           command: 123
       - espnow.send:
