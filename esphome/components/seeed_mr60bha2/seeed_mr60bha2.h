@@ -45,23 +45,16 @@ class MR60BHA2Component : public Component,
   SUB_SENSOR(distance);
 #endif
 
- protected:
-  uint8_t current_frame_locate_;
-  uint8_t current_frame_buf_[FRAME_BUF_MAX_SIZE];
-  uint8_t current_data_buf_[DATA_BUF_MAX_SIZE];
-  uint16_t current_frame_id_;
-  size_t current_frame_len_;
-  size_t current_data_frame_len_;
-  uint16_t current_frame_type_;
-
-  void split_frame_(uint8_t buffer);
-  void process_frame_();
-
  public:
   float get_setup_priority() const override { return esphome::setup_priority::LATE; }
-  void setup() override;
   void dump_config() override;
   void loop() override;
+
+ protected:
+  bool validate_message_();
+  void process_frame_(uint16_t frame_id, uint16_t frame_type, const uint8_t *data, size_t length);
+
+  std::vector<uint8_t> rx_message_;
 };
 
 }  // namespace seeed_mr60bha2

@@ -19,23 +19,6 @@ void MR60BHA2Component::dump_config() {
 #endif
 }
 
-// Initialisation functions
-void MR60BHA2Component::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up MR60BHA2...");
-  this->check_uart_settings(115200);
-
-  this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-  this->current_frame_id_ = 0;
-  this->current_frame_len_ = 0;
-  this->current_data_frame_len_ = 0;
-  this->current_frame_type_ = 0;
-
-  memset(this->current_frame_buf_, 0, FRAME_BUF_MAX_SIZE);
-  memset(this->current_data_buf_, 0, DATA_BUF_MAX_SIZE);
-
-  ESP_LOGCONFIG(TAG, "Set up MR60BHA2 complete");
-}
-
 // main loop
 void MR60BHA2Component::loop() {
   uint8_t byte;
@@ -43,7 +26,10 @@ void MR60BHA2Component::loop() {
   // Is there data on the serial port
   while (this->available()) {
     this->read_byte(&byte);
-    this->split_frame_(byte);  // split data frame
+    this->rx_message_.push_back(byte);
+    if (!this->validate_message_()) {
+      this->rx_message_.clear();
+    }
   }
 }
 
@@ -81,139 +67,102 @@ static bool validate_checksum(const uint8_t *data, size_t len, uint8_t expected_
   return calculate_checksum(data, len) == expected_checksum;
 }
 
-void MR60BHA2Component::split_frame_(uint8_t buffer) {
-  switch (this->current_frame_locate_) {
-    case LOCATE_FRAME_HEADER:  // starting buffer
-      if (buffer == FRAME_HEADER_BUFFER) {
-        this->current_frame_len_ = 1;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-      }
-      break;
-    case LOCATE_ID_FRAME1:
-      this->current_frame_id_ = buffer << 8;
-      this->current_frame_len_++;
-      this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-      this->current_frame_locate_++;
-      break;
-    case LOCATE_ID_FRAME2:
-      this->current_frame_id_ += buffer;
-      this->current_frame_len_++;
-      this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-      this->current_frame_locate_++;
-      break;
-    case LOCATE_LENGTH_FRAME_H:
-      this->current_data_frame_len_ = buffer << 8;
-      if (this->current_data_frame_len_ == 0x00) {
-        this->current_frame_len_++;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-      } else {
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      }
-      break;
-    case LOCATE_LENGTH_FRAME_L:
-      this->current_data_frame_len_ += buffer;
-      if (this->current_data_frame_len_ > DATA_BUF_MAX_SIZE) {
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      } else {
-        this->current_frame_len_++;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-      }
-      break;
-    case LOCATE_TYPE_FRAME1:
-      this->current_frame_type_ = buffer << 8;
-      this->current_frame_len_++;
-      this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-      this->current_frame_locate_++;
-      break;
-    case LOCATE_TYPE_FRAME2:
-      this->current_frame_type_ += buffer;
-      if ((this->current_frame_type_ == BREATH_RATE_TYPE_BUFFER) ||
-          (this->current_frame_type_ == HEART_RATE_TYPE_BUFFER) ||
-          (this->current_frame_type_ == DISTANCE_TYPE_BUFFER)) {
-        this->current_frame_len_++;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-      } else {
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      }
-      break;
-    case LOCATE_HEAD_CKSUM_FRAME:
-      if (validate_checksum(this->current_frame_buf_, this->current_frame_len_, buffer)) {
-        this->current_frame_len_++;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-      } else {
-        ESP_LOGD(TAG, "HEAD_CKSUM_FRAME ERROR: 0x%02x", buffer);
-        ESP_LOGV(TAG, " GET FRAME: %s", format_hex_pretty(this->current_frame_buf_, this->current_frame_len_).c_str());
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      }
-      break;
-    case LOCATE_DATA_FRAME:
-      this->current_frame_len_++;
-      this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-      this->current_data_buf_[this->current_frame_len_ - LEN_TO_DATA_FRAME] = buffer;
-      if (this->current_frame_len_ - LEN_TO_HEAD_CKSUM == this->current_data_frame_len_) {
-        this->current_frame_locate_++;
-      }
-      if (this->current_frame_len_ > FRAME_BUF_MAX_SIZE) {
-        ESP_LOGV(TAG, "PRACTICE_DATA_FRAME_LEN ERROR: %d", this->current_frame_len_ - LEN_TO_HEAD_CKSUM);
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      }
-      break;
-    case LOCATE_DATA_CKSUM_FRAME:
-      if (validate_checksum(this->current_data_buf_, this->current_data_frame_len_, buffer)) {
-        this->current_frame_len_++;
-        this->current_frame_buf_[this->current_frame_len_ - 1] = buffer;
-        this->current_frame_locate_++;
-        this->process_frame_();
-      } else {
-        ESP_LOGD(TAG, "DATA_CKSUM_FRAME ERROR: 0x%02x", buffer);
-        ESP_LOGV(TAG, "GET FRAME: %s", format_hex_pretty(this->current_frame_buf_, this->current_frame_len_).c_str());
-        this->current_frame_locate_ = LOCATE_FRAME_HEADER;
-      }
-      break;
-    default:
-      break;
+bool MR60BHA2Component::validate_message_() {
+  size_t at = this->rx_message_.size() - 1;
+  auto *data = &this->rx_message_[0];
+  uint8_t new_byte = data[at];
+
+  if (at == 0) {
+    return new_byte == FRAME_HEADER_BUFFER;
   }
+
+  if (at <= 2) {
+    return true;
+  }
+  uint16_t frame_id = encode_uint16(data[1], data[2]);
+
+  if (at <= 4) {
+    return true;
+  }
+
+  uint16_t length = encode_uint16(data[3], data[4]);
+
+  if (at <= 6) {
+    return true;
+  }
+
+  uint16_t frame_type = encode_uint16(data[5], data[6]);
+
+  if (frame_type != BREATH_RATE_TYPE_BUFFER && frame_type != HEART_RATE_TYPE_BUFFER &&
+      frame_type != DISTANCE_TYPE_BUFFER) {
+    return false;
+  }
+
+  uint8_t header_checksum = new_byte;
+
+  if (at == 7) {
+    if (!validate_checksum(data, 7, header_checksum)) {
+      ESP_LOGE(TAG, "HEAD_CKSUM_FRAME ERROR: 0x%02x", header_checksum);
+      ESP_LOGV(TAG, "GET FRAME: %s", format_hex_pretty(data, 8).c_str());
+      return false;
+    }
+    return true;
+  }
+
+  // Wait until all data is read
+  if (at - 8 < length) {
+    return true;
+  }
+
+  uint8_t data_checksum = new_byte;
+  if (at == 8 + length) {
+    if (!validate_checksum(data + 8, length, data_checksum)) {
+      ESP_LOGE(TAG, "DATA_CKSUM_FRAME ERROR: 0x%02x", data_checksum);
+      ESP_LOGV(TAG, "GET FRAME: %s", format_hex_pretty(data, 8 + length).c_str());
+      return false;
+    }
+  }
+
+  const uint8_t *frame_data = data + 8;
+  ESP_LOGV(TAG, "Received Frame: ID: 0x%04x, Type: 0x%04x, Data: [%s] Raw Data: [%s]", frame_id, frame_type,
+           format_hex_pretty(frame_data, length).c_str(), format_hex_pretty(this->rx_message_).c_str());
+  this->process_frame_(frame_id, frame_type, data + 8, length);
+
+  // Return false to reset rx buffer
+  return false;
 }
 
-void MR60BHA2Component::process_frame_() {
-  switch (this->current_frame_type_) {
+void MR60BHA2Component::process_frame_(uint16_t frame_id, uint16_t frame_type, const uint8_t *data, size_t length) {
+  switch (frame_type) {
     case BREATH_RATE_TYPE_BUFFER:
-      if (this->breath_rate_sensor_ != nullptr) {
-        uint32_t current_breath_rate_int =
-            encode_uint32(current_data_buf_[3], current_data_buf_[2], current_data_buf_[1], current_data_buf_[0]);
-        float breath_rate_float;
-        memcpy(&breath_rate_float, &current_breath_rate_int, sizeof(float));
-        this->breath_rate_sensor_->publish_state(breath_rate_float);
+      if (this->breath_rate_sensor_ != nullptr && length >= 4) {
+        uint32_t current_breath_rate_int = encode_uint32(data[3], data[2], data[1], data[0]);
+        if (current_breath_rate_int != 0) {
+          float breath_rate_float;
+          memcpy(&breath_rate_float, &current_breath_rate_int, sizeof(float));
+          this->breath_rate_sensor_->publish_state(breath_rate_float);
+        }
       }
-      this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
     case HEART_RATE_TYPE_BUFFER:
-      if (this->heart_rate_sensor_ != nullptr) {
-        uint32_t current_heart_rate_int =
-            encode_uint32(current_data_buf_[3], current_data_buf_[2], current_data_buf_[1], current_data_buf_[0]);
-        float heart_rate_float;
-        memcpy(&heart_rate_float, &current_heart_rate_int, sizeof(float));
-        this->heart_rate_sensor_->publish_state(heart_rate_float);
+      if (this->heart_rate_sensor_ != nullptr && length >= 4) {
+        uint32_t current_heart_rate_int = encode_uint32(data[3], data[2], data[1], data[0]);
+        if (current_heart_rate_int != 0) {
+          float heart_rate_float;
+          memcpy(&heart_rate_float, &current_heart_rate_int, sizeof(float));
+          this->heart_rate_sensor_->publish_state(heart_rate_float);
+        }
       }
-      this->current_frame_locate_ = LOCATE_FRAME_HEADER;
       break;
     case DISTANCE_TYPE_BUFFER:
-      if (!current_data_buf_[0]) {
-        if (this->distance_sensor_ != nullptr) {
-          uint32_t current_distance_int =
-              encode_uint32(current_data_buf_[7], current_data_buf_[6], current_data_buf_[5], current_data_buf_[4]);
+      if (!data[0]) {
+        if (this->distance_sensor_ != nullptr && length >= 8) {
+          uint32_t current_distance_int = encode_uint32(data[7], data[6], data[5], data[4]);
           float distance_float;
           memcpy(&distance_float, &current_distance_int, sizeof(float));
           this->distance_sensor_->publish_state(distance_float);
         }
-      } else
-        ESP_LOGD(TAG, "Distance information is not output");
-      this->current_frame_locate_ = LOCATE_FRAME_HEADER;
+      }
       break;
     default:
       break;
