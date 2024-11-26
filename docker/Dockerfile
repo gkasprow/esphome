@@ -32,9 +32,9 @@ RUN \
         python3-setuptools=66.1.1-1 \
         python3-venv=3.11.2-1+b1 \
         python3-wheel=0.38.4-2 \
-        iputils-ping=3:20221126-1 \
+        iputils-ping=3:20221126-1+deb12u1 \
         git=1:2.39.5-0+deb12u1 \
-        curl=7.88.1-10+deb12u7 \
+        curl=7.88.1-10+deb12u8 \
         openssh-client=1:9.2p1-2+deb12u3 \
         python3-cffi=1.15.1-5 \
         libcairo2=1.16.0-7 \
@@ -97,17 +97,19 @@ BUILD_DEPS="
     zlib1g-dev=1:1.2.13.dfsg-1
     libjpeg-dev=1:2.1.5-2
     libfreetype-dev=2.12.1+dfsg-5+deb12u3
-    libssl-dev=3.0.14-1~deb12u2
+    libssl-dev=3.0.15-1~deb12u1
     libffi-dev=3.4.4-1
-    libopenjp2-7=2.5.0-2
-    libtiff6=4.5.0-6+deb12u1
     cargo=0.66.0+ds1-1
     pkg-config=1.8.1-1
+"
+LIB_DEPS="
+    libtiff6=4.5.0-6+deb12u1
+    libopenjp2-7=2.5.0-2
 "
 if [ "$TARGETARCH$TARGETVARIANT" = "arm64" ] || [ "$TARGETARCH$TARGETVARIANT" = "armv7" ]
 then
     apt-get update
-    apt-get install -y --no-install-recommends $BUILD_DEPS
+    apt-get install -y --no-install-recommends $BUILD_DEPS $LIB_DEPS
 fi
 
 CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse CARGO_HOME=/root/.cargo

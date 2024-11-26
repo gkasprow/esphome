@@ -111,9 +111,15 @@ def clang_options(idedata):
     for directory in list(idedata["includes"]["build"]):
         # skip our own directories, we add those later
         if (
-            not directory.startswith(f"{root_path}/")
+            not directory.startswith(f"{root_path}")
+            or directory.startswith(
+                (
+                    f"{root_path}/.platformio",
+                    f"{root_path}/.temp",
+                    f"{root_path}/managed_components",
+                )
+            )
             or (directory.startswith(f"{root_path}") and "/.pio/" in directory)
-            or directory.startswith(f"{root_path}/managed_components/")
         ):
             cmd.extend(["-isystem", directory])
 
