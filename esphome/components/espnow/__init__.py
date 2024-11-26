@@ -1,5 +1,6 @@
 from esphome import automation, core
 import esphome.codegen as cg
+from esphome.components.globals import GlobalsComponent
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_COMMAND,
@@ -7,7 +8,9 @@ from esphome.const import (
     CONF_MAC_ADDRESS,
     CONF_PAYLOAD,
     CONF_TRIGGER_ID,
+    CONF_WIFI,
 )
+import esphome.final_validate as fv
 
 CODEOWNERS = ["@nielsnl68", "@jesserockz"]
 
@@ -18,7 +21,7 @@ ESPNowProtocol = espnow_ns.class_("ESPNowProtocol")
 ESPNowListener = espnow_ns.class_("ESPNowListener")
 
 ESPNowPacket = espnow_ns.class_("ESPNowPacket")
-ESPNowPeer = cg.uint64
+ESPNowPeer = GlobalsComponent
 
 ESPNowPacketConst = ESPNowPacket.operator("const")
 
@@ -41,7 +44,7 @@ SendAction = espnow_ns.class_("SendAction", automation.Action)
 NewPeerAction = espnow_ns.class_("NewPeerAction", automation.Action)
 DelPeerAction = espnow_ns.class_("DelPeerAction", automation.Action)
 SetKeeperAction = espnow_ns.class_("SetKeeperAction", automation.Action)
-SetStaticPeerAction = espnow_ns.class_("SetStaticPeerAction", automation.Action)
+SetChannelAction = espnow_ns.class_("SetChannelAction", automation.Action)
 
 CONF_AUTO_ADD_PEER = "auto_add_peer"
 CONF_CONFORMATION_TIMEOUT = "conformation_timeout"
@@ -59,6 +62,7 @@ CONF_WIFI_CHANNEL = "wifi_channel"
 CONF_PROTOCOL_MODE = "protocol_mode"
 
 validate_command = cv.Range(min=1, max=250)
+validate_channel = cv.int_range(1, 14)
 
 ESPNowProtocolMode = espnow_ns.enum("ESPNowProtocolMode")
 ENUM_MODE = {
@@ -86,9 +90,8 @@ def espnow_hex(mac_address):
 
 DEFINE_PEER_CONFIG = cv.maybe_simple_value(
     {
-        cv.Optional(CONF_PEER_ID): cv.declare_id(ESPNowPeer),
         cv.Required(CONF_MAC_ADDRESS): cv.mac_address,
-        cv.Optional(CONF_WIFI_CHANNEL): cv.int_range(0, 14),
+        cv.Optional(CONF_WIFI_CHANNEL): validate_channel,
     },
     key=CONF_MAC_ADDRESS,
 )
@@ -97,7 +100,7 @@ DEFINE_PEER_CONFIG = cv.maybe_simple_value(
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(ESPNowComponent),
-        cv.Optional(CONF_WIFI_CHANNEL): cv.int_range(0, 14),
+        cv.Optional(CONF_WIFI_CHANNEL): validate_channel,
         cv.Optional(CONF_AUTO_ADD_PEER, default=False): cv.boolean,
         cv.Optional(CONF_USE_SENT_CHECK, default=True): cv.boolean,
         cv.Optional(
@@ -211,6 +214,25 @@ async def register_protocol(var, config):
         cg.add(var.set_protocol_mode(config[CONF_PROTOCOL_MODE]))
 
 
+def _final_validate(config):
+    full_config = fv.full_config.get()
+    if CONF_WIFI_CHANNEL in config and CONF_WIFI in full_config:
+        raise cv.Invalid(
+            f"When you have {CONF_WIFI} configured, You can not set the {CONF_WIFI_CHANNEL} variable."
+        )
+    if CONF_WIFI_CHANNEL not in config and CONF_WIFI not in full_config:
+        raise cv.Invalid(
+            f"When you don't use the {CONF_WIFI} component, You need to set the {CONF_WIFI_CHANNEL} variable."
+        )
+    return config
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
+
+
+# ========================================== A C T I O N S ================================================
+
+
 def validate_peer(value):
     if isinstance(value, cv.Lambda):
         return cv.returning_lambda(value)
@@ -282,7 +304,7 @@ async def send_action(config, action_id, template_arg, args):
         {
             cv.GenerateID(): cv.use_id(ESPNowComponent),
             cv.Required(CONF_MAC_ADDRESS): validate_peer,
-            cv.Optional(CONF_WIFI_CHANNEL): cv.int_range(0, 14),
+            cv.Optional(CONF_WIFI_CHANNEL): cv.templatable(validate_channel),
         },
         key=CONF_MAC_ADDRESS,
     ),
@@ -298,26 +320,32 @@ async def send_action(config, action_id, template_arg, args):
         key=CONF_MAC_ADDRESS,
     ),
 )
-@automation.register_action(
-    "espnow.static.peer",
-    SetStaticPeerAction,
-    cv.Schema(
-        {
-            cv.GenerateID(): cv.use_id(ESPNowComponent),
-            cv.Required(CONF_PEER_ID): cv.use_id(ESPNowPeer),
-            cv.Required(CONF_MAC_ADDRESS): validate_peer,
-        }
-    ),
-)
 async def peer_action(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
-    if peer_id := config.get(CONF_PEER_ID):
-        peer = await cg.get_variable(peer_id)
-        cg.add(var.set_peer_id(peer))
     if CONF_WIFI_CHANNEL in config:
-        cg.add(var.set_wifi_channel(config[CONF_WIFI_CHANNEL]))
+        template_ = await cg.templatable(config[CONF_WIFI_CHANNEL], args, cg.uint8)
+        cg.add(var.set_wifi_channel(template_))
 
     await register_peer(var, config, args)
 
+    return var
+
+
+@automation.register_action(
+    "espnow.channel.set",
+    SetChannelAction,
+    cv.maybe_simple_value(
+        {
+            cv.GenerateID(): cv.use_id(ESPNowComponent),
+            cv.Required(CONF_WIFI_CHANNEL): cv.templatable(validate_channel),
+        },
+        key=CONF_WIFI_CHANNEL,
+    ),
+)
+async def channel_action(config, action_id, template_arg, args):
+    var = cg.new_Pvariable(action_id, template_arg)
+    await cg.register_parented(var, config[CONF_ID])
+    template_ = await cg.templatable(config[CONF_WIFI_CHANNEL], args, cg.uint8)
+    cg.add(var.set_channel(template_))
     return var

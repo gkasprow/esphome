@@ -26,23 +26,22 @@ esphome:
 
 # To be able to get logs from the device via serial and api.
 logger:
-  level: verbose
+  level: debug
 
 globals:
   - id: hub_address
     type: uint64_t
-    initial_value: "0xE86BEA23CD98"
+    initial_value: "0x0"
     restore_value: yes
 
 espnow:
   auto_add_peer: true
+  wifi_channel: 1
   predefined_peers:
-    - peer_id: keeper
-      mac_address: E8:6B:EA:23:CD:98
-
+    - mac_address: e8:6b:ea:24:22:04
   on_receive:
     - logger.log:
-        format: "Received: '%s' from '%s' command: %d RSSI: %d"
+        format: "Received from: %s = '%s' cmd: %d RSSI: %d"
         args:
           [
             packet.get_payload(),
@@ -51,52 +50,15 @@ espnow:
             packet.rssi,
           ]
 
-  on_broadcast:
-    - command: 123
-      then:
-        - logger.log:
-            format: "Broadcast Received from: '%s' RSSI: %d: %s"
-            args:
-              [
-                packet.get_peer_code().c_str(),
-                packet.rssi,
-                packet.get_payload(),
-              ]
-
 interval:
   - interval: 30sec
-    startup_delay: 20sec
+    startup_delay: 10sec
     then:
-      - espnow.broadcast:
-          payload: "Broadcast message"
-          command: 123
+      - espnow.channel.set: 5
   - interval: 5sec
+    startup_delay: 10sec
     then:
       - espnow.send:
-          mac_address: keeper
-          payload: "Used static keeper value"
-          command: 222
-      - espnow.send:
-          mac_address: E8:6B:EA:23:CD:98
-          payload: "used fixed mac address"
+          mac_address: e8:6b:ea:24:22:04
+          payload: "Test 2."
           command: 123
-      - espnow.send:
-          # dynamic peer address
-          mac_address: !lambda return keeper;
-          payload: "use keeper dynamicly "
-          command: 62
-      - espnow.send:
-          mac_address: !lambda return id(hub_address);
-          payload: "Using a global numberic value dynamicly"
-          command: 132
-
-binary_sensor:
-  - platform: gpio
-    pin: GPIO39
-    name: Button
-    on_click:
-      - espnow.static.peer:
-          peer_id: keeper
-          mac_address: 80:6B:EA:23:CD:87
-      - espnow.peer.add: 80:6B:EA:23:AA:BB
-      - espnow.peer.del: 80:6B:EA:23:AA:BB

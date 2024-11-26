@@ -266,8 +266,8 @@ void ESPNowComponent::set_wifi_channel(uint8_t channel) {
     ESPNowPacket packet(ESPNOW_MASS_SEND_ADDR, &channel, 1, ESPNOW_MAIN_PROTOCOL_ID, 251);
     this->send(packet);
     ESP_LOGD(TAG, "Wifi Channel is changed from %d to %d.", this->wifi_channel_, channel);
-    this->wifi_channel_ = channel;
   }
+  this->wifi_channel_ = channel;
 }
 
 esp_err_t ESPNowComponent::add_peer(uint64_t peer, int8_t channel) {
@@ -276,6 +276,11 @@ esp_err_t ESPNowComponent::add_peer(uint64_t peer, int8_t channel) {
   esp_now_peer_info_t peer_info = {};
 
   if (this->is_ready()) {
+    if (peer == this->own_peer_address_) {
+      ESP_LOGE(TAG, "Tried to peer your self.");
+      this->mark_failed();
+      return ESP_ERR_INVALID_MAC;
+    }
     if (esp_now_is_peer_exist((uint8_t *) &peer)) {
       esp_now_get_peer((const uint8_t *) &peer, &peer_info);
       old_channel = peer_info.channel;
@@ -444,8 +449,7 @@ void ESPNowComponent::handle_internal_commands(ESPNowPacket packet) {
     case 251:
       channel = (int8_t) *packet.get_payload();
       this->add_peer(packet.peer, channel);
-      ESP_LOGI(TAG, "The channel for peer %s. is changed toCommand not used: %d.", packet.get_peer_code().c_str(),
-               channel);
+      ESP_LOGI(TAG, "The channel for peer %s is changed to: %d.", packet.get_peer_code().c_str(), channel);
       break;
     default:
       ESP_LOGE(TAG, "Invalid internal ESP-NOW packet. Command not used: %d.", packet.get_command());
@@ -453,7 +457,9 @@ void ESPNowComponent::handle_internal_commands(ESPNowPacket packet) {
 }
 
 bool ESPNowComponent::send(ESPNowPacket packet) {
-  if (!this->is_ready()) {
+  if (packet.peer == this->own_peer_address_) {
+    ESP_LOGE(TAG, "Tried to peer your self.");
+  } else if (!this->is_ready()) {
     ESP_LOGE(TAG, "Cannot send espnow packet, espnow is not setup yet.");
   } else if (this->is_failed()) {
     ESP_LOGE(TAG, "Cannot send espnow packet, espnow failed to setup");
@@ -482,7 +488,7 @@ bool ESPNowComponent::send(ESPNowPacket packet) {
     this->call_on_sent_(packet, err == ESP_OK);
     return true;
   }
-
+  this->mark_failed();
   return false;
 }
 
@@ -518,7 +524,7 @@ bool ESPNowProtocol::send(uint64_t peer, const uint8_t *data, uint8_t len, uint8
   return this->parent_->send(packet);
 }
 
-const char *const ChangeChannel::TAG = "espnow.changechannel";
+const char *const SetChannel::TAG = "espnow.changechannel";
 
 }  // namespace espnow
 }  // namespace esphome

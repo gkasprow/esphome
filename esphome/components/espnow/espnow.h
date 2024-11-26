@@ -340,33 +340,18 @@ template<typename... Ts> class DelPeerAction : public Action<Ts...>, public Pare
   }
 };
 
-template<typename... Ts> class SetStaticPeerAction : public Action<Ts...>, public Parented<ESPNowComponent> {
- public:
-  TEMPLATABLE_VALUE(uint64_t, mac_address);
-  void set_peer_id(uint64_t &peer_id) { this->peer_id_ = &peer_id; }
-  void play(Ts... x) override {
-    uint64_t mac_address = this->mac_address_.value(x...);
-    *(this->peer_id_) = mac_address;
-    if (mac_address != 0)
-      parent_->add_peer(mac_address);
-  }
-
- protected:
-  uint64_t *peer_id_;
-};
-
-class ChangeChannel {
+class SetChannel {
  public:
   // could be made inline with C++17
   static const char *const TAG;
 };
 
-template<typename... Ts> class ChangeChannelAction : public Action<Ts...>, public Parented<ESPNowComponent> {
+template<typename... Ts> class SetChannelAction : public Action<Ts...>, public Parented<ESPNowComponent> {
  public:
   TEMPLATABLE_VALUE(int8_t, channel);
   void play(Ts... x) override {
 #ifdef USE_WIFI
-    esph_log_e(ChangeChannel::TAG, "Manual changing the channel is not possible with WIFI enabled.");
+    esph_log_e(SetChannel::TAG, "Manual changing the channel is not possible with WIFI enabled.");
 #else
     int8_t value = this->channel_.value(x...);
     parent_->set_wifi_channel(value);
@@ -374,7 +359,7 @@ template<typename... Ts> class ChangeChannelAction : public Action<Ts...>, publi
   }
 };
 
-/*********************************  triggers **************************************/
+/********************************* triggers **************************************/
 class ESPNowSentTrigger : public Trigger<const ESPNowPacket, bool> {
  public:
   explicit ESPNowSentTrigger(ESPNowComponent *parent) {
