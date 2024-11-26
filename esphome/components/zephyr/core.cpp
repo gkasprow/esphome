@@ -41,7 +41,7 @@ uint32_t arch_get_cpu_freq_hz() { return sys_clock_hw_cycles_per_sec(); }
 uint8_t progmem_read_byte(const uint8_t *addr) { return *addr; }
 
 Mutex::Mutex() {
-  auto mutex = new k_mutex();
+  auto *mutex = new k_mutex();
   this->handle_ = mutex;
   k_mutex_init(mutex);
 }
