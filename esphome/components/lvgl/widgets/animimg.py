@@ -1,5 +1,4 @@
 from esphome import automation
-import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_DURATION, CONF_ID
 
@@ -8,13 +7,12 @@ from ..defines import CONF_AUTO_START, CONF_MAIN, CONF_REPEAT_COUNT, CONF_SRC
 from ..helpers import lvgl_components_required
 from ..lv_validation import lv_image, lv_milliseconds
 from ..lvcode import lv
-from ..types import LvType, ObjUpdateAction, void_ptr
+from ..types import LvType, ObjUpdateAction
 from . import Widget, WidgetType, get_widgets
 from .img import CONF_IMAGE
 from .label import CONF_LABEL
 
 CONF_ANIMIMG = "animimg"
-CONF_SRC_LIST_ID = "src_list_id"
 
 
 def lv_repeat_count(value):
@@ -33,7 +31,6 @@ ANIMIMG_SCHEMA = ANIMIMG_BASE_SCHEMA.extend(
     {
         cv.Required(CONF_DURATION): lv_milliseconds,
         cv.Required(CONF_SRC): cv.ensure_list(lv_image),
-        cv.GenerateID(CONF_SRC_LIST_ID): cv.declare_id(void_ptr),
     }
 )
 
@@ -61,9 +58,7 @@ class AnimimgType(WidgetType):
         lvgl_components_required.add(CONF_ANIMIMG)
         if CONF_SRC in config:
             srcs = [await lv_image.process(x) for x in config[CONF_SRC]]
-            src_id = cg.static_const_array(config[CONF_SRC_LIST_ID], srcs)
-            count = len(config[CONF_SRC])
-            lv.animimg_set_src(w.obj, src_id, count)
+            lv.animimg_set_src(w.obj, srcs)
         lv.animimg_set_repeat_count(w.obj, config[CONF_REPEAT_COUNT])
         lv.animimg_set_duration(w.obj, config[CONF_DURATION])
         if config.get(CONF_AUTO_START):
