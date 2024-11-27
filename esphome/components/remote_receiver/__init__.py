@@ -129,10 +129,8 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
     if CORE.is_esp32:
-        if (
-            USE_NEW_RMT_DRIVER
-            and (rmt_channel := config.get(CONF_RMT_CHANNEL, None)) is not None
-        ):
+        rmt_channel = config.get(CONF_RMT_CHANNEL, None)
+        if USE_NEW_RMT_DRIVER and rmt_channel is not None:
             var = cg.new_Pvariable(
                 config[CONF_ID], pin, rmt_channel, config[CONF_MEMORY_BLOCKS]
             )

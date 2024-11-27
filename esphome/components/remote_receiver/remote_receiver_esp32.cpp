@@ -214,9 +214,9 @@ void RemoteReceiverComponent::loop() {
 }
 
 #ifdef USE_NEW_RMT_DRIVER
-void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t count) {
+void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t item_count) {
 #else
-void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t count) {
+void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t item_count) {
 #endif
   bool prev_level = false;
   uint32_t prev_length = 0;
@@ -225,7 +225,7 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t count) {
   uint32_t filter_ticks = this->from_microseconds_(this->filter_us_);
 
   ESP_LOGVV(TAG, "START:");
-  for (size_t i = 0; i < count; i++) {
+  for (size_t i = 0; i < item_count; i++) {
     if (item[i].level0) {
       ESP_LOGVV(TAG, "%zu A: ON %" PRIu32 "us (%u ticks)", i, this->to_microseconds_(item[i].duration0),
                 item[i].duration0);
@@ -243,8 +243,8 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t count) {
   }
   ESP_LOGVV(TAG, "\n");
 
-  this->temp_.reserve(count * 2);  // each RMT item has 2 pulses
-  for (size_t i = 0; i < count; i++) {
+  this->temp_.reserve(item_count * 2);  // each RMT item has 2 pulses
+  for (size_t i = 0; i < item_count; i++) {
     if (item[i].duration0 == 0u) {
       // EOF, sometimes garbage follows, break early
       break;
