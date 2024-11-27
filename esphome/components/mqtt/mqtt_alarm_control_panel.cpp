@@ -80,7 +80,7 @@ const EntityBase *MQTTAlarmControlPanelComponent::get_entity() const { return th
 
 bool MQTTAlarmControlPanelComponent::send_initial_state() { return this->publish_state(); }
 bool MQTTAlarmControlPanelComponent::publish_state() {
-  std::string state_s;
+  const char *state_s;
   switch (this->alarm_control_panel_->get_state()) {
     case ACP_STATE_DISARMED:
       state_s = "disarmed";
