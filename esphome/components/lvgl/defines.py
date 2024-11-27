@@ -70,10 +70,10 @@ class LValidator:
                     await cg.process_lambda(value, args, return_type=self.rtype)
                 )
             )
-        if isinstance(value, ID):
-            return await cg.get_variable(value)
         if self.retmapper is not None:
             return self.retmapper(value)
+        if isinstance(value, ID):
+            return await cg.get_variable(value)
         return cg.safe_exp(value)
 
 
