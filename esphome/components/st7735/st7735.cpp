@@ -483,7 +483,8 @@ void ST7735::spi_master_write_color_(uint16_t color, uint16_t size) {
   }
 
   this->dc_pin_->digital_write(true);
-  return write_array(byte, size * 2);
+  write_array(byte, size * 2);
+  return;
 }
 
 }  // namespace st7735
