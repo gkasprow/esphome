@@ -297,30 +297,18 @@ void UDPComponent::setup() {
 
     struct ipv6_mreq v6imreq {};
     err = inet6_aton("ff12::100", &v6imreq.ipv6mr_multiaddr);
+    ESP_LOGI(TAG, "Configured IPV6 Multicast address %s", inet6_ntoa(v6imreq.ipv6mr_multiaddr));
     if (err != 1) {
       ESP_LOGE(TAG, "Configured IPV6 multicast address '%s' is invalid.", "ff12::100");
       this->mark_failed();
       this->status_set_error("Unable to convert");
       return;
     }
-
-    // TODO/HeMan): Split out
-    ESP_LOGI(TAG, "Configured IPV6 Multicast address %s", inet6_ntoa(v6imreq.ipv6mr_multiaddr));
+    // TODO(HeMan): Split out
     ip6_addr_t multi_addr;
     inet6_addr_to_ip6addr(&multi_addr, &v6imreq.ipv6mr_multiaddr);
-    if (!ip6_addr_ismulticast(&multi_addr)) {
-      ESP_LOGW(TAG,
-               "Configured IPV6 multicast address '%s' is not a valid multicast address. This will probably not work.",
-               "ff12::100");
-    }
-
-    v6imreq.ipv6mr_interface = netif_index;
-    err = this->listen_socket_->setsockopt(IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &v6imreq, sizeof(struct ipv6_mreq));
-    if (err < 0) {
-      ESP_LOGE(TAG, "Socket unable to join: errno %d", errno);
-      this->mark_failed();
-      this->status_set_error("Unable to join socket");
-      return;
+    if (ip6_addr_ismulticast(&multi_addr)) {
+      this->join_multicast_();
     }
   }
 #endif
@@ -450,6 +438,53 @@ void UDPComponent::loop() {
     this->send_ping_pong_request_();
   if (this->updated_) {
     this->send_data_(this->resend_data_);
+  }
+}
+
+void UDPComponent::join_multicast_() {
+  struct sockaddr_in6 server {};
+  socklen_t sl = socket::set_sockaddr_any((struct sockaddr *) &server, sizeof(server), this->port_);
+  if (sl == 0) {
+    ESP_LOGE(TAG, "Socket unable to set sockaddr: errno %d", errno);
+    this->mark_failed();
+    this->status_set_error("Unable to set sockaddr");
+    return;
+  }
+
+  auto err = this->listen_socket_->bind((struct sockaddr *) &server, sizeof(struct sockaddr_in6));
+  if (err != 0) {
+    ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+    this->mark_failed();
+    this->status_set_error("Unable to bind socket");
+    return;
+  }
+
+  uint8_t netif_index = 2;  // TODO(HeMan): MAGIC NUMBER, why
+  err = this->listen_socket_->setsockopt(IPPROTO_IPV6, IPV6_MULTICAST_IF, &netif_index, sizeof(uint8_t));
+  if (err < 0) {
+    ESP_LOGE(TAG, "Failed to set IPV6_MULTICAST_IF. Error %d", errno);
+    this->mark_failed();
+    this->status_set_error("Unable to join socket");
+    return;
+  }
+
+  struct ipv6_mreq v6imreq {};
+  err = inet6_aton("ff12::100", &v6imreq.ipv6mr_multiaddr);
+  ESP_LOGI(TAG, "Configured IPV6 Multicast address %s", inet6_ntoa(v6imreq.ipv6mr_multiaddr));
+  if (err != 1) {
+    ESP_LOGE(TAG, "Configured IPV6 multicast address '%s' is invalid.", "ff12::100");
+    this->mark_failed();
+    this->status_set_error("Unable to convert");
+    return;
+  }
+
+  v6imreq.ipv6mr_interface = netif_index;
+  err = this->listen_socket_->setsockopt(IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &v6imreq, sizeof(struct ipv6_mreq));
+  if (err < 0) {
+    ESP_LOGE(TAG, "Socket unable to join: errno %d", errno);
+    this->mark_failed();
+    this->status_set_error("Unable to join socket");
+    return;
   }
 }
 

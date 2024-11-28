@@ -160,6 +160,7 @@ class UDPComponent : public PollingComponent {
   void send_ping_pong_request_();
   void send_packet_(void *data, size_t len);
   void process_ping_request_(const char *name, uint8_t *ptr, size_t len);
+  void join_multicast_();
 
   inline bool is_encrypted_() { return !this->encryption_key_.empty(); }
 };
