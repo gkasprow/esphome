@@ -194,6 +194,7 @@ size_t I2SAudioSpeaker::play(const uint8_t *data, size_t length, TickType_t tick
     ESP_LOGE(TAG, "Cannot play audio, speaker failed to setup");
     return 0;
   }
+
   if (this->state_ != speaker::STATE_RUNNING && this->state_ != speaker::STATE_STARTING) {
     this->start();
   }
@@ -271,6 +272,7 @@ void I2SAudioSpeaker::speaker_task(void *params) {
       if (event_group_bits & SpeakerEventGroupBits::COMMAND_STOP) {
         break;
       }
+
       if (event_group_bits & SpeakerEventGroupBits::COMMAND_STOP_GRACEFULLY) {
         stop_gracefully = true;
       }
@@ -306,6 +308,7 @@ void I2SAudioSpeaker::speaker_task(void *params) {
 
         if (bytes_written != bytes_read) {
           xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::ERR_ESP_INVALID_SIZE);
+          continue;
         }
         tx_dma_underflow = false;
         last_data_received_time = millis();
@@ -320,6 +323,7 @@ void I2SAudioSpeaker::speaker_task(void *params) {
     // Couldn't configure the I2S port to be compatible with the incoming audio
     xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::ERR_INVALID_FORMAT);
   }
+
   i2s_zero_dma_buffer(this_speaker->parent_->get_port());
 
   xEventGroupSetBits(this_speaker->event_group_, SpeakerEventGroupBits::STATE_STOPPING);
