@@ -7,7 +7,8 @@ namespace esphome {
 namespace remote_receiver {
 
 static const char *const TAG = "remote_receiver.esp32";
-static const uint32_t MEM_BLOCK_SIZE = 64u;
+static const uint32_t RMT_CLK_FREQ = 80000000;
+static const uint32_t RMT_MEM_BLOCK_SIZE = 64;
 
 #ifdef USE_NEW_RMT_DRIVER
 static bool IRAM_ATTR HOT rmt_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *event, void *arg) {
@@ -40,8 +41,8 @@ void RemoteReceiverComponent::setup() {
   rmt_rx_channel_config_t channel{};
   memset(&channel, 0, sizeof(channel));
   channel.clk_src = RMT_CLK_SRC_DEFAULT;
-  channel.resolution_hz = 1 * 1000 * 1000;
-  channel.mem_block_symbols = MEM_BLOCK_SIZE * this->mem_block_num_;
+  channel.resolution_hz = RMT_CLK_FREQ / this->clock_divider_;
+  channel.mem_block_symbols = RMT_MEM_BLOCK_SIZE * this->mem_block_num_;
   channel.gpio_num = gpio_num_t(this->pin_->get_pin());
   channel.intr_priority = 0;
   channel.flags.invert_in = 0;
@@ -83,7 +84,7 @@ void RemoteReceiverComponent::setup() {
   if (this->max_length_ > 0) {
     this->store_.receive_size = ((this->max_length_ + 1) / 2) * sizeof(rmt_symbol_word_t);
   } else {
-    this->store_.receive_size = MEM_BLOCK_SIZE * this->mem_block_num_ * sizeof(rmt_symbol_word_t);
+    this->store_.receive_size = RMT_MEM_BLOCK_SIZE * this->mem_block_num_ * sizeof(rmt_symbol_word_t);
   }
   this->store_.buffer_size = std::max((event_size + this->store_.receive_size) * 2, this->buffer_size_);
   this->store_.buffer = new uint8_t[this->buffer_size_];

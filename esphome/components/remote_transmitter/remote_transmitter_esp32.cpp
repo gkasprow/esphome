@@ -8,6 +8,8 @@ namespace esphome {
 namespace remote_transmitter {
 
 static const char *const TAG = "remote_transmitter";
+static const uint32_t RMT_CLK_FREQ = 80000000;
+static const uint32_t RMT_MEM_BLOCK_SIZE = 64;
 
 void RemoteTransmitterComponent::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Remote Transmitter...");
@@ -43,9 +45,9 @@ void RemoteTransmitterComponent::configure_rmt_() {
     rmt_tx_channel_config_t channel{};
     memset(&channel, 0, sizeof(channel));
     channel.clk_src = RMT_CLK_SRC_DEFAULT;
-    channel.resolution_hz = 1 * 1000 * 1000;
+    channel.resolution_hz = RMT_CLK_FREQ / this->clock_divider_;
     channel.gpio_num = gpio_num_t(this->pin_->get_pin());
-    channel.mem_block_symbols = 64 * this->mem_block_num_;
+    channel.mem_block_symbols = RMT_MEM_BLOCK_SIZE * this->mem_block_num_;
     channel.trans_queue_depth = 1;
     channel.flags.io_loop_back = this->one_wire_;
     channel.flags.io_od_mode = this->one_wire_;
