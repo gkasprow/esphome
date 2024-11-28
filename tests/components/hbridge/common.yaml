@@ -9,7 +9,7 @@ output:
     pin: ${output3_pin}
     id: gpio_output3
   - platform: ${pwm_platform}
-    pin: ${output5_pin}
+    pin: ${output4_pin}
     id: gpio_output4
 
 light:
