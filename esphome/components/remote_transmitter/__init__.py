@@ -2,14 +2,7 @@ from esphome import automation, pins
 import esphome.codegen as cg
 from esphome.components import esp32_rmt, remote_base
 import esphome.config_validation as cv
-from esphome.const import (
-    CONF_CARRIER_DUTY_PERCENT,
-    CONF_ID,
-    CONF_PIN,
-    CONF_RMT_CHANNEL,
-    KEY_CORE,
-    KEY_FRAMEWORK_VERSION,
-)
+from esphome.const import CONF_CARRIER_DUTY_PERCENT, CONF_ID, CONF_PIN, CONF_RMT_CHANNEL
 from esphome.core import CORE
 
 AUTO_LOAD = ["remote_base"]
@@ -44,8 +37,7 @@ CONFIG_SCHEMA = cv.Schema(
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
     if CORE.is_esp32:
-        version = CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION]
-        new_driver = CORE.using_esp_idf and version >= cv.Version(5, 0, 0)
+        new_driver = esp32_rmt.new_rmt_driver()
         rmt_channel = config.get(CONF_RMT_CHANNEL, None)
         if not new_driver and rmt_channel is not None:
             var = cg.new_Pvariable(config[CONF_ID], pin, rmt_channel)

@@ -16,8 +16,6 @@ from esphome.const import (
     CONF_TOLERANCE,
     CONF_TYPE,
     CONF_VALUE,
-    KEY_CORE,
-    KEY_FRAMEWORK_VERSION,
 )
 from esphome.core import CORE, TimePeriod
 
@@ -123,8 +121,7 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
     if CORE.is_esp32:
-        version = CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION]
-        new_driver = CORE.using_esp_idf and version >= cv.Version(5, 0, 0)
+        new_driver = esp32_rmt.new_rmt_driver()
         rmt_channel = config.get(CONF_RMT_CHANNEL, None)
         if not new_driver and rmt_channel is not None:
             var = cg.new_Pvariable(

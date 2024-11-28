@@ -13,10 +13,7 @@ from esphome.const import (
     CONF_PIN,
     CONF_RGB_ORDER,
     CONF_RMT_CHANNEL,
-    KEY_CORE,
-    KEY_FRAMEWORK_VERSION,
 )
-from esphome.core import CORE
 
 CODEOWNERS = ["@jesserockz"]
 DEPENDENCIES = ["esp32"]
@@ -149,8 +146,7 @@ async def to_code(config):
     cg.add(var.set_is_wrgb(config[CONF_IS_WRGB]))
     cg.add(var.set_use_psram(config[CONF_USE_PSRAM]))
 
-    version = CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION]
-    if CORE.using_esp_idf and version >= cv.Version(5, 0, 0):
+    if esp32_rmt.new_rmt_driver():
         cg.add_define("USE_NEW_RMT_DRIVER")
     else:
         rmt_channel_t = cg.global_ns.enum("rmt_channel_t")

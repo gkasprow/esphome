@@ -1,7 +1,8 @@
-import esphome.config_validation as cv
 import esphome.codegen as cg
-
 from esphome.components import esp32
+import esphome.config_validation as cv
+from esphome.const import KEY_CORE, KEY_FRAMEWORK_VERSION
+from esphome.core import CORE
 
 CODEOWNERS = ["@jesserockz"]
 
@@ -36,8 +37,14 @@ RMT_CHANNEL_ENUMS = {
 }
 
 
-def validate_rmt_channel(*, tx: bool):
+def new_rmt_driver():
+    framework_version = CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION]
+    if CORE.using_esp_idf and framework_version >= cv.Version(5, 0, 0):
+        return True
+    return False
 
+
+def validate_rmt_channel(*, tx: bool):
     rmt_channels = RMT_TX_CHANNELS if tx else RMT_RX_CHANNELS
 
     def _validator(value):
