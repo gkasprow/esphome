@@ -104,9 +104,10 @@ lv_img_dsc_t *Image::get_lv_img_dsc() {
 
       case IMAGE_TYPE_RGB565:
 #if LV_COLOR_DEPTH == 16
-        this->dsc_.header.cf = this->has_transparency() ? LV_IMG_CF_TRUE_COLOR_ALPHA : LV_IMG_CF_TRUE_COLOR;
+        this->dsc_.header.cf =
+            this->transparent_ == TRANSPARENCY_ALPHA_CHANNEL ? LV_IMG_CF_TRUE_COLOR_ALPHA : LV_IMG_CF_TRUE_COLOR;
 #else
-        this->dsc_.header.cf = LV_IMG_CF_RGB565;
+        this->dsc_.header.cf = this->transparent_ == TRANSPARENCY_ALPHA_CHANNEL ? LV_IMG_CF_RGB565A8 : LV_IMG_CF_RGB565;
 #endif
         break;
 
@@ -148,7 +149,7 @@ Color Image::get_rgb24_pixel_(int x, int y) const {
 }
 Color Image::get_rgb565_pixel_(int x, int y) const {
   const uint8_t *pos = this->data_start_;
-  if (this->transparent_) {
+  if (this->transparent_ == TRANSPARENCY_ALPHA_CHANNEL) {
     pos += (x + y * this->width_) * 3;
   } else {
     pos += (x + y * this->width_) * 2;
@@ -157,7 +158,18 @@ Color Image::get_rgb565_pixel_(int x, int y) const {
   auto r = (rgb565 & 0xF800) >> 11;
   auto g = (rgb565 & 0x07E0) >> 5;
   auto b = rgb565 & 0x001F;
-  auto a = this->transparent_ ? progmem_read_byte(pos + 2) : 0xFF;
+  auto a = 0xFF;
+  switch (this->transparent_) {
+    case TRANSPARENCY_ALPHA_CHANNEL:
+      a = progmem_read_byte(pos + 2);
+      break;
+    case TRANSPARENCY_CHROMA_KEY:
+      if (rgb565 == 0x0020)
+        a = 0;
+      break;
+    default:
+      break;
+  }
   Color color = Color((r << 3) | (r >> 2), (g << 2) | (g >> 4), (b << 3) | (b >> 2), a);
   return color;
 }

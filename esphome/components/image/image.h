@@ -17,6 +17,12 @@ enum ImageType {
   IMAGE_TYPE_RGBA = 4,
 };
 
+enum Transparency {
+  TRANSPARENCY_NONE = 0,
+  TRANSPARENCY_CHROMA_KEY = 1,
+  TRANSPARENCY_ALPHA_CHANNEL = 2,
+};
+
 class Image : public display::BaseImage {
  public:
   Image(const uint8_t *data_start, int width, int height, ImageType type);
@@ -33,7 +39,7 @@ class Image : public display::BaseImage {
       case IMAGE_TYPE_GRAYSCALE:
         return 8;
       case IMAGE_TYPE_RGB565:
-        return this->transparent_ ? 24 : 16;
+        return this->transparent_ == TRANSPARENCY_ALPHA_CHANNEL ? 24 : 16;
       case IMAGE_TYPE_RGB24:
         return 24;
       case IMAGE_TYPE_RGBA:
@@ -47,8 +53,8 @@ class Image : public display::BaseImage {
   uint32_t get_width_stride() const { return (this->width_ * this->get_bpp() + 7u) / 8u; }
   void draw(int x, int y, display::Display *display, Color color_on, Color color_off) override;
 
-  void set_transparency(bool transparent) { transparent_ = transparent; }
-  bool has_transparency() const { return transparent_; }
+  void set_transparency(Transparency transparent) { transparent_ = transparent; }
+  bool has_transparency() const { return transparent_ != TRANSPARENCY_NONE; }
 
 #ifdef USE_LVGL
   lv_img_dsc_t *get_lv_img_dsc();
@@ -64,7 +70,7 @@ class Image : public display::BaseImage {
   int height_;
   ImageType type_;
   const uint8_t *data_start_;
-  bool transparent_;
+  Transparency transparent_;
 #ifdef USE_LVGL
   lv_img_dsc_t dsc_{};
 #endif
