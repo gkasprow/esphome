@@ -25,7 +25,7 @@ from esphome.const import (
     CONF_TYPE,
     CONF_URL,
 )
-from esphome.core import HexInt
+from esphome.core import CORE, HexInt
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,15 +49,13 @@ TRANSPARENCY_TYPES = (
 )
 
 
-class ImageEnoder:
+class ImageEncoder:
     def __init__(self, width, height, transparency, dither, image: Image):
         self.transparency = transparency
         self.width = width
         self.height = height
         self.data = [0 for _ in range(width * height)]
-        self.dither = (
-            Image.Dither.NONE if dither == "NONE" else Image.Dither.FLOYDSTEINBERG
-        )
+        self.dither = dither
         self.index = 0
         self.image = image
 
@@ -73,22 +71,19 @@ class ImageEnoder:
         """
 
 
-class ImageBinary(ImageEnoder):
+class ImageBinary(ImageEncoder):
     def __init__(self, width, height, transparency, dither, image: Image):
-        self.width8 = (width + 7) // 8, height
-        super().__init__(self.width8, height, transparency, dither, image)
+        self.width8 = (width + 7) // 8
         alpha = image.split()[-1]
-        if self.transparency != CONF_NONE and alpha.getextrema()[0] < 0xFF:
+        if transparency != CONF_NONE and alpha.getextrema()[0] < 0xFF:
             image = alpha
-        image = image.convert("1", dither=self.dither)
-        self.image = image
+        else:
+            image = image.convert("1", dither=dither)
+        super().__init__(self.width8, height, transparency, dither, image)
         self.bitno = 0
 
     def encode(self, pixel):
-        b, a = pixel
-        if self.transparency == CONF_NONE:
-            a = b
-        if a:
+        if pixel:
             self.data[self.index] |= 0x80 >> (self.bitno % 8)
         self.bitno += 1
         if self.bitno == 8:
@@ -104,10 +99,12 @@ class ImageBinary(ImageEnoder):
             self.index += 1
 
 
-class ImageRGB(ImageEnoder):
+class ImageRGB(ImageEncoder):
     def __init__(self, width, height, transparency, dither, image):
         stride = 4 if transparency == CONF_ALPHA_CHANNEL else 3
-        super().__init__(width * stride, height, transparency, dither, image)
+        super().__init__(
+            width * stride, height, transparency, dither, image.convert("RGBA")
+        )
 
     def encode(self, pixel):
         r, g, b, a = pixel
@@ -129,11 +126,12 @@ class ImageRGB(ImageEnoder):
             self.index += 1
 
 
-class ImageRGB565(ImageEnoder):
+class ImageRGB565(ImageEncoder):
     def __init__(self, width, height, transparency, dither, image):
         stride = 3 if transparency == CONF_ALPHA_CHANNEL else 2
-        super().__init__(width * stride, height, transparency, dither, image)
-        self.image = image.convert("RGB;16", dither=dither)
+        super().__init__(
+            width * stride, height, transparency, dither, image.convert("RGBA")
+        )
 
     def encode(self, pixel):
         r, g, b, a = pixel
@@ -150,14 +148,14 @@ class ImageRGB565(ImageEnoder):
         rgb = (r << 11) | (g << 5) | b
         self.data[self.index] = rgb >> 8
         self.index += 1
-        self.data[self.index] = rgb >> 8
+        self.data[self.index] = rgb & 0xFF
         self.index += 1
         if self.transparency == CONF_ALPHA_CHANNEL:
             self.data[self.index] = a
             self.index += 1
 
 
-class ImageGrayscale(ImageEnoder):
+class ImageGrayscale(ImageEncoder):
     def __init__(self, width, height, transparency, dither, image):
         stride = 2 if transparency == CONF_ALPHA_CHANNEL else 1
         super().__init__(width * stride, height, transparency, dither, image)
@@ -193,8 +191,8 @@ SOURCE_WEB = "web"
 Image_ = image_ns.class_("Image")
 
 
-def compute_local_image_path(value: dict) -> Path:
-    url = value[CONF_URL]
+def compute_local_image_path(value) -> Path:
+    url = value[CONF_URL] if isinstance(value, dict) else value
     h = hashlib.new("sha256")
     h.update(url.encode())
     key = h.hexdigest()[:8]
@@ -203,25 +201,27 @@ def compute_local_image_path(value: dict) -> Path:
 
 
 def local_path(value):
-    return value[CONF_PATH]
+    value = value[CONF_PATH] if isinstance(value, dict) else value
+    return str(CORE.relative_config_path(value))
 
 
 def download_file(url, path):
     external_files.download_content(url, path, IMAGE_DOWNLOAD_TIMEOUT)
-    return path
+    return str(path)
 
 
 def download_mdi(value):
-    mdi_id = value[CONF_ICON]
+    mdi_id = value[CONF_ICON] if isinstance(value, dict) else value
     base_dir = external_files.compute_local_file_dir(DOMAIN) / "mdi"
-    path = base_dir / f"{value[CONF_ICON]}.svg"
+    path = base_dir / f"{mdi_id}.svg"
 
     url = f"https://raw.githubusercontent.com/Templarian/MaterialDesign/master/svg/{mdi_id}.svg"
     return download_file(url, path)
 
 
 def download_image(value):
-    return download_file(value[CONF_URL], compute_local_image_path(value))
+    value = value[CONF_URL] if isinstance(value, dict) else value
+    return download_file(value, compute_local_image_path(value))
 
 
 def validate_cairosvg_installed(value):
@@ -255,25 +255,13 @@ def validate_file_shorthand(value):
         if match is None:
             raise cv.Invalid("Could not parse mdi icon name.")
         icon = match.group(1)
-        return TYPED_FILE_SCHEMA(
-            {
-                CONF_SOURCE: SOURCE_MDI,
-                CONF_ICON: icon,
-            }
-        )
+        return download_mdi(icon)
+
     if value.startswith("http://") or value.startswith("https://"):
-        return TYPED_FILE_SCHEMA(
-            {
-                CONF_SOURCE: SOURCE_WEB,
-                CONF_URL: value,
-            }
-        )
-    return TYPED_FILE_SCHEMA(
-        {
-            CONF_SOURCE: SOURCE_LOCAL,
-            CONF_PATH: value,
-        }
-    )
+        return download_image(value)
+
+    value = cv.file_(value)
+    return local_path(value)
 
 
 LOCAL_SCHEMA = cv.All(
@@ -307,15 +295,34 @@ TYPED_FILE_SCHEMA = cv.typed_schema(
 )
 
 
+def validate_transparency(value):
+    if isinstance(value, bool):
+        value = str(value)
+    return cv.one_of(*TRANSPARENCY_TYPES, lower=True)(value)
+
+
+def validate_type(value):
+    if value.upper() == "TRANSPARENT_BINARY":
+        raise cv.Invalid(
+            "'TRANSPARENT_BINARY' is deprecated; replace with 'type: BINARY' and 'use_transparency: chroma_key'"
+        )
+    if value.upper() == "RGB24":
+        raise cv.Invalid("'RGB24' is deprecated; replace with 'type: RGB'")
+    if value.upper() == "RGBA":
+        raise cv.Invalid(
+            "'RGBA' is deprecated; replace with 'type: RGB' and 'use_transparency: alpha_channel'"
+        )
+    return cv.one_of(*IMAGE_TYPE, upper=True)(value)
+
+
 IMAGE_SCHEMA = cv.Schema(
     cv.All(
         {
             cv.Required(CONF_ID): cv.declare_id(Image_),
+            cv.Required(CONF_TYPE): validate_type,
             cv.Required(CONF_FILE): cv.Any(validate_file_shorthand, TYPED_FILE_SCHEMA),
             cv.Optional(CONF_RESIZE): cv.dimensions,
-            cv.Optional(CONF_USE_TRANSPARENCY, default="none"): cv.one_of(
-                *TRANSPARENCY_TYPES, lower=True
-            ),
+            cv.Optional(CONF_USE_TRANSPARENCY, default="none"): validate_transparency,
             cv.Optional(CONF_DITHER, default="NONE"): cv.one_of(
                 "NONE", "FLOYDSTEINBERG", upper=True
             ),
@@ -378,7 +385,15 @@ async def to_code(config):
             path,
         )
 
-    encoder = IMAGE_TYPE[config[CONF_TYPE]](width, height, image, config)
+    dither = (
+        Image.Dither.NONE
+        if config[CONF_DITHER] == "NONE"
+        else Image.Dither.FLOYDSTEINBERG
+    )
+    type = config[CONF_TYPE]
+    encoder = IMAGE_TYPE[type](
+        width, height, config[CONF_USE_TRANSPARENCY], dither, image
+    )
     pixels = encoder.image.getdata()
     for row in range(height):
         for col in range(width):
@@ -387,10 +402,9 @@ async def to_code(config):
 
     rhs = [HexInt(x) for x in encoder.data]
     prog_arr = cg.progmem_array(config[CONF_RAW_DATA_ID], rhs)
-    var = cg.new_Pvariable(
-        config[CONF_ID], prog_arr, width, height, IMAGE_TYPE[config[CONF_TYPE]]
-    )
+    image_type = getattr(ImageType, f"IMAGE_TYPE_{type.upper()}")
     trans_value = getattr(
         TransparencyType, f"TRANSPARENCY_{config[CONF_USE_TRANSPARENCY].upper()}"
     )
-    cg.add(var.set_transparency(trans_value))
+
+    cg.new_Pvariable(config[CONF_ID], prog_arr, width, height, image_type, trans_value)

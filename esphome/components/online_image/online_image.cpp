@@ -228,7 +228,7 @@ void OnlineImage::draw_pixel_(int x, int y, Color color) {
       this->buffer_[pos + 3] = color.w;
       break;
     }
-    case ImageType::IMAGE_TYPE_RGB24:
+    case ImageType::IMAGE_TYPE_RGB:
     default: {
       if (this->has_transparency()) {
         if (color.b == 1 && color.r == 0 && color.g == 0) {
