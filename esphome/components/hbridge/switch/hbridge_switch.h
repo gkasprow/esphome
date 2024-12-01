@@ -37,11 +37,11 @@ class HBridgeSwitch : public switch_::Switch, public Component {
   void timer_fn_();
 
   bool timer_running_{false};
-  bool desired_state_;
+  bool desired_state_{false};
   RelayState relay_state_{RELAY_STATE_UNKNOWN};
-  GPIOPin *on_pin_;
-  GPIOPin *off_pin_;
-  uint32_t pulse_length_;
+  GPIOPin *on_pin_{nullptr};
+  GPIOPin *off_pin_{nullptr};
+  uint32_t pulse_length_{0};
   uint32_t wait_time_{0};
   bool optimistic_{false};
 };
