@@ -105,7 +105,7 @@ i2s_audio:
 
 media_player:
   - platform: i2s_audio
-    name: None
+    name: "Media Player"
     dac_type: external
     i2s_dout_pin: 18
     mute_pin: 19
