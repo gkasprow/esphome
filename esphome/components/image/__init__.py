@@ -11,7 +11,6 @@ import puremagic
 
 from esphome import core, external_files
 import esphome.codegen as cg
-from esphome.components import font
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_DITHER,
@@ -51,18 +50,41 @@ TRANSPARENCY_TYPES = (
 
 
 class ImageEncoder:
-    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_NONE}
-    replace_with = False
+    """
+    Superclass of image type encoders
+    """
 
-    def __init__(self, width, height, transparency, dither, invert_alpha, image: Image):
+    # Control which transparency options are available for a given type
+    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_NONE}
+
+    # All imageencoder types are valid
+    @staticmethod
+    def validate(value):
+        return value
+
+    def __init__(self, width, height, transparency, dither, invert_alpha):
+        """
+        :param width:  The image width in pixels
+        :param height:  The image height in pixels
+        :param transparency: Transparency type
+        :param dither: Dither method
+        :param invert_alpha: True if the alpha channel should be inverted; for monochrome formats inverts the colours.
+        """
         self.transparency = transparency
         self.width = width
         self.height = height
         self.data = [0 for _ in range(width * height)]
         self.dither = dither
         self.index = 0
-        self.image = image
         self.invert_alpha = invert_alpha
+
+    def convert(self, image):
+        """
+        Convert the image format
+        :param image:  Input image
+        :return: converted image
+        """
+        return image
 
     def encode(self, pixel):
         """
@@ -79,11 +101,13 @@ class ImageEncoder:
 class ImageBinary(ImageEncoder):
     allow_config = {CONF_NONE, CONF_INVERT_ALPHA, CONF_CHROMA_KEY}
 
-    def __init__(self, width, height, transparency, dither, invert_alpha, image):
+    def __init__(self, width, height, transparency, dither, invert_alpha):
         self.width8 = (width + 7) // 8
-        image = image.convert("1", dither=dither)
-        super().__init__(self.width8, height, transparency, dither, invert_alpha, image)
+        super().__init__(self.width8, height, transparency, dither, invert_alpha)
         self.bitno = 0
+
+    def convert(self, image):
+        return image.convert("1", dither=self.dither)
 
     def encode(self, pixel):
         if self.invert_alpha:
@@ -105,7 +129,7 @@ class ImageBinary(ImageEncoder):
 
 
 class ImageRGB(ImageEncoder):
-    def __init__(self, width, height, transparency, dither, invert_alpha, image):
+    def __init__(self, width, height, transparency, dither, invert_alpha):
         stride = 4 if transparency == CONF_ALPHA_CHANNEL else 3
         super().__init__(
             width * stride,
@@ -113,8 +137,10 @@ class ImageRGB(ImageEncoder):
             transparency,
             dither,
             invert_alpha,
-            image.convert("RGBA"),
         )
+
+    def convert(self, image):
+        return image.convert("RGBA")
 
     def encode(self, pixel):
         r, g, b, a = pixel
@@ -139,7 +165,7 @@ class ImageRGB(ImageEncoder):
 
 
 class ImageRGB565(ImageEncoder):
-    def __init__(self, width, height, transparency, dither, invert_alpha, image):
+    def __init__(self, width, height, transparency, dither, invert_alpha):
         stride = 3 if transparency == CONF_ALPHA_CHANNEL else 2
         super().__init__(
             width * stride,
@@ -147,8 +173,10 @@ class ImageRGB565(ImageEncoder):
             transparency,
             dither,
             invert_alpha,
-            image.convert("RGBA"),
         )
+
+    def convert(self, image):
+        return image.convert("RGBA")
 
     def encode(self, pixel):
         r, g, b, a = pixel
@@ -177,9 +205,8 @@ class ImageRGB565(ImageEncoder):
 class ImageGrayscale(ImageEncoder):
     allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_INVERT_ALPHA, CONF_NONE}
 
-    def __init__(self, width, height, transparency, dither, invert_alpha, image):
-        image = image.convert("LA", dither=dither)
-        super().__init__(width, height, transparency, dither, invert_alpha, image)
+    def convert(self, image):
+        return image.convert("LA")
 
     def encode(self, pixel):
         b, a = pixel
@@ -198,8 +225,17 @@ class ImageGrayscale(ImageEncoder):
 
 
 class ReplaceWith:
+    """
+    Placeholder class to provide feedback on deprecated features
+    """
+
     def __init__(self, replace_with):
         self.replace_with = replace_with
+
+    def validate(self, value):
+        raise cv.Invalid(
+            f"Image type {value} is removed; replace with {self.replace_with}"
+        )
 
 
 IMAGE_TYPE = {
@@ -224,7 +260,6 @@ IMAGE_DOWNLOAD_TIMEOUT = 30  # seconds
 SOURCE_LOCAL = "local"
 SOURCE_MDI = "mdi"
 SOURCE_WEB = "web"
-
 
 Image_ = image_ns.class_("Image")
 
@@ -341,11 +376,7 @@ def validate_transparency(value):
 
 def validate_type(value):
     value = cv.one_of(*IMAGE_TYPE, upper=True)(value)
-    if replace_with := IMAGE_TYPE[value.upper()].replace_with:
-        raise cv.Invalid(
-            f"Image type {value} is deprecated; replace with {replace_with}"
-        )
-    return value
+    return IMAGE_TYPE[value].validate(value)
 
 
 def validate_settings(value):
@@ -363,29 +394,25 @@ def validate_settings(value):
         and CONF_INVERT_ALPHA not in allow_config
     ):
         raise cv.Invalid("No alpha channel to invert")
-    return value
+    return validate_cairosvg_installed(value)
 
 
 IMAGE_SCHEMA = cv.Schema(
-    cv.All(
-        {
-            cv.Required(CONF_ID): cv.declare_id(Image_),
-            cv.Required(CONF_TYPE): validate_type,
-            cv.Required(CONF_FILE): cv.Any(validate_file_shorthand, TYPED_FILE_SCHEMA),
-            cv.Optional(CONF_RESIZE): cv.dimensions,
-            cv.Optional(CONF_USE_TRANSPARENCY, default="none"): validate_transparency,
-            cv.Optional(CONF_DITHER, default="NONE"): cv.one_of(
-                "NONE", "FLOYDSTEINBERG", upper=True
-            ),
-            cv.Optional(CONF_INVERT_ALPHA, default=False): cv.boolean,
-            cv.GenerateID(CONF_RAW_DATA_ID): cv.declare_id(cg.uint8),
-        },
-        validate_settings,
-        validate_cairosvg_installed,
-    )
-)
+    {
+        cv.Required(CONF_ID): cv.declare_id(Image_),
+        cv.Required(CONF_TYPE): validate_type,
+        cv.Required(CONF_FILE): cv.Any(validate_file_shorthand, TYPED_FILE_SCHEMA),
+        cv.Optional(CONF_RESIZE): cv.dimensions,
+        cv.Optional(CONF_USE_TRANSPARENCY, default="none"): validate_transparency,
+        cv.Optional(CONF_DITHER, default="NONE"): cv.one_of(
+            "NONE", "FLOYDSTEINBERG", upper=True
+        ),
+        cv.Optional(CONF_INVERT_ALPHA, default=False): cv.boolean,
+        cv.GenerateID(CONF_RAW_DATA_ID): cv.declare_id(cg.uint8),
+    }
+).add_extra(validate_settings)
 
-CONFIG_SCHEMA = cv.All(font.validate_pillow_installed, IMAGE_SCHEMA)
+CONFIG_SCHEMA = IMAGE_SCHEMA
 
 
 def load_svg_image(file: bytes, resize: tuple[int, int]):
@@ -408,11 +435,8 @@ def load_svg_image(file: bytes, resize: tuple[int, int]):
     return Image.open(io.BytesIO(svg_image))
 
 
-async def to_code(config):
-    # Local import only to allow "validate_pillow_installed" to run *before* importing it
-
+async def write_image(config, all_frames=False):
     path = config[CONF_FILE]
-
     try:
         with open(path, "rb") as f:
             file_contents = f.read()
@@ -424,14 +448,18 @@ async def to_code(config):
     resize = config.get(CONF_RESIZE)
     if "svg" in file_type:
         image = load_svg_image(file_contents, resize)
+        width, height = resize
     else:
         image = Image.open(io.BytesIO(file_contents))
+        width, height = image.size
         if resize:
-            image.thumbnail(resize)
+            # Preserve aspect ratio
+            new_width_max = min(width, resize[0])
+            new_height_max = min(height, resize[1])
+            ratio = min(new_width_max / width, new_height_max / height)
+            width, height = int(width * ratio), int(height * ratio)
 
-    width, height = image.size
-
-    if CONF_RESIZE not in config and (width > 500 or height > 500):
+    if not resize and (width > 500 or height > 500):
         _LOGGER.warning(
             'The image "%s" you requested is very big. Please consider'
             " using the resize parameter.",
@@ -445,14 +473,26 @@ async def to_code(config):
     )
     type = config[CONF_TYPE]
     invert_alpha = config[CONF_INVERT_ALPHA]
+    frame_count = 1
+    if all_frames:
+        try:
+            frame_count = image.n_frames
+        except AttributeError:
+            pass
+        if frame_count <= 1:
+            _LOGGER.warning("Image file %s has no animation frames", path)
+
+    total_rows = height * frame_count
     encoder = IMAGE_TYPE[type](
-        width, height, config[CONF_USE_TRANSPARENCY], dither, invert_alpha, image
+        width, total_rows, config[CONF_USE_TRANSPARENCY], dither, invert_alpha
     )
-    pixels = encoder.image.getdata()
-    for row in range(height):
-        for col in range(width):
-            encoder.encode(pixels[row * width + col])
-        encoder.end_row()
+    for frame_index in range(frame_count):
+        image.seek(frame_index)
+        pixels = encoder.convert(image.resize((width, height))).getdata()
+        for row in range(height):
+            for col in range(width):
+                encoder.encode(pixels[row * width + col])
+            encoder.end_row()
 
     rhs = [HexInt(x) for x in encoder.data]
     prog_arr = cg.progmem_array(config[CONF_RAW_DATA_ID], rhs)
@@ -461,4 +501,9 @@ async def to_code(config):
         TransparencyType, f"TRANSPARENCY_{config[CONF_USE_TRANSPARENCY].upper()}"
     )
 
+    return prog_arr, width, height, image_type, trans_value, frame_count
+
+
+async def to_code(config):
+    prog_arr, width, height, image_type, trans_value, _ = await write_image(config)
     cg.new_Pvariable(config[CONF_ID], prog_arr, width, height, image_type, trans_value)
