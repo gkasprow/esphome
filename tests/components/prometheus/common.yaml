@@ -99,9 +99,9 @@ number:
     step: 1
 
 i2s_audio:
-  i2s_lrclk_pin: 16
-  i2s_bclk_pin: 17
-  i2s_mclk_pin: 18
+  i2s_lrclk_pin: 20
+  i2s_bclk_pin: 21
+  i2s_mclk_pin: 22
 
 media_player:
   - platform: i2s_audio
