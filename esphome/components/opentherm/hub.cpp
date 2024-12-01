@@ -163,7 +163,8 @@ void OpenthermHub::setup() {
 
 void OpenthermHub::on_shutdown() { this->opentherm_->stop(); }
 
-void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {
+// Disabling clang-tidy for this particular line since it keeps removing the trailing underscore (bug?)
+void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {  // NOLINT
   std::vector<std::pair<MessageId, uint8_t>> sorted;
   std::copy_if(this->configured_messages_.begin(), this->configured_messages_.end(), std::back_inserter(sorted),
                [](const std::pair<MessageId, uint8_t> &pair) { return pair.second < REPEATING_MESSAGE_ORDER; });
@@ -177,7 +178,8 @@ void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {
                  [](const std::pair<MessageId, uint8_t> &pair) { return pair.first; });
 }
 
-void OpenthermHub::write_repeating_messages_(std::vector<MessageId> &target) {
+// Disabling clang-tidy for this particular line since it keeps removing the trailing underscore (bug?)
+void OpenthermHub::write_repeating_messages_(std::vector<MessageId> &target) { // NOLINT
   target.clear();
   for (auto const &pair : this->configured_messages_) {
     if (pair.second == REPEATING_MESSAGE_ORDER) {
