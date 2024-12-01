@@ -350,7 +350,6 @@ void ESP32BLETracker::recalculate_advertisement_parser_types() {
 }
 
 void ESP32BLETracker::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
-  ESP_LOGD(TAG, "event: %d", event);
   switch (event) {
     case ESP_GAP_BLE_SCAN_RESULT_EVT:
       this->gap_scan_result_(param->scan_rst);
@@ -672,6 +671,7 @@ void ESP32BLETracker::dump_config() {
   ESP_LOGCONFIG(TAG, "  Scan Type: %s", this->scan_active_ ? "ACTIVE" : "PASSIVE");
   ESP_LOGCONFIG(TAG, "  Continuous Scanning: %s", YESNO(this->scan_continuous_));
   ESP_LOGCONFIG(TAG, "  Scanner Idle: %s", YESNO(this->scanner_idle_));
+  ESP_LOGCONFIG(TAG, "  Scan End: %s", YESNO(xSemaphoreGetMutexHolder(this->scan_end_lock_) == nullptr));
   if (this->scan_start_fail_count_) {
     ESP_LOGCONFIG(TAG, "  Scan Start Fail Count: %d", this->scan_start_fail_count_);
   }
