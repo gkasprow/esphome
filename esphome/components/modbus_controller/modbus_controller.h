@@ -312,11 +312,11 @@ struct RegisterRange {
 class ModbusCommandItem {
  public:
   static const size_t MAX_PAYLOAD_BYTES = 240;
-  ModbusController *modbusdevice;
-  uint16_t register_address;
-  uint16_t register_count;
-  ModbusFunctionCode function_code;
-  ModbusRegisterType register_type;
+  ModbusController *modbusdevice{nullptr};
+  uint16_t register_address{0};
+  uint16_t register_count{0};
+  ModbusFunctionCode function_code{ModbusFunctionCode::CUSTOM};
+  ModbusRegisterType register_type{ModbusRegisterType::CUSTOM};
   std::function<void(ModbusRegisterType register_type, uint16_t start_address, const std::vector<uint8_t> &data)>
       on_data_func;
   std::vector<uint8_t> payload = {};
