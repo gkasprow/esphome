@@ -264,12 +264,6 @@ void ESP32BLETracker::start_scan_(bool first) {
     ESP_LOGW(TAG, "Cannot start scan while ESP32BLE is disabled.");
     return;
   }
-  // The lock must be held when calling this function.
-  if (xSemaphoreTake(this->scan_end_lock_, 0L)) {
-    ESP_LOGE(TAG, "start_scan called without holding scan_end_lock_");
-    xSemaphoreGive(this->scan_end_lock_);
-    return;
-  }
 
   ESP_LOGD(TAG, "Starting scan...");
   if (!first) {
@@ -303,13 +297,6 @@ void ESP32BLETracker::start_scan_(bool first) {
 }
 
 void ESP32BLETracker::end_of_scan_() {
-  // The lock must be held when calling this function.
-  if (xSemaphoreTake(this->scan_end_lock_, 0L)) {
-    ESP_LOGE(TAG, "end_of_scan_ called without holding the scan_end_lock_");
-    xSemaphoreGive(this->scan_end_lock_);
-    return;
-  }
-
   ESP_LOGD(TAG, "End of scan.");
   this->scanner_idle_ = true;
   this->already_discovered_.clear();
