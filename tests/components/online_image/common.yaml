@@ -28,19 +28,17 @@ online_image:
     use_transparency: chroma_key
 
 # Check the set_url action
-time:
-  - platform: sntp
-    on_time:
-      - at: "13:37:42"
-        then:
-          - online_image.set_url:
-              id: online_rgba_image
-              url: http://www.example.org/example.png
-          - online_image.set_url:
-              id: online_rgba_image
-              url: !lambda |-
-                return "http://www.example.org/example.png";
-          - online_image.set_url:
-              id: online_rgba_image
-              url: !lambda |-
-                return str_sprintf("http://homeassistant.local:8123");
+esphome:
+  on_boot:
+    then:
+      - online_image.set_url:
+          id: online_rgba_image
+          url: http://www.example.org/example.png
+      - online_image.set_url:
+          id: online_rgba_image
+          url: !lambda |-
+            return "http://www.example.org/example.png";
+      - online_image.set_url:
+          id: online_rgba_image
+          url: !lambda |-
+            return str_sprintf("http://homeassistant.local:8123");

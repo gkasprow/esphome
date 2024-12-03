@@ -136,16 +136,16 @@ void OnlineImage::update() {
 }
 
 void OnlineImage::loop() {
-  if (!this->decoder_.get()) {
+  if (!this->decoder_) {
     // Not decoding at the moment => nothing to do.
     return;
   }
   if (!this->downloader_ || this->decoder_->is_finished()) {
-    ESP_LOGD(TAG, "Downloader %s, decoder finished", YESNO(this->downloader_), YESNO(this->decoder_->is_finished()));
     this->data_start_ = buffer_;
     this->width_ = buffer_width_;
     this->height_ = buffer_height_;
-    ESP_LOGD(TAG, "Image fully downloaded, width/height = %d/%d", this->width_, this->height_);
+    ESP_LOGD(TAG, "Image fully downloaded, read %zu bytes, width/height = %d/%d", this->downloader_->get_bytes_read(),
+             this->width_, this->height_);
     this->end_connection_();
     this->download_finished_callback_.call();
     return;
@@ -155,10 +155,8 @@ void OnlineImage::loop() {
     return;
   }
   size_t available = this->download_buffer_.free_capacity();
-  ESP_LOGD(TAG, "Available %zu bytes", available);
   if (available) {
     auto len = this->downloader_->read(this->download_buffer_.append(), available);
-    ESP_LOGD(TAG, "Read %d bytes", len);
     if (len > 0) {
       this->download_buffer_.write(len);
       auto fed = this->decoder_->decode(this->download_buffer_.data(), this->download_buffer_.unread());

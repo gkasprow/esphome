@@ -56,7 +56,7 @@ Color Image::get_pixel(int x, int y, const Color color_on, const Color color_off
     return color_off;
   switch (this->type_) {
     case IMAGE_TYPE_BINARY:
-      return this->get_binary_pixel_(x, y) ? color_on : color_off;
+      return std::move(this->get_binary_pixel_(x, y) ? color_on : color_off);
     case IMAGE_TYPE_GRAYSCALE:
       return this->get_grayscale_pixel_(x, y);
     case IMAGE_TYPE_RGB565:
@@ -154,12 +154,7 @@ Color Image::get_rgb_pixel_(int x, int y) const {
   return color;
 }
 Color Image::get_rgb565_pixel_(int x, int y) const {
-  const uint8_t *pos = this->data_start_;
-  if (this->transparency_ == TRANSPARENCY_ALPHA_CHANNEL) {
-    pos += (x + y * this->width_) * 3;
-  } else {
-    pos += (x + y * this->width_) * 2;
-  }
+  const uint8_t *pos = this->data_start_ + (x + y * this->width_) * this->bpp_ / 8;
   uint16_t rgb565 = encode_uint16(progmem_read_byte(pos), progmem_read_byte(pos + 1));
   auto r = (rgb565 & 0xF800) >> 11;
   auto g = (rgb565 & 0x07E0) >> 5;
