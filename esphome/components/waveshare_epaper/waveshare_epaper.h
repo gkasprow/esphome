@@ -266,6 +266,26 @@ class GDEW029T5 : public WaveshareEPaper {
   int get_height_internal() override;
 };
 
+class GDEY029T94 : public WaveshareEPaper {
+ public:
+  void initialize() override;
+
+  void display() override;
+
+  void dump_config() override;
+
+  void deep_sleep() override {
+    this->command(0x10);  // Enter deep sleep
+    this->data(0x01);
+    delay(100);
+  }
+
+ protected:
+  int get_width_internal() override;
+
+  int get_height_internal() override;
+};
+
 class WaveshareEPaper2P7InV2 : public WaveshareEPaper {
  public:
   void initialize() override;
