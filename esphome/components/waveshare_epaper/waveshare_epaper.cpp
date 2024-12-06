@@ -1637,8 +1637,8 @@ void GDEY029T94::initialize() {
   this->command(0x4E);  // set RAM x address count to 0;
   this->data(0x00);
   this->command(0x4F);  // set RAM y address count to 0X199;
-  this->data((this->get_height_internal() - 1) % 256);
-  this->data((this->get_height_internal() - 1) / 256);
+  this->data(0x00);
+  this->data(0x00);
   this->wait_until_idle_();
 }
 void HOT GDEY029T94::display() {
