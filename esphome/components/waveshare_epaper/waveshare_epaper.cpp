@@ -1591,7 +1591,7 @@ void WaveshareEPaper2P9InV2R2::set_full_update_every(uint32_t full_update_every)
   this->full_update_every_ = full_update_every;
 }
 // ========================================================
-//     Good Display 2.9in black/white/grey
+//     Good Display 2.9in black/white
 // Datasheet:
 //  - https://files.seeedstudio.com/wiki/Other_Display/29-epaper/GDEY029T94.pdf
 //  -
