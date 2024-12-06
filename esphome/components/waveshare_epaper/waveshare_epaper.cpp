@@ -1643,14 +1643,8 @@ void GDEY029T94::initialize() {
 }
 void HOT GDEY029T94::display() {
   this->command(0x24);  // write RAM for black(0)/white (1)
-  delay(2);
-  this->start_data_();
-  for (size_t i = 0; i < this->get_buffer_length_(); i++) {
-    this->write_byte(this->buffer_[i]);
-  }
+  this->write_array(this->buffer_, this->get_buffer_length_());
   this->end_data_();
-  delay(2);
-
   this->command(0x22);  // Display Update Control
   this->data(0xF7);
   this->command(0x20);  // Activate Display Update Sequence
