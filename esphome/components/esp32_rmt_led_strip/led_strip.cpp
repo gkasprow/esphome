@@ -13,9 +13,13 @@ namespace esp32_rmt_led_strip {
 
 static const char *const TAG = "esp32_rmt_led_strip";
 
+#ifdef USE_ESP32_VARIANT_ESP32H2
+static const uint32_t RMT_CLK_FREQ = 32000000;
+static const uint8_t RMT_CLK_DIV = 1;
+#else
 static const uint32_t RMT_CLK_FREQ = 80000000;
-
 static const uint8_t RMT_CLK_DIV = 2;
+#endif
 
 void ESP32RMTLEDStripLightOutput::setup() {
   ESP_LOGCONFIG(TAG, "Setting up ESP32 LED Strip...");
