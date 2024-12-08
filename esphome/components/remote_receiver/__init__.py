@@ -62,7 +62,7 @@ RemoteReceiverComponent = remote_receiver_ns.class_(
 
 def validate_config(config):
     if CORE.is_esp32:
-        if esp32_rmt.new_rmt_driver():
+        if esp32_rmt.use_new_rmt_driver():
             if CONF_CLOCK_DIVIDER in config:
                 raise cv.Invalid(
                     "clock_divider not available with the new RMT driver, use clock_resolution instead"
@@ -146,7 +146,7 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
 async def to_code(config):
     pin = await cg.gpio_pin_expression(config[CONF_PIN])
     if CORE.is_esp32:
-        new_driver = esp32_rmt.new_rmt_driver()
+        new_driver = esp32_rmt.use_new_rmt_driver()
         rmt_channel = config.get(CONF_RMT_CHANNEL, None)
         if not new_driver and rmt_channel is not None:
             var = cg.new_Pvariable(

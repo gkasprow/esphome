@@ -43,8 +43,9 @@ void ESP32RMTLEDStripLightOutput::setup() {
 
 #ifndef USE_NEW_RMT_DRIVER
   RAMAllocator<rmt_item32_t> rmt_allocator(this->use_psram_ ? 0 : RAMAllocator<rmt_item32_t>::ALLOC_INTERNAL);
-  this->rmt_buf_ = rmt_allocator.allocate(buffer_size * 8 +
-                                          1);  // 8 bits per byte, 1 rmt_item32_t per bit + 1 rmt_item32_t for reset
+
+  // 8 bits per byte, 1 rmt_item32_t per bit + 1 rmt_item32_t for reset
+  this->rmt_buf_ = rmt_allocator.allocate(buffer_size * 8 + 1);
 
   rmt_config_t config;
   memset(&config, 0, sizeof(config));
@@ -71,8 +72,9 @@ void ESP32RMTLEDStripLightOutput::setup() {
   }
 #else
   RAMAllocator<rmt_symbol_word_t> rmt_allocator(this->use_psram_ ? 0 : RAMAllocator<rmt_symbol_word_t>::ALLOC_INTERNAL);
-  this->rmt_buf_ = rmt_allocator.allocate(
-      buffer_size * 8 + 1);  // 8 bits per byte, 1 rmt_symbol_word_t per bit + 1 rmt_symbol_word_t for reset
+
+  // 8 bits per byte, 1 rmt_symbol_word_t per bit + 1 rmt_symbol_word_t for reset
+  this->rmt_buf_ = rmt_allocator.allocate(buffer_size * 8 + 1);
 
   rmt_tx_channel_config_t channel{};
   memset(&channel, 0, sizeof(channel));

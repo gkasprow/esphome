@@ -146,7 +146,7 @@ async def to_code(config):
     cg.add(var.set_is_wrgb(config[CONF_IS_WRGB]))
     cg.add(var.set_use_psram(config[CONF_USE_PSRAM]))
 
-    if esp32_rmt.new_rmt_driver():
+    if esp32_rmt.use_new_rmt_driver():
         cg.add_define("USE_NEW_RMT_DRIVER")
     else:
         rmt_channel_t = cg.global_ns.enum("rmt_channel_t")

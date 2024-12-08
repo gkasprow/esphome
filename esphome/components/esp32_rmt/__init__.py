@@ -37,7 +37,7 @@ RMT_CHANNEL_ENUMS = {
 }
 
 
-def new_rmt_driver():
+def use_new_rmt_driver():
     framework_version = CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION]
     if CORE.using_esp_idf and framework_version >= cv.Version(5, 0, 0):
         return True
