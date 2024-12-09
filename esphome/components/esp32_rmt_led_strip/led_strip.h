@@ -10,11 +10,12 @@
 
 #include <driver/gpio.h>
 #include <esp_err.h>
+#include <esp_idf_version.h>
 
-#ifndef USE_NEW_RMT_DRIVER
-#include <driver/rmt.h>
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
 #include <driver/rmt_tx.h>
+#else
+#include <driver/rmt.h>
 #endif
 
 namespace esphome {
@@ -59,7 +60,7 @@ class ESP32RMTLEDStripLightOutput : public light::AddressableLight {
                       uint32_t reset_time_high, uint32_t reset_time_low);
 
   void set_rgb_order(RGBOrder rgb_order) { this->rgb_order_ = rgb_order; }
-#ifndef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR < 5
   void set_rmt_channel(rmt_channel_t channel) { this->channel_ = channel; }
 #endif
 
@@ -77,15 +78,15 @@ class ESP32RMTLEDStripLightOutput : public light::AddressableLight {
 
   uint8_t *buf_{nullptr};
   uint8_t *effect_data_{nullptr};
-#ifndef USE_NEW_RMT_DRIVER
-  rmt_item32_t *rmt_buf_{nullptr};
-  rmt_item32_t bit0_, bit1_, reset_;
-  rmt_channel_t channel_{RMT_CHANNEL_0};
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
   rmt_channel_handle_t channel_{nullptr};
   rmt_encoder_handle_t encoder_{nullptr};
   rmt_symbol_word_t *rmt_buf_{nullptr};
   rmt_symbol_word_t bit0_, bit1_, reset_;
+#else
+  rmt_item32_t *rmt_buf_{nullptr};
+  rmt_item32_t bit0_, bit1_, reset_;
+  rmt_channel_t channel_{RMT_CHANNEL_0};
 #endif
 
   uint8_t pin_;
