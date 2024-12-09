@@ -17,7 +17,7 @@ void RemoteTransmitterComponent::setup() {
 
 void RemoteTransmitterComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "Remote Transmitter...");
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   ESP_LOGCONFIG(TAG, "  One wire: %s", this->one_wire_ ? "true" : "false");
   ESP_LOGCONFIG(TAG, "  Clock resolution: %" PRIu32 " hz", this->clock_resolution_);
 #else
@@ -38,11 +38,11 @@ void RemoteTransmitterComponent::dump_config() {
 }
 
 void RemoteTransmitterComponent::configure_rmt_() {
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   esp_err_t error;
 
   if (!this->initialized_) {
-    rmt_tx_channel_config_t channel{};
+    rmt_tx_channel_config_t channel;
     memset(&channel, 0, sizeof(channel));
     channel.clk_src = RMT_CLK_SRC_DEFAULT;
     channel.resolution_hz = this->clock_resolution_;
@@ -62,7 +62,7 @@ void RemoteTransmitterComponent::configure_rmt_() {
       return;
     }
 
-    rmt_copy_encoder_config_t encoder{};
+    rmt_copy_encoder_config_t encoder;
     memset(&encoder, 0, sizeof(encoder));
     error = rmt_new_copy_encoder(&encoder, &this->encoder_);
     if (error != ESP_OK) {
@@ -82,7 +82,7 @@ void RemoteTransmitterComponent::configure_rmt_() {
     this->initialized_ = true;
   }
 
-  rmt_carrier_config_t carrier{};
+  rmt_carrier_config_t carrier;
   memset(&carrier, 0, sizeof(carrier));
   if (this->current_carrier_frequency_ == 0 || this->carrier_duty_percent_ == 100) {
     carrier.frequency_hz = 0;
@@ -101,7 +101,7 @@ void RemoteTransmitterComponent::configure_rmt_() {
     return;
   }
 #else
-  rmt_config_t c{};
+  rmt_config_t c;
 
   this->config_rmt(c);
   c.rmt_mode = RMT_MODE_TX;
@@ -163,7 +163,7 @@ void RemoteTransmitterComponent::send_internal(uint32_t send_times, uint32_t sen
   this->rmt_temp_.clear();
   this->rmt_temp_.reserve((this->temp_.get_data().size() + 1) / 2);
   uint32_t rmt_i = 0;
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   rmt_symbol_word_t rmt_item;
 #else
   rmt_item32_t rmt_item;
@@ -202,9 +202,9 @@ void RemoteTransmitterComponent::send_internal(uint32_t send_times, uint32_t sen
     return;
   }
   this->transmit_trigger_->trigger();
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   for (uint32_t i = 0; i < send_times; i++) {
-    rmt_transmit_config_t config{};
+    rmt_transmit_config_t config;
     memset(&config, 0, sizeof(config));
     config.loop_count = 0;
     config.flags.eot_level = this->inverted_;

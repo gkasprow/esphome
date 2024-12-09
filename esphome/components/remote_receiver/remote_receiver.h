@@ -5,7 +5,7 @@
 
 #include <cinttypes>
 
-#if defined(USE_ESP32) && defined(USE_NEW_RMT_DRIVER)
+#if defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR >= 5
 #include <driver/rmt_rx.h>
 #endif
 
@@ -29,7 +29,7 @@ struct RemoteReceiverComponentStore {
   uint32_t filter_us{10};
   ISRInternalGPIOPin pin;
 };
-#elif defined(USE_ESP32) && defined(USE_NEW_RMT_DRIVER)
+#elif defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR >= 5
 struct RemoteReceiverComponentStore {
   /// Stores RMT symbols and rx done event data
   volatile uint8_t *buffer{nullptr};
@@ -58,7 +58,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
 #ifdef USE_ESP32
   RemoteReceiverComponent(InternalGPIOPin *pin, uint8_t mem_block_num = 1)
       : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(mem_block_num) {}
-#ifndef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR < 5
   RemoteReceiverComponent(InternalGPIOPin *pin, rmt_channel_t channel, uint8_t mem_block_num = 1)
       : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(channel, mem_block_num) {}
 #endif
@@ -70,7 +70,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
   void loop() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
 
-#if defined(USE_ESP32) && defined(USE_NEW_RMT_DRIVER)
+#if defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR >= 5
   void set_min_length(uint32_t min_length) { this->min_length_ = min_length; }
   void set_max_length(uint32_t max_length) { this->max_length_ = max_length; }
   void set_with_dma(bool with_dma) { this->with_dma_ = with_dma; }
@@ -81,7 +81,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
 
  protected:
 #ifdef USE_ESP32
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   void decode_rmt_(rmt_symbol_word_t *item, size_t item_count);
   rmt_channel_handle_t channel_{NULL};
   uint32_t min_length_{0};
@@ -95,7 +95,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
   std::string error_string_{""};
 #endif
 
-#if defined(USE_ESP8266) || defined(USE_LIBRETINY) || (defined(USE_ESP32) && defined(USE_NEW_RMT_DRIVER))
+#if defined(USE_ESP8266) || defined(USE_LIBRETINY) || (defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR >= 5)
   RemoteReceiverComponentStore store_;
   HighFrequencyLoopRequester high_freq_;
 #endif

@@ -8,7 +8,7 @@
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
 
-#if defined(USE_ESP32) && !defined(USE_NEW_RMT_DRIVER)
+#if defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR < 5
 #include <driver/rmt.h>
 #endif
 
@@ -112,41 +112,41 @@ class RemoteComponentBase {
 #ifdef USE_ESP32
 class RemoteRMTChannel {
  public:
-#ifndef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
+  explicit RemoteRMTChannel(uint8_t mem_block_num = 1) : mem_block_num_(mem_block_num) {}
+
+  void set_clock_resolution(uint32_t clock_resolution) { this->clock_resolution_ = clock_resolution; }
+#else
   explicit RemoteRMTChannel(uint8_t mem_block_num = 1);
   explicit RemoteRMTChannel(rmt_channel_t channel, uint8_t mem_block_num = 1);
 
   void config_rmt(rmt_config_t &rmt);
   void set_clock_divider(uint8_t clock_divider) { this->clock_divider_ = clock_divider; }
-#else
-  explicit RemoteRMTChannel(uint8_t mem_block_num = 1) : mem_block_num_(mem_block_num) {}
-
-  void set_clock_resolution(uint32_t clock_resolution) { this->clock_resolution_ = clock_resolution; }
 #endif
 
  protected:
   uint32_t from_microseconds_(uint32_t us) {
-#ifndef USE_NEW_RMT_DRIVER
-    const uint32_t ticks_per_ten_us = 80000000u / this->clock_divider_ / 100000u;
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
     const uint32_t ticks_per_ten_us = this->clock_resolution_ / 100000u;
+#else
+    const uint32_t ticks_per_ten_us = 80000000u / this->clock_divider_ / 100000u;
 #endif
     return us * ticks_per_ten_us / 10;
   }
   uint32_t to_microseconds_(uint32_t ticks) {
-#ifndef USE_NEW_RMT_DRIVER
-    const uint32_t ticks_per_ten_us = 80000000u / this->clock_divider_ / 100000u;
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
     const uint32_t ticks_per_ten_us = this->clock_resolution_ / 100000u;
+#else
+    const uint32_t ticks_per_ten_us = 80000000u / this->clock_divider_ / 100000u;
 #endif
     return (ticks * 10) / ticks_per_ten_us;
   }
   RemoteComponentBase *remote_base_;
-#ifndef USE_NEW_RMT_DRIVER
-  rmt_channel_t channel_{RMT_CHANNEL_0};
-  uint8_t clock_divider_{80};
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
   uint32_t clock_resolution_{1000000};
+#else
+  uint8_t clock_divider_{80};
+  rmt_channel_t channel_{RMT_CHANNEL_0};
 #endif
   uint8_t mem_block_num_;
 };

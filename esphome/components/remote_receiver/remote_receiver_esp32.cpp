@@ -14,7 +14,7 @@ static const uint32_t RMT_CLK_FREQ = 80000000;
 #endif
 static const uint32_t RMT_MEM_BLOCK_SIZE = 64;
 
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
 static bool IRAM_ATTR HOT rmt_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *event, void *arg) {
   RemoteReceiverComponentStore *store = (RemoteReceiverComponentStore *) arg;
   rmt_rx_done_event_data_t *event_buffer = (rmt_rx_done_event_data_t *) (store->buffer + store->buffer_write);
@@ -40,9 +40,9 @@ static bool IRAM_ATTR HOT rmt_callback(rmt_channel_handle_t channel, const rmt_r
 #endif
 
 void RemoteReceiverComponent::setup() {
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   ESP_LOGCONFIG(TAG, "Setting up Remote Receiver...");
-  rmt_rx_channel_config_t channel{};
+  rmt_rx_channel_config_t channel;
   memset(&channel, 0, sizeof(channel));
   channel.clk_src = RMT_CLK_SRC_DEFAULT;
   channel.resolution_hz = this->clock_resolution_;
@@ -67,7 +67,7 @@ void RemoteReceiverComponent::setup() {
     return;
   }
 
-  rmt_rx_event_callbacks_t callbacks{};
+  rmt_rx_event_callbacks_t callbacks;
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.on_recv_done = rmt_callback;
   error = rmt_rx_register_event_callbacks(this->channel_, &callbacks, &this->store_);
@@ -103,7 +103,7 @@ void RemoteReceiverComponent::setup() {
 #else
   ESP_LOGCONFIG(TAG, "Setting up Remote Receiver...");
   this->pin_->setup();
-  rmt_config_t rmt{};
+  rmt_config_t rmt;
   this->config_rmt(rmt);
   rmt.gpio_num = gpio_num_t(this->pin_->get_pin());
   rmt.rmt_mode = RMT_MODE_RX;
@@ -160,11 +160,11 @@ void RemoteReceiverComponent::dump_config() {
     ESP_LOGW(TAG, "Remote Receiver Signal starts with a HIGH value. Usually this means you have to "
                   "invert the signal using 'inverted: True' in the pin schema!");
   }
-#ifndef USE_NEW_RMT_DRIVER
-  ESP_LOGCONFIG(TAG, "  Channel: %d", this->channel_);
-  ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
-#else
+#if ESP_IDF_VERSION_MAJOR >= 5
   ESP_LOGCONFIG(TAG, "  Clock resolution: %" PRIu32 " hz", this->clock_resolution_);
+#else
+  ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
+  ESP_LOGCONFIG(TAG, "  Channel: %d", this->channel_);
 #endif
   ESP_LOGCONFIG(TAG, "  RMT memory blocks: %d", this->mem_block_num_);
   ESP_LOGCONFIG(TAG, "  Tolerance: %" PRIu32 "%s", this->tolerance_,
@@ -178,7 +178,7 @@ void RemoteReceiverComponent::dump_config() {
 }
 
 void RemoteReceiverComponent::loop() {
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
   if (this->store_.error != ESP_OK) {
     ESP_LOGE(TAG, "RMT receive error!");
     this->error_code_ = this->store_.error;
@@ -220,7 +220,7 @@ void RemoteReceiverComponent::loop() {
 #endif
 }
 
-#ifdef USE_NEW_RMT_DRIVER
+#if ESP_IDF_VERSION_MAJOR >= 5
 void RemoteReceiverComponent::decode_rmt_(rmt_symbol_word_t *item, size_t item_count) {
 #else
 void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t item_count) {

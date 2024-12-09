@@ -47,7 +47,7 @@ void ESP32RMTLEDStripLightOutput::setup() {
   // 8 bits per byte, 1 rmt_symbol_word_t per bit + 1 rmt_symbol_word_t for reset
   this->rmt_buf_ = rmt_allocator.allocate(buffer_size * 8 + 1);
 
-  rmt_tx_channel_config_t channel{};
+  rmt_tx_channel_config_t channel;
   memset(&channel, 0, sizeof(channel));
   channel.clk_src = RMT_CLK_SRC_DEFAULT;
   channel.resolution_hz = RMT_CLK_FREQ / RMT_CLK_DIV;
@@ -65,7 +65,7 @@ void ESP32RMTLEDStripLightOutput::setup() {
     return;
   }
 
-  rmt_copy_encoder_config_t encoder{};
+  rmt_copy_encoder_config_t encoder;
   memset(&encoder, 0, sizeof(encoder));
   if (rmt_new_copy_encoder(&encoder, &this->encoder_) != ESP_OK) {
     ESP_LOGE(TAG, "Cannot create new RMT encoder!");
@@ -184,7 +184,7 @@ void ESP32RMTLEDStripLightOutput::write_state(light::LightState *state) {
   }
 
 #if ESP_IDF_VERSION_MAJOR >= 5
-  rmt_transmit_config_t config{};
+  rmt_transmit_config_t config;
   memset(&config, 0, sizeof(config));
   config.loop_count = 0;
   config.flags.eot_level = 0;
