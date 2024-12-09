@@ -1,5 +1,4 @@
 #include "adc_sensor.h"
-#include "esphome/core/log.h"
 
 namespace esphome {
 namespace adc {

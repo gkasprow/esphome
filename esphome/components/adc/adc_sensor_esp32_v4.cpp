@@ -1,12 +1,13 @@
 #ifdef USE_ESP32
 
 #include "adc_sensor.h"
-#include "esphome/core/log.h"
+
+#if (ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0))
 
 namespace esphome {
 namespace adc {
 
-static const char *const TAG = "adc.esp32";
+static const char *const TAG = "adc.esp32.v4";
 
 static const adc_bits_width_t ADC_WIDTH_MAX_SOC_BITS = static_cast<adc_bits_width_t>(ADC_WIDTH_MAX - 1);
 
@@ -73,7 +74,7 @@ void ADCSensor::dump_config() {
       case ADC_ATTEN_DB_12_COMPAT:
         ESP_LOGCONFIG(TAG, "  Attenuation: 12db");
         break;
-      default:  // This is to satisfy the unused ADC_ATTEN_MAX
+      default:
         break;
     }
   }
@@ -159,5 +160,7 @@ float ADCSensor::sample() {
 
 }  // namespace adc
 }  // namespace esphome
+
+#endif  // ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
 
 #endif  // USE_ESP32
