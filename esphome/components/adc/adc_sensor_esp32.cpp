@@ -96,7 +96,7 @@ float ADCSensor::sample() {
       }
       sum += raw;
     }
-    sum = (sum + (this->sample_count_ >> 1)) / this->sample_count_;
+    sum = (sum + (this->sample_count_ >> 1)) / this->sample_count_;  // NOLINT(clang-analyzer-core.DivideZero)
     if (this->output_raw_) {
       return sum;
     }
