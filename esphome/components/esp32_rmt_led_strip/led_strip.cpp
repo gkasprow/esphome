@@ -54,8 +54,8 @@ void ESP32RMTLEDStripLightOutput::setup() {
   channel.gpio_num = gpio_num_t(this->pin_);
   channel.mem_block_symbols = 64;
   channel.trans_queue_depth = 1;
-  channel.flags.io_loop_back = 1;
-  channel.flags.io_od_mode = 1;
+  channel.flags.io_loop_back = 0;
+  channel.flags.io_od_mode = 0;
   channel.flags.invert_out = 0;
   channel.flags.with_dma = 0;
   channel.intr_priority = 0;
