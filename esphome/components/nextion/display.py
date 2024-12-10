@@ -86,7 +86,9 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_AUTO_WAKE_ON_TOUCH, default=True): cv.boolean,
             cv.Optional(CONF_EXIT_REPARSE_ON_START, default=False): cv.boolean,
             cv.Optional(CONF_SKIP_CONNECTION_HANDSHAKE, default=False): cv.boolean,
-            cv.Optional(CONF_COMMAND_SPACING, default="0ms"): cv.positive_time_period_milliseconds,
+            cv.Optional(
+                CONF_COMMAND_SPACING, default="0ms"
+            ): cv.positive_time_period_milliseconds,
         }
     )
     .extend(cv.polling_component_schema("5s"))
