@@ -318,6 +318,11 @@ bool Nextion::remove_from_q_(bool report_empty) {
   }
 
   NextionQueue *nb = this->nextion_queue_.front();
+  if (!nb || !nb->component) {
+    ESP_LOGE(TAG, "Invalid queue entry!");
+    this->nextion_queue_.pop_front();
+    return false;
+  }
   NextionComponentBase *component = nb->component;
 
   ESP_LOGN(TAG, "Removing %s from the queue", component->get_variable_name().c_str());
@@ -530,6 +535,11 @@ void Nextion::process_nextion_commands_() {
         }
 
         NextionQueue *nb = this->nextion_queue_.front();
+        if (!nb || !nb->component) {
+          ESP_LOGE(TAG, "Invalid queue entry!");
+          this->nextion_queue_.pop_front();
+          return;
+        }
         NextionComponentBase *component = nb->component;
 
         if (component->get_queue_type() != NextionQueueType::TEXT_SENSOR) {
@@ -570,6 +580,11 @@ void Nextion::process_nextion_commands_() {
         }
 
         NextionQueue *nb = this->nextion_queue_.front();
+        if (!nb || !nb->component) {
+          ESP_LOGE(TAG, "Invalid queue entry!");
+          this->nextion_queue_.pop_front();
+          return;
+        }
         NextionComponentBase *component = nb->component;
 
         if (component->get_queue_type() != NextionQueueType::SENSOR &&
