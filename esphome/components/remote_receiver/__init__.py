@@ -1,6 +1,6 @@
 from esphome import pins
 import esphome.codegen as cg
-from esphome.components import esp32_rmt, remote_base
+from esphome.components import esp32, esp32_rmt, remote_base
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_BUFFER_SIZE,
@@ -165,6 +165,9 @@ async def to_code(config):
                 cg.add(var.set_max_length(config[CONF_MAX_LENGTH]))
             if CONF_WITH_DMA in config:
                 cg.add(var.set_with_dma(config[CONF_WITH_DMA]))
+            if CORE.using_esp_idf:
+                esp32.add_idf_sdkconfig_option("CONFIG_RMT_RECV_FUNC_IN_IRAM", True)
+                esp32.add_idf_sdkconfig_option("CONFIG_RMT_ISR_IRAM_SAFE", True)
     else:
         var = cg.new_Pvariable(config[CONF_ID], pin)
 
