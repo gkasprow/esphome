@@ -1,6 +1,7 @@
 #ifdef USE_RP2040
 
 #include "adc_sensor.h"
+#include "esphome/core/log.h"
 
 #ifdef CYW43_USES_VSYS_PIN
 #include "pico/cyw43_arch.h"
