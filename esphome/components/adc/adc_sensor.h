@@ -22,6 +22,36 @@ namespace esphome {
 namespace adc {
 
 #ifdef USE_ESP32
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+// Map legacy types to new ones for v5
+typedef adc_channel_t adc1_channel_t;
+typedef adc_channel_t adc2_channel_t;
+
+// ADC1 channel mapping
+inline constexpr adc_channel_t ADC1_CHANNEL_0 = ADC_CHANNEL_0;
+inline constexpr adc_channel_t ADC1_CHANNEL_1 = ADC_CHANNEL_1;
+inline constexpr adc_channel_t ADC1_CHANNEL_2 = ADC_CHANNEL_2;
+inline constexpr adc_channel_t ADC1_CHANNEL_3 = ADC_CHANNEL_3;
+inline constexpr adc_channel_t ADC1_CHANNEL_4 = ADC_CHANNEL_4;
+inline constexpr adc_channel_t ADC1_CHANNEL_5 = ADC_CHANNEL_5;
+inline constexpr adc_channel_t ADC1_CHANNEL_6 = ADC_CHANNEL_6;
+inline constexpr adc_channel_t ADC1_CHANNEL_7 = ADC_CHANNEL_7;
+inline constexpr adc_channel_t ADC1_CHANNEL_MAX = ADC_CHANNEL_MAX;
+
+// ADC2 channel mapping
+inline constexpr adc_channel_t ADC2_CHANNEL_0 = ADC_CHANNEL_0;
+inline constexpr adc_channel_t ADC2_CHANNEL_1 = ADC_CHANNEL_1;
+inline constexpr adc_channel_t ADC2_CHANNEL_2 = ADC_CHANNEL_2;
+inline constexpr adc_channel_t ADC2_CHANNEL_3 = ADC_CHANNEL_3;
+inline constexpr adc_channel_t ADC2_CHANNEL_4 = ADC_CHANNEL_4;
+inline constexpr adc_channel_t ADC2_CHANNEL_5 = ADC_CHANNEL_5;
+inline constexpr adc_channel_t ADC2_CHANNEL_6 = ADC_CHANNEL_6;
+inline constexpr adc_channel_t ADC2_CHANNEL_7 = ADC_CHANNEL_7;
+inline constexpr adc_channel_t ADC2_CHANNEL_8 = ADC_CHANNEL_8;
+inline constexpr adc_channel_t ADC2_CHANNEL_9 = ADC_CHANNEL_9;
+inline constexpr adc_channel_t ADC2_CHANNEL_MAX = ADC_CHANNEL_MAX;
+#endif  // ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+
 // clang-format off
 #if (ESP_IDF_VERSION_MAJOR == 4 && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 7)) || \
     (ESP_IDF_VERSION_MAJOR == 5 && \
@@ -87,7 +117,7 @@ class ADCSensor : public sensor::Sensor, public PollingComponent, public voltage
   /// Configure the ADC to use a specific channel on ADC1.
   /// This sets the channel for single-shot or continuous ADC measurements.
   /// @param channel The ADC1 channel to configure, such as ADC_CHANNEL_0, ADC_CHANNEL_3, etc.
-  void set_channel1(adc_channel_t channel) {
+  void set_channel1(adc1_channel_t channel) {
     this->channel_ = channel;
     this->is_adc1_ = true;
     this->do_setup_ = true;
@@ -97,7 +127,7 @@ class ADCSensor : public sensor::Sensor, public PollingComponent, public voltage
   /// This sets the channel for single-shot or continuous ADC measurements.
   /// ADC2 is shared with other peripherals, so care must be taken to avoid conflicts.
   /// @param channel The ADC2 channel to configure, such as ADC_CHANNEL_0, ADC_CHANNEL_3, etc.
-  void set_channel2(adc_channel_t channel) {
+  void set_channel2(adc2_channel_t channel) {
     this->channel_ = channel;
     this->is_adc1_ = false;
     this->do_setup_ = true;
