@@ -82,18 +82,20 @@ void RemoteTransmitterComponent::configure_rmt_() {
     this->initialized_ = true;
   }
 
-  rmt_carrier_config_t carrier;
-  memset(&carrier, 0, sizeof(carrier));
+  ESP_LOGCONFIG(TAG, "    Carrier Duty: %u%%", this->carrier_duty_percent_);
+  ESP_LOGCONFIG(TAG, "    Carrier Freq: %" PRIu32 " hz", this->current_carrier_frequency_);
+
   if (this->current_carrier_frequency_ == 0 || this->carrier_duty_percent_ == 100) {
-    carrier.frequency_hz = 0;
-    carrier.duty_cycle = 100;
+    error = rmt_apply_carrier(this->channel_, nullptr);
   } else {
+    rmt_carrier_config_t carrier;
+    memset(&carrier, 0, sizeof(carrier));
     carrier.frequency_hz = this->current_carrier_frequency_;
-    carrier.duty_cycle = this->carrier_duty_percent_;
+    carrier.duty_cycle = (float) this->carrier_duty_percent_ / 100.0f;
+    carrier.flags.polarity_active_low = this->inverted_;
+    carrier.flags.always_on = 1;
+    error = rmt_apply_carrier(this->channel_, &carrier);
   }
-  carrier.flags.polarity_active_low = this->inverted_;
-  carrier.flags.always_on = 0;
-  error = rmt_apply_carrier(this->channel_, &carrier);
   if (error != ESP_OK) {
     this->error_code_ = error;
     this->error_string_ = "in rmt_apply_carrier";
