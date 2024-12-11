@@ -8,7 +8,7 @@
 namespace esphome {
 namespace adc {
 
-static const char *const TAG = "adc.esp32.v4";
+static const char *const TAG = "adc.esp32";
 
 static const adc_bits_width_t ADC_WIDTH_MAX_SOC_BITS = static_cast<adc_bits_width_t>(ADC_WIDTH_MAX - 1);
 
@@ -75,7 +75,7 @@ void ADCSensor::dump_config() {
       case ADC_ATTEN_DB_12_COMPAT:
         ESP_LOGCONFIG(TAG, "  Attenuation: 12db");
         break;
-      default:
+      default:  // This is to satisfy the unused ADC_ATTEN_MAX
         break;
     }
   }

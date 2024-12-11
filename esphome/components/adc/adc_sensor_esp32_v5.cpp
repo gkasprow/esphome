@@ -8,7 +8,7 @@
 namespace esphome {
 namespace adc {
 
-static const char *const TAG = "adc.esp32.v5";
+static const char *const TAG = "adc.esp32";
 
 void ADCSensor::setup() {
   ESP_LOGCONFIG(TAG, "Setting up ADC '%s'...", this->get_name().c_str());
