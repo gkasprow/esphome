@@ -66,7 +66,7 @@ CONF_RESET_LOW = "reset_low"
 
 def final_validation(config):
     if not esp32_rmt.use_new_rmt_driver() and CONF_RMT_CHANNEL not in config:
-        raise cv.Invalid("rmt_channel is a required option for the arduino framework.")
+        raise cv.Invalid("rmt_channel is a required option.")
 
 
 FINAL_VALIDATE_SCHEMA = final_validation
