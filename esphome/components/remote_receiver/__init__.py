@@ -127,12 +127,12 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
                 cv.positive_time_period_microseconds,
                 cv.Range(max=TimePeriod(microseconds=4294967295)),
             ),
-            cv.Optional(CONF_FILTER_SYMBOLS): cv.Range(min=0),
-            cv.Optional(CONF_RECEIVE_SYMBOLS): cv.Range(min=0),
-            cv.Optional(CONF_WITH_DMA): cv.boolean,
             cv.SplitDefault(CONF_MEMORY_BLOCKS, esp32_arduino=3): cv.Range(
                 min=1, max=8
             ),
+            cv.Optional(CONF_FILTER_SYMBOLS): cv.Range(min=0),
+            cv.Optional(CONF_RECEIVE_SYMBOLS): cv.Range(min=0),
+            cv.Optional(CONF_WITH_DMA): cv.boolean,
             cv.Optional(CONF_RMT_CHANNEL): esp32_rmt.validate_rmt_channel(tx=False),
             cv.SplitDefault(
                 CONF_RMT_SYMBOLS,

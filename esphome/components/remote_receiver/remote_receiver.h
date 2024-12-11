@@ -58,6 +58,7 @@ class RemoteReceiverComponent : public remote_base::RemoteReceiverBase,
 #if defined(USE_ESP32) && ESP_IDF_VERSION_MAJOR < 5
   RemoteReceiverComponent(InternalGPIOPin *pin, uint8_t mem_block_num = 1)
       : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(mem_block_num) {}
+
   RemoteReceiverComponent(InternalGPIOPin *pin, rmt_channel_t channel, uint8_t mem_block_num = 1)
       : RemoteReceiverBase(pin), remote_base::RemoteRMTChannel(channel, mem_block_num) {}
 #else
