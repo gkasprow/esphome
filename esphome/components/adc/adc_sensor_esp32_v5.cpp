@@ -71,14 +71,14 @@ void ADCSensor::setup() {
       this->calibration_handle_ = handle;
       ESP_LOGV(TAG, "Using curve fitting calibration");
     }
-#else   // USE_ESP32_VARIANT_ESP32C3 || ESP32C6 || ESP32S3 || ESP32H2
+#else  // USE_ESP32_VARIANT_ESP32C3 || ESP32C6 || ESP32S3 || ESP32H2
     // Other ESP32 variants use line fitting calibration
     adc_cali_line_fitting_config_t cali_config = {
-        .unit_id = unit_id,
-        .atten = this->attenuation_,
-        .bitwidth = ADC_BITWIDTH_DEFAULT,
+      .unit_id = unit_id,
+      .atten = this->attenuation_,
+      .bitwidth = ADC_BITWIDTH_DEFAULT,
 #if !defined(USE_ESP32_VARIANT_ESP32S2)
-        .default_vref = 1100,  // Initialize default_vref to 1100mV
+      .default_vref = 1100,  // Initialize default_vref to 1100mV
 #endif  // not USE_ESP32_VARIANT_ESP32S2
     };
     if (adc_cali_create_scheme_line_fitting(&cali_config, &handle) == ESP_OK) {
