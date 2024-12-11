@@ -117,11 +117,11 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
                 cv.positive_time_period_microseconds,
                 cv.Range(max=TimePeriod(microseconds=4294967295)),
             ),
+            cv.SplitDefault(CONF_CLOCK_DIVIDER, esp32_arduino=80): cv.All(
+                cv.only_on_esp32, cv.Range(min=1, max=255)
+            ),
             cv.Optional(CONF_CLOCK_RESOLUTION): cv.All(
                 cv.only_on_esp32, esp32_rmt.validate_clock_resolution()
-            ),
-            cv.Optional(CONF_CLOCK_DIVIDER): cv.All(
-                cv.only_on_esp32, cv.Range(min=1, max=255)
             ),
             cv.Optional(CONF_IDLE, default="10ms"): cv.All(
                 cv.positive_time_period_microseconds,
@@ -166,15 +166,13 @@ async def to_code(config):
                 esp32.add_idf_sdkconfig_option("CONFIG_RMT_RECV_FUNC_IN_IRAM", True)
                 esp32.add_idf_sdkconfig_option("CONFIG_RMT_ISR_IRAM_SAFE", True)
         else:
-            rmt_channel = config.get(CONF_RMT_CHANNEL, None)
-            if rmt_channel is not None:
+            if (rmt_channel := config.get(CONF_RMT_CHANNEL, None)) is not None:
                 var = cg.new_Pvariable(
                     config[CONF_ID], pin, rmt_channel, config[CONF_MEMORY_BLOCKS]
                 )
             else:
                 var = cg.new_Pvariable(config[CONF_ID], pin, config[CONF_MEMORY_BLOCKS])
-            if CONF_CLOCK_DIVIDER in config:
-                cg.add(var.set_clock_divider(config[CONF_CLOCK_DIVIDER]))
+            cg.add(var.set_clock_divider(config[CONF_CLOCK_DIVIDER]))
     else:
         var = cg.new_Pvariable(config[CONF_ID], pin)
 

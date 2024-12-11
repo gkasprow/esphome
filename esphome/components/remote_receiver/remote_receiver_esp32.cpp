@@ -98,7 +98,7 @@ void RemoteReceiverComponent::setup() {
 #else
   ESP_LOGCONFIG(TAG, "Setting up Remote Receiver...");
   this->pin_->setup();
-  rmt_config_t rmt;
+  rmt_config_t rmt{};
   this->config_rmt(rmt);
   rmt.gpio_num = gpio_num_t(this->pin_->get_pin());
   rmt.rmt_mode = RMT_MODE_RX;
@@ -161,9 +161,9 @@ void RemoteReceiverComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "  Filter symbols: %" PRIu32, this->filter_symbols_);
   ESP_LOGCONFIG(TAG, "  Receive symbols: %" PRIu32, this->receive_symbols_);
 #else
-  ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
   ESP_LOGCONFIG(TAG, "  Channel: %d", this->channel_);
   ESP_LOGCONFIG(TAG, "  RMT memory blocks: %d", this->mem_block_num_);
+  ESP_LOGCONFIG(TAG, "  Clock divider: %u", this->clock_divider_);
 #endif
   ESP_LOGCONFIG(TAG, "  Tolerance: %" PRIu32 "%s", this->tolerance_,
                 (this->tolerance_mode_ == remote_base::TOLERANCE_MODE_TIME) ? " us" : "%");

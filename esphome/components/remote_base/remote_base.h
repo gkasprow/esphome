@@ -145,9 +145,9 @@ class RemoteRMTChannel {
   uint32_t clock_resolution_{1000000};
   uint32_t rmt_symbols_;
 #else
-  uint8_t clock_divider_{80};
   rmt_channel_t channel_{RMT_CHANNEL_0};
   uint8_t mem_block_num_;
+  uint8_t clock_divider_{80};
 #endif
 };
 #endif

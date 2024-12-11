@@ -26,7 +26,7 @@ class RemoteTransmitterComponent : public remote_base::RemoteTransmitterBase,
   RemoteTransmitterComponent(InternalGPIOPin *pin, rmt_channel_t channel, uint8_t mem_block_num = 1)
       : remote_base::RemoteTransmitterBase(pin), remote_base::RemoteRMTChannel(channel, mem_block_num) {}
 #else
-  RemoteTransmitterComponent(InternalGPIOPin *pin) : remote_base::RemoteTransmitterBase(pin) {}
+  explicit RemoteTransmitterComponent(InternalGPIOPin *pin) : remote_base::RemoteTransmitterBase(pin) {}
 #endif
   void setup() override;
 

@@ -73,8 +73,7 @@ async def to_code(config):
             if CONF_ONE_WIRE in config:
                 cg.add(var.set_one_wire(config[CONF_ONE_WIRE]))
         else:
-            rmt_channel = config.get(CONF_RMT_CHANNEL, None)
-            if rmt_channel is not None:
+            if (rmt_channel := config.get(CONF_RMT_CHANNEL, None)) is not None:
                 var = cg.new_Pvariable(config[CONF_ID], pin, rmt_channel)
             else:
                 var = cg.new_Pvariable(config[CONF_ID], pin)
