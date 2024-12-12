@@ -15,7 +15,7 @@ void RemoteTransmitterComponent::setup() {
 }
 
 void RemoteTransmitterComponent::dump_config() {
-  ESP_LOGCONFIG(TAG, "Remote Transmitter...");
+  ESP_LOGCONFIG(TAG, "Remote Transmitter:");
 #if ESP_IDF_VERSION_MAJOR >= 5
   ESP_LOGCONFIG(TAG, "  One wire: %s", this->one_wire_ ? "true" : "false");
   ESP_LOGCONFIG(TAG, "  Clock resolution: %" PRIu32 " hz", this->clock_resolution_);

@@ -60,7 +60,7 @@ void ESP32RMTLEDStripLightOutput::setup() {
   channel.flags.with_dma = 0;
   channel.intr_priority = 0;
   if (rmt_new_tx_channel(&channel, &this->channel_) != ESP_OK) {
-    ESP_LOGE(TAG, "Cannot create new RMT channel!");
+    ESP_LOGE(TAG, "Channel creation failed");
     this->mark_failed();
     return;
   }
@@ -68,13 +68,13 @@ void ESP32RMTLEDStripLightOutput::setup() {
   rmt_copy_encoder_config_t encoder;
   memset(&encoder, 0, sizeof(encoder));
   if (rmt_new_copy_encoder(&encoder, &this->encoder_) != ESP_OK) {
-    ESP_LOGE(TAG, "Cannot create new RMT encoder!");
+    ESP_LOGE(TAG, "Encoder creation failed");
     this->mark_failed();
     return;
   }
 
   if (rmt_enable(this->channel_) != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to enable RMT channel!");
+    ESP_LOGE(TAG, "Enabling channel failed");
     this->mark_failed();
     return;
   }

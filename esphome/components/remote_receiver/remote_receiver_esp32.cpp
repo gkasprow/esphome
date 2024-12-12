@@ -182,13 +182,13 @@ void RemoteReceiverComponent::dump_config() {
 void RemoteReceiverComponent::loop() {
 #if ESP_IDF_VERSION_MAJOR >= 5
   if (this->store_.error != ESP_OK) {
-    ESP_LOGE(TAG, "RMT receive error!");
+    ESP_LOGE(TAG, "Receive error");
     this->error_code_ = this->store_.error;
     this->error_string_ = "in rmt_callback";
     this->mark_failed();
   }
   if (this->store_.overflow) {
-    ESP_LOGW(TAG, "RMT buffer overflow!");
+    ESP_LOGW(TAG, "Buffer overflow");
     this->store_.overflow = false;
   }
   uint32_t buffer_write = this->store_.buffer_write;
