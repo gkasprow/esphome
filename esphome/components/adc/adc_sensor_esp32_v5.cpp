@@ -86,7 +86,7 @@ void ADCSensor::setup() {
     cali_config.unit_id = unit_id;
     cali_config.atten = this->attenuation_;
     cali_config.bitwidth = ADC_BITWIDTH_DEFAULT;
-    
+
     err = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
     if (err == ESP_OK) {
       this->calibration_handle_ = handle;
@@ -151,7 +151,7 @@ float ADCSensor::sample() {
     for (uint8_t sample = 0; sample < this->sample_count_; sample++) {
       int raw;
       esp_err_t err;
-      
+
       if (this->is_adc1_) {
         err = adc_oneshot_read(this->adc1_handle_, this->channel_, &raw);
       } else {
@@ -200,7 +200,7 @@ float ADCSensor::sample() {
         }
       }
     }
-    
+
     return sum * 3.3f / 4095.0f;
 
   } else {
@@ -215,7 +215,7 @@ float ADCSensor::sample() {
           ESP_LOGW(TAG, "Error configuring ADC1 channel for autorange: %d", err);
           return {-1, 0.0f};
         }
-        
+
         int raw;
         err = adc_oneshot_read(this->adc1_handle_, this->channel_, &raw);
         if (err != ESP_OK) {
@@ -242,7 +242,7 @@ float ADCSensor::sample() {
           ESP_LOGW(TAG, "Error configuring ADC2 channel for autorange: %d", err);
           return {-1, 0.0f};
         }
-        
+
         int raw;
         err = adc_oneshot_read(this->adc2_handle_, this->channel_, &raw);
         if (err != ESP_OK) {
