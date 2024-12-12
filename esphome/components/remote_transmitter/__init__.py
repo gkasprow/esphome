@@ -43,9 +43,13 @@ CONFIG_SCHEMA = cv.Schema(
         ),
         cv.Optional(CONF_ONE_WIRE): cv.All(cv.only_with_esp_idf, cv.boolean),
         cv.Optional(CONF_USE_DMA): cv.All(cv.only_with_esp_idf, cv.boolean),
-        cv.SplitDefault(CONF_RMT_SYMBOLS, esp32_idf=64): cv.All(
-            cv.only_with_esp_idf, cv.int_range(min=2)
-        ),
+        cv.SplitDefault(
+            CONF_RMT_SYMBOLS,
+            esp32_idf=64,
+            esp32_s2_idf=64,
+            esp32_s3_idf=48,
+            esp32_c3_idf=48,
+        ): cv.All(cv.only_with_esp_idf, cv.int_range(min=2)),
         cv.Optional(CONF_RMT_CHANNEL): cv.All(
             cv.only_with_arduino, esp32_rmt.validate_rmt_channel(tx=True)
         ),

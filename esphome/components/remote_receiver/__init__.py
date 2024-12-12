@@ -126,8 +126,8 @@ CONFIG_SCHEMA = remote_base.validate_triggers(
             cv.SplitDefault(
                 CONF_RMT_SYMBOLS,
                 esp32_idf=192,
+                esp32_s2_idf=192,
                 esp32_s3_idf=192,
-                esp32_s2_idf=128,
                 esp32_c3_idf=96,
             ): cv.All(cv.only_with_esp_idf, cv.int_range(min=2)),
             cv.Optional(CONF_FILTER_SYMBOLS): cv.All(

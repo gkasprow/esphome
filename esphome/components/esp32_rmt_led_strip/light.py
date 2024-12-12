@@ -81,9 +81,13 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_RMT_CHANNEL): cv.All(
                 cv.only_with_arduino, esp32_rmt.validate_rmt_channel(tx=True)
             ),
-            cv.SplitDefault(CONF_RMT_SYMBOLS, esp32_idf=64): cv.All(
-                cv.only_with_esp_idf, cv.Range(min=2)
-            ),
+            cv.SplitDefault(
+                CONF_RMT_SYMBOLS,
+                esp32_idf=64,
+                esp32_s2_idf=64,
+                esp32_s3_idf=48,
+                esp32_c3_idf=48,
+            ): cv.All(cv.only_with_esp_idf, cv.int_range(min=2)),
             cv.Optional(CONF_MAX_REFRESH_RATE): cv.positive_time_period_microseconds,
             cv.Optional(CONF_CHIPSET): cv.one_of(*CHIPSETS, upper=True),
             cv.Optional(CONF_IS_RGBW, default=False): cv.boolean,
