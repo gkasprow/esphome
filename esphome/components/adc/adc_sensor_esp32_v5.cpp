@@ -34,8 +34,8 @@ void ADCSensor::setup() {
     }
 
     adc_oneshot_chan_cfg_t config = {
-      .atten = this->attenuation_,
-      .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .atten = this->attenuation_,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
     esp_err_t err = adc_oneshot_config_channel(this->adc1_handle_, this->channel_, &config);
     if (err != ESP_OK) {
@@ -61,8 +61,8 @@ void ADCSensor::setup() {
     }
 
     adc_oneshot_chan_cfg_t config = {
-      .atten = this->attenuation_,
-      .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .atten = this->attenuation_,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
     esp_err_t err = adc_oneshot_config_channel(this->adc2_handle_, this->channel_, &config);
     if (err != ESP_OK) {
@@ -96,11 +96,11 @@ void ADCSensor::setup() {
     }
 #else  // Other ESP32 variants use line fitting calibration
     adc_cali_line_fitting_config_t cali_config = {
-      .unit_id = unit_id,
-      .atten = this->attenuation_,
-      .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .unit_id = unit_id,
+        .atten = this->attenuation_,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
 #if !defined(USE_ESP32_VARIANT_ESP32S2)
-      .default_vref = 1100,  // Default reference voltage in mV
+        .default_vref = 1100,  // Default reference voltage in mV
 #endif  // !defined(USE_ESP32_VARIANT_ESP32S2)
     };
     err = adc_cali_create_scheme_line_fitting(&cali_config, &handle);
@@ -207,8 +207,8 @@ float ADCSensor::sample() {
     auto read_atten = [this](adc_atten_t atten) -> std::pair<int, float> {
       if (this->is_adc1_) {
         adc_oneshot_chan_cfg_t config = {
-          .atten = atten,
-          .bitwidth = ADC_BITWIDTH_DEFAULT,
+            .atten = atten,
+            .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         esp_err_t err = adc_oneshot_config_channel(this->adc1_handle_, this->channel_, &config);
         if (err != ESP_OK) {
@@ -234,8 +234,8 @@ float ADCSensor::sample() {
         return {raw, raw * 3.3f / 4095.0f};
       } else {
         adc_oneshot_chan_cfg_t config = {
-          .atten = atten,
-          .bitwidth = ADC_BITWIDTH_DEFAULT,
+            .atten = atten,
+            .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         esp_err_t err = adc_oneshot_config_channel(this->adc2_handle_, this->channel_, &config);
         if (err != ESP_OK) {
