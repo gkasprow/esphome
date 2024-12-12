@@ -112,12 +112,12 @@ void ADCSensor::setup() {
     // RISC-V variants and S3 use curve fitting calibration
     adc_cali_curve_fitting_config_t cali_config = {};  // Zero initialize first
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
-    cali_config.chan = this->channel_;  // Set chan first as it's the first field in v5.3+
+    cali_config.chan = this->channel_;
 #endif  // ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
     cali_config.unit_id = unit_id;
     cali_config.atten = this->attenuation_;
     cali_config.bitwidth = ADC_BITWIDTH_DEFAULT;
-    
+
     err = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
     if (err == ESP_OK) {
       this->calibration_handle_ = handle;
