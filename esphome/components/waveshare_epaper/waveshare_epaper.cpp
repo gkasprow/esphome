@@ -1645,7 +1645,7 @@ void HOT GDEY029T94::display() {
   this->command(0x24);  // write RAM for black(0)/white (1)
   this->start_data_();
   for (uint32_t i = 0; i < this->get_buffer_length_(); i++) {
-    this->data(this->buffer_[i]);
+    this->write_byte(this->buffer_[i]);
   }
   this->end_data_();
   this->command(0x22);  // Display Update Control
