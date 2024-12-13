@@ -1637,20 +1637,17 @@ void GDEY029T94::initialize() {
   this->command(0x4E);  // set RAM x address count to 0;
   this->data(0x00);
   this->command(0x4F);  // set RAM y address count to 0X199;
-  this->data(0x00);
-  this->data(0x00);
+  this->command((this->get_height_internal() - 1) % 256);
+  this->command((this->get_height_internal() - 1) / 256);
   this->wait_until_idle_();
 }
 void HOT GDEY029T94::display() {
   this->command(0x24);  // write RAM for black(0)/white (1)
-  delay(2);
   this->start_data_();
   for (size_t i = 0; i < this->get_buffer_length_(); i++) {
     this->write_byte(this->buffer_[i]);
   }
   this->end_data_();
-  delay(2);
-
   this->command(0x22);  // Display Update Control
   this->data(0xF7);
   this->command(0x20);  // Activate Display Update Sequence
