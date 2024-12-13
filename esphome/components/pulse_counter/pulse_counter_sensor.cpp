@@ -28,18 +28,14 @@ void IRAM_ATTR BasicPulseCounterStorage::gpio_intr(BasicPulseCounterStorage *arg
   switch (mode) {
     case PULSE_COUNTER_DISABLE:
       break;
-    case PULSE_COUNTER_INCREMENT:
-      {
-        auto x = arg->counter + 1;
-        arg->counter = x;
-      }
-      break;
-    case PULSE_COUNTER_DECREMENT:
-      {
-        auto x = arg->counter - 1;
-        arg->counter = x;
-      }
-      break;
+    case PULSE_COUNTER_INCREMENT: {
+      auto x = arg->counter + 1;
+      arg->counter = x;
+    } break;
+    case PULSE_COUNTER_DECREMENT: {
+      auto x = arg->counter - 1;
+      arg->counter = x;
+    } break;
   }
 }
 
@@ -52,7 +48,6 @@ bool BasicPulseCounterStorage::pulse_counter_setup(InternalGPIOPin *pin) {
 }
 
 pulse_counter_t BasicPulseCounterStorage::read_raw_value() {
-  esphome::InterruptLock lock;
   pulse_counter_t counter = this->counter;
   pulse_counter_t ret = counter - this->last_value;
   this->last_value = counter;
