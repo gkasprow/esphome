@@ -13,25 +13,25 @@ PulseCounterStorageBase *get_storage(bool hw_pcnt) {
   return (hw_pcnt ? (PulseCounterStorageBase *) (new HwPulseCounterStorage)
                   : (PulseCounterStorageBase *) (new BasicPulseCounterStorage));
 }
-#else  // HAS_PCNT
+#else   // HAS_PCNT
 PulseCounterStorageBase *get_storage(bool) { return new BasicPulseCounterStorage; }
 #endif  // HAS_PCNT
 
 void IRAM_ATTR BasicPulseCounterStorage::gpio_intr(BasicPulseCounterStorage *arg) {
   const uint32_t now = micros();
   bool skip_pulse;
-  
+
   {
     esphome::InterruptLock lock;
     skip_pulse = (now - arg->last_pulse < arg->filter_us);
     arg->last_pulse = now;
   }
-  
+
   if (skip_pulse)
     return;
 
   PulseCounterCountMode mode = arg->isr_pin.digital_read() ? arg->rising_edge_mode : arg->falling_edge_mode;
-  
+
   {
     esphome::InterruptLock lock;
     switch (mode) {

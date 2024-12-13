@@ -22,7 +22,7 @@ enum PulseCounterCountMode {
 
 #ifdef HAS_PCNT
 using pulse_counter_t = int16_t;
-#else  // HAS_PCNT
+#else   // HAS_PCNT
 using pulse_counter_t = int32_t;
 #endif  // HAS_PCNT
 
