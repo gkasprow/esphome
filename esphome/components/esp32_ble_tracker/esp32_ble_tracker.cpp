@@ -106,6 +106,7 @@ void ESP32BLETracker::loop() {
         break;
     }
   }
+  ESP_LOGV(TAG, "connecting: %d, discovered %d, searching %d, disconnecting %d", connecting, discovered, searching, disconnecting);
   bool promote_to_connecting = discovered && !searching && !connecting;
 
   if (!this->scanner_idle_) {
@@ -372,6 +373,7 @@ void ESP32BLETracker::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_ga
 }
 
 void ESP32BLETracker::gap_scan_set_param_complete_(const esp_ble_gap_cb_param_t::ble_scan_param_cmpl_evt_param &param) {
+  ESP_LOGV(TAG, "gap_scan_set_param_complete - status %d", param.status);
   if (param.status == ESP_BT_STATUS_DONE) {
     this->scan_set_param_failed_ = ESP_BT_STATUS_SUCCESS;
   } else {
@@ -380,6 +382,7 @@ void ESP32BLETracker::gap_scan_set_param_complete_(const esp_ble_gap_cb_param_t:
 }
 
 void ESP32BLETracker::gap_scan_start_complete_(const esp_ble_gap_cb_param_t::ble_scan_start_cmpl_evt_param &param) {
+  ESP_LOGV(TAG, "gap_scan_start_complete - status %d", param.status);
   this->scan_start_failed_ = param.status;
   if (param.status == ESP_BT_STATUS_SUCCESS) {
     this->scan_start_fail_count_ = 0;
@@ -392,10 +395,12 @@ void ESP32BLETracker::gap_scan_start_complete_(const esp_ble_gap_cb_param_t::ble
 }
 
 void ESP32BLETracker::gap_scan_stop_complete_(const esp_ble_gap_cb_param_t::ble_scan_stop_cmpl_evt_param &param) {
+  ESP_LOGV(TAG, "gap_scan_stop_complete - status %d", param.status);
   xSemaphoreGive(this->scan_end_lock_);
 }
 
 void ESP32BLETracker::gap_scan_result_(const esp_ble_gap_cb_param_t::ble_scan_result_evt_param &param) {
+  ESP_LOGV(TAG, "gap_scan_result - event %d, status %d", param.search_evt, param.status);
   if (param.search_evt == ESP_GAP_SEARCH_INQ_RES_EVT) {
     if (xSemaphoreTake(this->scan_result_lock_, 0L)) {
       if (this->scan_result_index_ < ESP32BLETracker::SCAN_RESULT_BUFFER_SIZE) {
