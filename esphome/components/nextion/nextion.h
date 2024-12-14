@@ -1218,22 +1218,22 @@ class Nextion : public NextionBase, public PollingComponent, public uart::UARTDe
   bool is_updating() override;
 
   /**
-  * @brief Check if the Nextion display is successfully connected.
-  * 
-  * This method returns whether a successful connection has been established with 
-  * the Nextion display. A connection is considered established when:
-  * 
-  * - The initial handshake with the display is completed successfully, or
-  * - The handshake is skipped via skip_connection_handshake_ flag
-  * 
-  * The connection status is particularly useful when:
-  * - Troubleshooting communication issues
-  * - Ensuring the display is ready before sending commands
-  * - Implementing connection-dependent behaviors
-  * 
-  * @return true if the Nextion display is connected and ready to receive commands
-  * @return false if the display is not yet connected or connection was lost
-  */
+   * @brief Check if the Nextion display is successfully connected.
+   *
+   * This method returns whether a successful connection has been established with
+   * the Nextion display. A connection is considered established when:
+   *
+   * - The initial handshake with the display is completed successfully, or
+   * - The handshake is skipped via skip_connection_handshake_ flag
+   *
+   * The connection status is particularly useful when:
+   * - Troubleshooting communication issues
+   * - Ensuring the display is ready before sending commands
+   * - Implementing connection-dependent behaviors
+   *
+   * @return true if the Nextion display is connected and ready to receive commands
+   * @return false if the display is not yet connected or connection was lost
+   */
   bool is_connected() { return this->is_connected_; }
 
  protected:
