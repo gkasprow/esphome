@@ -112,8 +112,8 @@ void ESP32BLETracker::loop() {
     discovered_ = discovered;
     searching_ = searching;
     disconnecting_ = disconnecting;
-    ESP_LOGD(TAG, "connecting: %d, discovered %d, searching %d, disconnecting %d", connecting_, discovered_, searching_,
-             disconnecting_);
+    ESP_LOGD(TAG, "connecting: %d, discovered: %d, searching: %d, disconnecting: %d", connecting_, discovered_,
+             searching_, disconnecting_);
   }
   bool promote_to_connecting = discovered && !searching && !connecting;
 
@@ -685,7 +685,7 @@ void ESP32BLETracker::dump_config() {
   ESP_LOGCONFIG(TAG, "  Continuous Scanning: %s", YESNO(this->scan_continuous_));
   ESP_LOGCONFIG(TAG, "  Scanner Idle: %s", YESNO(this->scanner_idle_));
   ESP_LOGCONFIG(TAG, "  Scan End: %s", YESNO(xSemaphoreGetMutexHolder(this->scan_end_lock_) == nullptr));
-  ESP_LOGCONFIG(TAG, "  Connecting: %d, discovered %d, searching %d, disconnecting %d", connecting_, discovered_,
+  ESP_LOGCONFIG(TAG, "  Connecting: %d, discovered: %d, searching: %d, disconnecting: %d", connecting_, discovered_,
                 searching_, disconnecting_);
   if (this->scan_start_fail_count_) {
     ESP_LOGCONFIG(TAG, "  Scan Start Fail Count: %d", this->scan_start_fail_count_);
