@@ -1134,6 +1134,12 @@ class Nextion : public NextionBase, public PollingComponent, public uart::UARTDe
    */
   void add_touch_event_callback(std::function<void(uint8_t, uint8_t, bool)> &&callback);
 
+  /** Add a callback to be notified when the nextion reports a buffer overflow.
+   *
+   * @param callback The void() callback.
+   */
+  void add_buffer_overflow_event_callback(std::function<void()> &&callback);
+
   void update_all_components();
 
   /**
@@ -1210,6 +1216,25 @@ class Nextion : public NextionBase, public PollingComponent, public uart::UARTDe
    *         state, ready to receive and process commands as usual.
    */
   bool is_updating() override;
+
+  /**
+   * @brief Check if the Nextion display is successfully connected.
+   *
+   * This method returns whether a successful connection has been established with
+   * the Nextion display. A connection is considered established when:
+   *
+   * - The initial handshake with the display is completed successfully, or
+   * - The handshake is skipped via skip_connection_handshake_ flag
+   *
+   * The connection status is particularly useful when:
+   * - Troubleshooting communication issues
+   * - Ensuring the display is ready before sending commands
+   * - Implementing connection-dependent behaviors
+   *
+   * @return true if the Nextion display is connected and ready to receive commands
+   * @return false if the display is not yet connected or connection was lost
+   */
+  bool is_connected() { return this->is_connected_; }
 
  protected:
   std::deque<NextionQueue *> nextion_queue_;
@@ -1309,8 +1334,6 @@ class Nextion : public NextionBase, public PollingComponent, public uart::UARTDe
 
 #endif  // USE_NEXTION_TFT_UPLOAD
 
-  bool get_is_connected_() { return this->is_connected_; }
-
   bool check_connect_();
 
   std::vector<NextionComponentBase *> touch_;
@@ -1323,6 +1346,7 @@ class Nextion : public NextionBase, public PollingComponent, public uart::UARTDe
   CallbackManager<void()> wake_callback_{};
   CallbackManager<void(uint8_t)> page_callback_{};
   CallbackManager<void(uint8_t, uint8_t, bool)> touch_callback_{};
+  CallbackManager<void()> buffer_overflow_callback_{};
 
   optional<nextion_writer_t> writer_;
   float brightness_{1.0};
