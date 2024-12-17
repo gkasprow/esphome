@@ -438,6 +438,7 @@ async def write_image(config, all_frames=False):
 
     resize = config.get(CONF_RESIZE)
     if is_svg_file(path):
+        # Local import so use of non-SVG files needn't require cairosvg installed
         from cairosvg import svg2png
 
         if not resize:
