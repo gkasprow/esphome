@@ -60,7 +60,7 @@ size_t RingBuffer::read(void *data, size_t len, TickType_t ticks_to_wait) {
       return bytes_read;
     }
 
-    std::memcpy(data + bytes_read, buffer_data, follow_up_bytes_read);
+    std::memcpy((void *) ((uint8_t *) (data) + bytes_read), buffer_data, follow_up_bytes_read);
 
     vRingbufferReturnItem(this->handle_, buffer_data);
     bytes_read += follow_up_bytes_read;
