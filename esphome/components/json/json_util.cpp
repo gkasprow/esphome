@@ -7,7 +7,7 @@ namespace json {
 static const char *const TAG = "json";
 
 static std::vector<char> global_json_build_buffer;  // NOLINT
-static auto allocator = RAMAllocator<uint8_t>(RAMAllocator<uint8_t>::ALLOC_INTERNAL);
+static const auto allocator = RAMAllocator<uint8_t>(RAMAllocator<uint8_t>::ALLOC_INTERNAL);
 
 std::string build_json(const json_build_t &f) {
   // Here we are allocating up to 5kb of memory,
