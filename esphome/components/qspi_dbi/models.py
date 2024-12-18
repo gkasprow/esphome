@@ -1,5 +1,5 @@
 # Commands
-from esphome.const import CONF_INVERT_COLORS
+from esphome.const import CONF_INVERT_COLORS, CONF_SWAP_XY
 
 from . import CONF_DRAW_ROUNDING
 
@@ -65,7 +65,7 @@ chip.cmd(TEON, 0x00)
 chip.cmd(PIXFMT, 0x55)
 chip.cmd(NORON)
 
-chip = DriverChip("AXS15231", {CONF_DRAW_ROUNDING: 8})
+chip = DriverChip("AXS15231", {CONF_DRAW_ROUNDING: 8, CONF_SWAP_XY: False})
 chip.cmd(0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5A, 0xA5)
 chip.cmd(0xC1, 0x33)
 chip.cmd(0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
@@ -74,6 +74,7 @@ chip = DriverChip(
     "JC4832W535",
     {
         CONF_DRAW_ROUNDING: 8,
+        CONF_SWAP_XY: False,
     },
 )
 chip.cmd(DISPLAY_OFF)

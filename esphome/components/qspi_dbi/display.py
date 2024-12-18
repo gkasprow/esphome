@@ -101,13 +101,6 @@ BASE_SCHEMA = display.FULL_DISPLAY_SCHEMA.extend(
                     }
                 ),
             ),
-            cv.Optional(CONF_TRANSFORM): cv.Schema(
-                {
-                    cv.Optional(CONF_MIRROR_X, default=False): cv.boolean,
-                    cv.Optional(CONF_MIRROR_Y, default=False): cv.boolean,
-                    cv.Optional(CONF_SWAP_XY, default=False): cv.boolean,
-                }
-            ),
             cv.Optional(CONF_DRAW_FROM_ORIGIN, default=False): cv.boolean,
             cv.Optional(CONF_RESET_PIN): pins.gpio_output_pin_schema,
             cv.Optional(CONF_ENABLE_PIN): pins.gpio_output_pin_schema,
@@ -131,6 +124,18 @@ def model_property(name, defaults, fallback):
 
 
 def model_schema(defaults):
+    transform = cv.Schema(
+        {
+            cv.Optional(CONF_MIRROR_X, default=False): cv.boolean,
+            cv.Optional(CONF_MIRROR_Y, default=False): cv.boolean,
+        }
+    )
+    if defaults.get(CONF_SWAP_XY, True):
+        transform = transform.extend(
+            {
+                cv.Optional(CONF_SWAP_XY, default=False): cv.boolean,
+            }
+        )
     return BASE_SCHEMA.extend(
         {
             model_property(CONF_INVERT_COLORS, defaults, False): cv.boolean,
@@ -138,6 +143,7 @@ def model_schema(defaults):
                 COLOR_ORDERS, upper=True
             ),
             model_property(CONF_DRAW_ROUNDING, defaults, 2): power_of_two,
+            cv.Optional(CONF_TRANSFORM): transform,
         }
     )
 
@@ -183,7 +189,8 @@ async def to_code(config):
     if transform := config.get(CONF_TRANSFORM):
         cg.add(var.set_mirror_x(transform[CONF_MIRROR_X]))
         cg.add(var.set_mirror_y(transform[CONF_MIRROR_Y]))
-        cg.add(var.set_swap_xy(transform[CONF_SWAP_XY]))
+        # swap_xy is not implemented for some chips
+        cg.add(var.set_swap_xy(transform.get(CONF_SWAP_XY, False)))
 
     if CONF_DIMENSIONS in config:
         dimensions = config[CONF_DIMENSIONS]
