@@ -732,7 +732,7 @@ template<class T> class RAMAllocator {
         this->flags_ & ALLOC_INTERNAL ? heap_caps_get_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL) : 0;
     auto max_external =
         this->flags_ & ALLOC_EXTERNAL ? heap_caps_get_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM) : 0;
-    return std::max(max_internal, max_external);
+    return max_internal + max_external;
 #elif defined(USE_RP2040)
     return ::rp2040.getFreeHeap();
 #elif defined(USE_LIBRETINY)
