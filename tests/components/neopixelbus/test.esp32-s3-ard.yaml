@@ -1,1 +1,1 @@
-<<: !include common_i2s.yaml
+<<: !include common_rmt.yaml
