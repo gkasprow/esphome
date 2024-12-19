@@ -17,7 +17,7 @@ enum ImageType {
 };
 
 enum Transparency {
-  TRANSPARENCY_NONE = 0,
+  TRANSPARENCY_OPAQUE = 0,
   TRANSPARENCY_CHROMA_KEY = 1,
   TRANSPARENCY_ALPHA_CHANNEL = 2,
 };
@@ -38,7 +38,7 @@ class Image : public display::BaseImage {
   size_t get_width_stride() const { return (this->width_ * this->get_bpp() + 7u) / 8u; }
   void draw(int x, int y, display::Display *display, Color color_on, Color color_off) override;
 
-  bool has_transparency() const { return transparency_ != TRANSPARENCY_NONE; }
+  bool has_transparency() const { return transparency_ != TRANSPARENCY_OPAQUE; }
 
 #ifdef USE_LVGL
   lv_img_dsc_t *get_lv_img_dsc();

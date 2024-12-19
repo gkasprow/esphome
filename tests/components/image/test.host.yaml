@@ -14,21 +14,21 @@ image:
       file: ../../pnglogo.png
       use_transparency: chroma_key
   rgb:
-    - id: rgba_image
-      file: ../../pnglogo.png
-      use_transparency: alpha_channel
-      resize: 50x50
-    - id: rgb24_image
-      file: ../../pnglogo.png
-      type: RGB # accepts only same type as above.
-      use_transparency: chroma_key
-    - id: rgb_image
-      file: ../../pnglogo.png
-      use_transparency: none
+    alpha_channel:
+      - id: rgba_image
+        file: ../../pnglogo.png
+        resize: 50x50
+    chroma_key:
+      - id: rgb24_image
+        file: ../../pnglogo.png
+        type: RGB # accepts only same type as above.
+    opaque:
+      - id: rgb_image
+        file: ../../pnglogo.png
   rgb565:
     - id: rgb565_image
       file: ../../pnglogo.png
-      use_transparency: none
+      use_transparency: opaque
     - id: rgb565_ck_image
       file: ../../pnglogo.png
       use_transparency: chroma_key
@@ -45,4 +45,4 @@ image:
       use_transparency: chroma_key
     - id: grayscale_image
       file: ../../pnglogo.png
-      use_transparency: none
+      use_transparency: opaque

@@ -34,13 +34,13 @@ image_ns = cg.esphome_ns.namespace("image")
 
 ImageType = image_ns.enum("ImageType")
 
-CONF_NONE = "none"
+CONF_OPAQUE = "opaque"
 CONF_CHROMA_KEY = "chroma_key"
 CONF_ALPHA_CHANNEL = "alpha_channel"
 CONF_INVERT_ALPHA = "invert_alpha"
 
 TRANSPARENCY_TYPES = (
-    CONF_NONE,
+    CONF_OPAQUE,
     CONF_CHROMA_KEY,
     CONF_ALPHA_CHANNEL,
 )
@@ -60,7 +60,7 @@ class ImageEncoder:
     """
 
     # Control which transparency options are available for a given type
-    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_NONE}
+    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_OPAQUE}
 
     # All imageencoder types are valid
     @staticmethod
@@ -104,7 +104,7 @@ class ImageEncoder:
 
 
 class ImageBinary(ImageEncoder):
-    allow_config = {CONF_NONE, CONF_INVERT_ALPHA, CONF_CHROMA_KEY}
+    allow_config = {CONF_OPAQUE, CONF_INVERT_ALPHA, CONF_CHROMA_KEY}
 
     def __init__(self, width, height, transparency, dither, invert_alpha):
         self.width8 = (width + 7) // 8
@@ -134,7 +134,7 @@ class ImageBinary(ImageEncoder):
 
 
 class ImageGrayscale(ImageEncoder):
-    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_INVERT_ALPHA, CONF_NONE}
+    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_INVERT_ALPHA, CONF_OPAQUE}
 
     def convert(self, image):
         return image.convert("LA")
@@ -233,6 +233,8 @@ class ReplaceWith:
     """
     Placeholder class to provide feedback on deprecated features
     """
+
+    allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_OPAQUE}
 
     def __init__(self, replace_with):
         self.replace_with = replace_with
@@ -373,15 +375,21 @@ TYPED_FILE_SCHEMA = cv.typed_schema(
 )
 
 
-def validate_transparency(value):
-    if isinstance(value, bool):
-        value = str(value)
-    return cv.one_of(*TRANSPARENCY_TYPES, lower=True)(value)
+def validate_transparency(choices=TRANSPARENCY_TYPES):
+    def validate(value):
+        if isinstance(value, bool):
+            value = str(value)
+        return cv.one_of(*choices, lower=True)(value)
+
+    return validate
 
 
-def validate_type(value):
-    value = cv.one_of(*IMAGE_TYPE, upper=True)(value)
-    return IMAGE_TYPE[value].validate(value)
+def validate_type(image_types):
+    def validate(value):
+        value = cv.one_of(*image_types, upper=True)(value)
+        return IMAGE_TYPE[value].validate(value)
+
+    return validate
 
 
 def validate_settings(value):
@@ -416,7 +424,6 @@ BASE_SCHEMA = cv.Schema(
         cv.Required(CONF_ID): cv.declare_id(Image_),
         cv.Required(CONF_FILE): cv.Any(validate_file_shorthand, TYPED_FILE_SCHEMA),
         cv.Optional(CONF_RESIZE): cv.dimensions,
-        cv.Optional(CONF_USE_TRANSPARENCY, default="none"): validate_transparency,
         cv.Optional(CONF_DITHER, default="NONE"): cv.one_of(
             "NONE", "FLOYDSTEINBERG", upper=True
         ),
@@ -427,23 +434,52 @@ BASE_SCHEMA = cv.Schema(
 
 IMAGE_SCHEMA = BASE_SCHEMA.extend(
     {
-        cv.Required(CONF_TYPE): validate_type,
+        cv.Required(CONF_TYPE): validate_type(IMAGE_TYPE),
+        cv.Optional(
+            CONF_USE_TRANSPARENCY, default=CONF_OPAQUE
+        ): validate_transparency(),
     }
 )
 
-CONFIG_SCHEMA = cv.Any(
-    cv.Schema(
-        {
-            cv.Optional(x.lower()): cv.ensure_list(
-                BASE_SCHEMA.extend(
-                    {
-                        cv.Optional(CONF_TYPE, default=x): cv.one_of(x, upper=True),
-                    }
+
+def transparency_schema(image_type):
+    return cv.Any(
+        cv.Schema(
+            {
+                cv.Optional(t.lower()): cv.ensure_list(
+                    BASE_SCHEMA.extend(
+                        {
+                            cv.Optional(
+                                CONF_USE_TRANSPARENCY, default=t
+                            ): validate_transparency((t,)),
+                            cv.Optional(CONF_TYPE, default=image_type): validate_type(
+                                (image_type,)
+                            ),
+                        }
+                    )
                 )
+                for t in IMAGE_TYPE[image_type].allow_config.intersection(
+                    TRANSPARENCY_TYPES
+                )
+            }
+        ),
+        cv.ensure_list(
+            BASE_SCHEMA.extend(
+                {
+                    cv.Optional(
+                        CONF_USE_TRANSPARENCY, default=CONF_OPAQUE
+                    ): validate_transparency(),
+                    cv.Optional(CONF_TYPE, default=image_type): validate_type(
+                        (image_type,)
+                    ),
+                }
             )
-            for x in IMAGE_TYPE
-        }
-    ),
+        ),
+    )
+
+
+CONFIG_SCHEMA = cv.Any(
+    cv.Schema({cv.Optional(t.lower()): transparency_schema(t) for t in IMAGE_TYPE}),
     cv.ensure_list(IMAGE_SCHEMA),
 )
 
@@ -520,17 +556,15 @@ async def write_image(config, all_frames=False):
     return prog_arr, width, height, image_type, trans_value, frame_count
 
 
-async def image_list_to_code(configs):
-    for config in configs:
+async def to_code(config):
+    if isinstance(config, list):
+        for entry in config:
+            await to_code(entry)
+    elif CONF_ID not in config:
+        for entry in config.values():
+            await to_code(entry)
+    else:
         prog_arr, width, height, image_type, trans_value, _ = await write_image(config)
         cg.new_Pvariable(
             config[CONF_ID], prog_arr, width, height, image_type, trans_value
         )
-
-
-async def to_code(configs):
-    if isinstance(configs, list):
-        await image_list_to_code(configs)
-    else:
-        for entry in configs.values():
-            await image_list_to_code(entry)

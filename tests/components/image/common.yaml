@@ -20,12 +20,12 @@ image:
   - id: rgb_image
     file: ../../pnglogo.png
     type: RGB
-    use_transparency: none
+    use_transparency: opaque
 
   - id: rgb565_image
     file: ../../pnglogo.png
     type: RGB565
-    use_transparency: none
+    use_transparency: opaque
   - id: rgb565_ck_image
     file: ../../pnglogo.png
     type: RGB565
@@ -47,7 +47,7 @@ image:
   - id: grayscale_image
     file: ../../pnglogo.png
     type: grayscale
-    use_transparency: none
+    use_transparency: opaque
 
   - id: web_svg_image
     file: https://raw.githubusercontent.com/esphome/esphome-docs/a62d7ab193c1a464ed791670170c7d518189109b/images/logo.svg
