@@ -21,7 +21,7 @@ image:
     chroma_key:
       - id: rgb24_image
         file: ../../pnglogo.png
-        type: RGB # accepts only same type as above.
+        type: RGB
     opaque:
       - id: rgb_image
         file: ../../pnglogo.png
