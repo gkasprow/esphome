@@ -202,7 +202,6 @@ void RemoteReceiverComponent::loop() {
     this->store_.buffer_read = next_read;
 
     if (!this->temp_.empty()) {
-      this->temp_.push_back(-this->idle_us_);
       this->call_listeners_dumpers_();
     }
   }
@@ -213,10 +212,9 @@ void RemoteReceiverComponent::loop() {
     this->decode_rmt_(item, len / sizeof(rmt_item32_t));
     vRingbufferReturnItem(this->ringbuf_, item);
 
-    if (this->temp_.empty())
-      return;
-
-    this->call_listeners_dumpers_();
+    if (!this->temp_.empty()) {
+      this->call_listeners_dumpers_();
+    }
   }
 #endif
 }
