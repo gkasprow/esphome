@@ -1,6 +1,6 @@
 import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome.components import sensor
+import esphome.config_validation as cv
 from esphome.const import (
     CONF_ACCELERATION_X,
     CONF_ACCELERATION_Y,
@@ -10,11 +10,13 @@ from esphome.const import (
     STATE_CLASS_MEASUREMENT,
     UNIT_METER_PER_SECOND_SQUARED,
 )
-from . import MSA3xxComponent, CONF_MSA3XX_ID
+
+from . import CONF_MSA3XX_ID, MSA3xxComponent
 
 CODEOWNERS = ["@latonita"]
 DEPENDENCIES = ["msa3xx"]
 
+ACCELERATION_SENSORS = (CONF_ACCELERATION_X, CONF_ACCELERATION_Y, CONF_ACCELERATION_Z)
 
 accel_schema = cv.maybe_simple_value(
     sensor.sensor_schema(
@@ -27,23 +29,16 @@ accel_schema = cv.maybe_simple_value(
 )
 
 
-CONFIG_SCHEMA = cv.All(
-    cv.Schema(
-        {
-            cv.GenerateID(CONF_MSA3XX_ID): cv.use_id(MSA3xxComponent),
-            cv.Optional(CONF_ACCELERATION_X): accel_schema,
-            cv.Optional(CONF_ACCELERATION_Y): accel_schema,
-            cv.Optional(CONF_ACCELERATION_Z): accel_schema,
-        }
-    ).extend(cv.COMPONENT_SCHEMA)
-)
+CONFIG_SCHEMA = cv.Schema(
+    {
+        cv.GenerateID(CONF_MSA3XX_ID): cv.use_id(MSA3xxComponent),
+    }
+).extend({cv.Optional(sensor): accel_schema for sensor in ACCELERATION_SENSORS})
 
 
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_MSA3XX_ID])
-
-    for d in ["x", "y", "z"]:
-        accel_key = f"acceleration_{d}"
+    for accel_key in ACCELERATION_SENSORS:
         if accel_key in config:
             sens = await sensor.new_sensor(config[accel_key])
-            cg.add(getattr(hub, f"set_acceleration_{d}_sensor")(sens))
+            cg.add(getattr(hub, f"set_{accel_key}_sensor")(sens))

@@ -31,3 +31,18 @@ sensor:
     acceleration_x: Accel X
     acceleration_y: Accel Y
     acceleration_z: Accel Z
+
+text_sensor:
+  - platform: msa3xx
+    orientation_xy: Orientation XY
+    orientation_z: Orientation Z
+
+binary_sensor:
+  - platform: msa3xx
+    tap: Single tap
+    double_tap:
+      name: Double tap
+    active:
+      name: Active
+      filters:
+        - delayed_off: 5000ms
