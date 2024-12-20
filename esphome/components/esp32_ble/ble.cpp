@@ -18,9 +18,7 @@
 #include <freertos/task.h>
 #include <nvs_flash.h>
 
-#ifdef USE_ARDUINO
-#include <esp32-hal-bt.h>
-#endif
+#include "esphome/components/esp32_bt_common/bt_defs.h"
 
 namespace esphome {
 namespace esp32_ble {
@@ -141,7 +139,7 @@ bool ESP32BLE::ble_setup_() {
         ;
     }
     if (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_INITED) {
-      err = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+      err = esp_bt_controller_enable(BT_MODE);
       if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_bt_controller_enable failed: %s", esp_err_to_name(err));
         return false;
@@ -154,17 +152,30 @@ bool ESP32BLE::ble_setup_() {
   }
 #endif
 
+#ifdef BT_CLASSIC_INCLUDED_PLEASE_DONT_MEM_RELEASE
   esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+#endif
 
-  err = esp_bluedroid_init();
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "esp_bluedroid_init failed: %d", err);
-    return false;
+  if (esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_UNINITIALIZED) {
+    ESP_LOGD(TAG, "Initializing BlueDroid");
+    err = esp_bluedroid_init();
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "%s initialize bluedroid failed: %s\n", __func__, esp_err_to_name(err));
+      return false;
+    }
+  } else {
+    ESP_LOGD(TAG, "BlueDroid Already Initialized!");
   }
-  err = esp_bluedroid_enable();
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "esp_bluedroid_enable failed: %d", err);
-    return false;
+
+  if (esp_bluedroid_get_status() != ESP_BLUEDROID_STATUS_ENABLED) {
+    ESP_LOGD(TAG, "Enabling BlueDroid");
+    err = esp_bluedroid_enable();
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "%s enable bluedroid failed: %s\n", __func__, esp_err_to_name(err));
+      return false;
+    }
+  } else {
+    ESP_LOGD(TAG, "BlueDroid Already Enabled!");
   }
 
   if (!this->gap_event_handlers_.empty()) {

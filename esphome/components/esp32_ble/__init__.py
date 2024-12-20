@@ -7,6 +7,7 @@ from esphome.core import CORE
 from esphome.core.config import CONF_NAME_ADD_MAC_SUFFIX
 import esphome.final_validate as fv
 
+AUTO_LOAD = ["esp32_bt_common"]
 DEPENDENCIES = ["esp32"]
 CODEOWNERS = ["@jesserockz", "@Rapsssito"]
 

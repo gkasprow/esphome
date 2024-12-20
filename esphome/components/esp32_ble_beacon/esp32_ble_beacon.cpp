@@ -14,9 +14,7 @@
 #include "esphome/core/hal.h"
 #include "esphome/core/helpers.h"
 
-#ifdef USE_ARDUINO
-#include <esp32-hal-bt.h>
-#endif
+#include "esphome/components/esp32_bt_common/bt_defs.h"
 
 namespace esphome {
 namespace esp32_ble_beacon {

@@ -11,7 +11,7 @@
 #include "esphome/core/helpers.h"
 
 #include "ble_event.h"
-#include "queue.h"
+#include "esphome/components/esp32_bt_common/queue.h"
 
 #ifdef USE_ESP32
 
@@ -127,7 +127,7 @@ class ESP32BLE : public Component {
   std::vector<BLEStatusEventHandler *> ble_status_event_handlers_;
   BLEComponentState state_{BLE_COMPONENT_STATE_OFF};
 
-  Queue<BLEEvent> ble_events_;
+  esp32_bt_common::Queue<BLEEvent> ble_events_;
   BLEAdvertising *advertising_;
   esp_ble_io_cap_t io_cap_{ESP_IO_CAP_NONE};
   uint32_t advertising_cycle_time_;
