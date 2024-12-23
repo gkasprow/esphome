@@ -1,6 +1,6 @@
 msa3xx:
   i2c_id: i2c_msa3xx
-  model: msa301
+  type: msa301
   range: 4G
   resolution: 14
   update_interval: 10s

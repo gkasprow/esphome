@@ -338,7 +338,9 @@ void MSA3xxComponent::setup_range_resolution_(Range range, Resolution resolution
   RegRangeResolution reg;
   reg.raw = this->read_byte(static_cast<uint8_t>(RegisterMap::RANGE_RESOLUTION)).value_or(0x00);
   reg.range = range;
-  reg.resolution = this->model_ == Model::MSA301 ? resolution : Resolution::RES_14BIT;
+  if (this->model_ == Model::MSA301) {
+    reg.resolution = resolution;
+  }
   this->write_byte(static_cast<uint8_t>(RegisterMap::RANGE_RESOLUTION), reg.raw);
 }
 
