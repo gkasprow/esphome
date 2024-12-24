@@ -27,7 +27,7 @@ void PsramComponent::dump_config() {
     if (abs(round(psram_total_size_kb) - psram_total_size_kb) < 0.05f) {
       ESP_LOGCONFIG(TAG, "  Size: %.0f KB", psram_total_size_kb);
     } else {
-      ESP_LOGCONFIG(TAG, "  Size: %.0f bytes", (float)psram_total_size_bytes);
+      ESP_LOGCONFIG(TAG, "  Size: %.0f bytes", (float) psram_total_size_bytes);
     }
   }
 #endif
