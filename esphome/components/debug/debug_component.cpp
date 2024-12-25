@@ -53,7 +53,7 @@ void DebugComponent::dump_config() {
 
 #ifdef USE_ESP32
   this->log_partition_info_();  // Log partition information for ESP32
-#endif  // USE_ESP32
+#endif                          // USE_ESP32
 }
 
 void DebugComponent::loop() {
