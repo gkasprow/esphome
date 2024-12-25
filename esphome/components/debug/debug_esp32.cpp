@@ -5,6 +5,7 @@
 #include <esp_heap_caps.h>
 #include <esp_system.h>
 #include <esp_chip_info.h>
+#include <esp_partition.h>
 
 #if defined(USE_ESP32_VARIANT_ESP32)
 #include <esp32/rom/rtc.h>
@@ -27,6 +28,23 @@ namespace esphome {
 namespace debug {
 
 static const char *const TAG = "debug";
+
+void DebugComponent::log_partition_info_() {
+  ESP_LOGCONFIG(TAG, "Partition table:");
+  ESP_LOGCONFIG(TAG, "  %-12s %-4s %-8s %-10s %-10s", "Name", "Type", "Subtype", "Address", "Size");
+  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  while (it != NULL) {
+    const esp_partition_t *partition = esp_partition_get(it);
+    ESP_LOGCONFIG(TAG, "  %-12s %-4d %-8d 0x%08X 0x%08X",
+                  partition->label,
+                  partition->type,
+                  partition->subtype,
+                  partition->address,
+                  partition->size);
+    it = esp_partition_next(it);
+  }
+  esp_partition_iterator_release(it);
+}
 
 std::string DebugComponent::get_reset_reason_() {
   std::string reset_reason;
