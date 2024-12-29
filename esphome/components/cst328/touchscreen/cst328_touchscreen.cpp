@@ -137,6 +137,8 @@ void CST328Touchscreen::update_touches() {
   //  this->writeRegister(MODE_NORMAL_0_REG, (uint8_t)0xAB); // sync signal ?
   clear = 0xAB;
   this->write_register16(static_cast<u_int16_t>(Cst328Registers::TOUCH_INFORMATION), &clear, 1);
+  clear = 0;
+  this->write_register16(static_cast<u_int16_t>(Cst328Registers::TOUCH_FINGER_NUMBER), &clear, 1);
 
   this->skip_update_ = false;
   size_t index = 0;
