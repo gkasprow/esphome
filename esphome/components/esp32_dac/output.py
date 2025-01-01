@@ -8,6 +8,7 @@ from esphome.const import CONF_ID, CONF_NUMBER, CONF_PIN
 
 DEPENDENCIES = ["esp32"]
 
+
 def valid_dac_pin(value):
     valid_pins = (17, 18) if get_esp32_variant() == VARIANT_ESP32S2 else (25, 26)
     num = value[CONF_NUMBER]
