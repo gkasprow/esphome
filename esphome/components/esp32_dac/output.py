@@ -2,14 +2,17 @@ from esphome import pins
 from esphome.components import output
 import esphome.config_validation as cv
 import esphome.codegen as cg
-from esphome.const import CONF_ID, CONF_NUMBER, CONF_PIN
+from esphome.core import CORE
+from esphome.components.esp32 import get_esp32_variant
+from esphome.components.esp32.const import VARIANT_ESP32S2
+from esphome.const import CONF_ID, CONF_NUMBER, CONF_PIN, KEY_CORE, KEY_TARGET_FRAMEWORK
 
 DEPENDENCIES = ["esp32"]
 
-
 def valid_dac_pin(value):
+    valid_pins = (17, 18) if get_esp32_variant() == VARIANT_ESP32S2 else (25, 26)
     num = value[CONF_NUMBER]
-    cv.one_of(25, 26)(num)
+    cv.one_of(*valid_pins)(num)
     return value
 
 
