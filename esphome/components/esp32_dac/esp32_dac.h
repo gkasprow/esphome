@@ -7,9 +7,9 @@
 
 #ifdef USE_ESP32
 
-// Forward declaration
-struct dac_oneshot_s;
-typedef struct dac_oneshot_s *dac_oneshot_handle_t;
+#ifdef USE_ESP_IDF
+#include <driver/dac_oneshot.h>
+#endif
 
 namespace esphome {
 namespace esp32_dac {

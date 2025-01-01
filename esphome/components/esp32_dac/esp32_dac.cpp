@@ -7,9 +7,6 @@
 #ifdef USE_ARDUINO
 #include <esp32-hal-dac.h>
 #endif
-#ifdef USE_ESP_IDF
-#include <driver/dac_oneshot.h>
-#endif
 
 namespace esphome {
 namespace esp32_dac {
