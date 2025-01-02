@@ -255,14 +255,10 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t item_count)
     if (item[i].duration0 == 0u) {
       // EOF, sometimes garbage follows, break early
       break;
-    } else if (item[i].duration0 < filter_ticks) {
-      if (!this->temp_.empty()) {
-        prev_length += item[i].duration0;
-      }
-    } else if (bool(item[i].level0) == prev_level) {
+    } else if ((bool(item[i].level0) == prev_level) || (item[i].duration0 < filter_ticks)) {
       prev_length += item[i].duration0;
     } else {
-      if (prev_length > 0) {
+      if (prev_length >= filter_ticks) {
         if (prev_level) {
           this->temp_.push_back(this->to_microseconds_(prev_length) * multiplier);
         } else {
@@ -277,14 +273,10 @@ void RemoteReceiverComponent::decode_rmt_(rmt_item32_t *item, size_t item_count)
     if (item[i].duration1 == 0u) {
       // EOF, sometimes garbage follows, break early
       break;
-    } else if (item[i].duration1 < filter_ticks) {
-      if (!this->temp_.empty()) {
-        prev_length += item[i].duration1;
-      }
-    } else if (bool(item[i].level1) == prev_level) {
+    } else if ((bool(item[i].level1) == prev_level) || (item[i].duration1 < filter_ticks)) {
       prev_length += item[i].duration1;
     } else {
-      if (prev_length > 0) {
+      if (prev_length >= filter_ticks) {
         if (prev_level) {
           this->temp_.push_back(this->to_microseconds_(prev_length) * multiplier);
         } else {
