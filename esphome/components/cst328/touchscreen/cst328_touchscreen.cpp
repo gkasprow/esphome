@@ -18,6 +18,15 @@ void CST328Touchscreen::setup() {
   }
 }
 
+bool CST328Touchscreen::read16_(uint16_t addr, uint8_t *data, size_t len) {
+  if (i2c::ERROR_OK != this->read_register16(addr, data, len)) {
+    ESP_LOGE(TAG, "Read data from 0x%04X failed", addr);
+    this->mark_failed();
+    return false;
+  }
+  return true;
+}
+
 void CST328Touchscreen::continue_setup_() {
   uint8_t buffer[4];
 
@@ -26,16 +35,8 @@ void CST328Touchscreen::continue_setup_() {
     this->attach_interrupt_(this->interrupt_pin_, gpio::INTERRUPT_FALLING_EDGE);
   }
 
-  // buffer[0] = 0xD1;
-  // if (this->write_register16(0xD1, buffer, 1) != i2c::ERROR_OK) {
-  //   ESP_LOGE(TAG, "Write byte to 0xD1 failed");
-  //   this->mark_failed();
-  //   return;
-  // }
-  // delay(10);
-
   // Enter debug/info mode
-  if (this->write_register16(static_cast<uint16_t>(Cst328WorkModes::DEBUG_INFO_MODE), buffer, 0) != i2c::ERROR_OK) {
+  if (i2c::ERROR_OK != this->write_register16(static_cast<uint16_t>(Cst328WorkModes::DEBUG_INFO_MODE), buffer, 0)) {
     ESP_LOGE(TAG, "Failed to enter debug/info mode");
     this->mark_failed();
     return;
@@ -108,9 +109,9 @@ void CST328Touchscreen::update_button_state_(bool state) {
 }
 
 void CST328Touchscreen::update_touches() {
+  const uint8_t clear_byte{0};
+  const uint8_t sync_byte{0xAB};
   uint8_t data[CST328_TOUCH_DATA_SIZE];
-  uint8_t clear_byte{0};
-  uint8_t sync_byte{0xAB};
   uint8_t touch_cnt{0};
 
   this->status_clear_warning();
@@ -118,7 +119,7 @@ void CST328Touchscreen::update_touches() {
 
   if (!this->read16_(static_cast<u_int16_t>(Cst328Registers::TOUCH_FINGER_NUMBER), data, 1)) {
     // Failed to read
-    ESP_LOGV(TAG, "update_touches() ERROR - Can't read touch count");
+    ESP_LOGW(TAG, "update_touches() ERROR - Can't read touch count");
     this->skip_update_ = true;
     this->status_set_warning();
 
@@ -129,7 +130,7 @@ void CST328Touchscreen::update_touches() {
     if (touch_cnt == 0 || touch_cnt > CST328_TOUCH_MAX_POINTS) {
       // No touches
       this->update_button_state_(false);
-      ESP_LOGV(TAG, "update_touches() INFO: Zero touches");
+      ESP_LOGVV(TAG, "update_touches() INFO: Zero touches");
 
     } else {
       // Touches
@@ -144,16 +145,17 @@ void CST328Touchscreen::update_touches() {
         size_t index = 0;
         for (uint8_t i = 0; i != touch_cnt; i++) {
           uint8_t id = data[index] >> 4;
+          uint8_t status = (data[index] & 0x0F) >> 1;
           int16_t x = (data[index + 1] << 4) | ((data[index + 3] >> 4) & 0x0F);
           int16_t y = (data[index + 2] << 4) | (data[index + 3] & 0x0F);
           int16_t z = data[index + 4];
 
           this->add_raw_touch_position_(id, x, y, z);
-          ESP_LOGD(TAG, "update_touches() INFO id:%d, x:%d, y:%d, z:%d", id, x, y, z);
+          ESP_LOGD(TAG, "update_touches() INFO id:%d, status:%d, x:%d, y:%d, z:%d", id, status, x, y, z);
 
+          // first touch data block is 7 bytes, others are 5
           index += 5;
           if (i == 0) {
-            // first touch data block is 7 bytes, others are 5
             index += 2;
           }
         }
