@@ -31,10 +31,10 @@ void Modbus::loop() {
   }
 
   // If we're past the send_wait_time timeout and response buffer doesn't have the start of the expected response
-  if (waiting_for_response != 0 && millis() - last_send_ > send_wait_time_ &&
-      (rx_buffer_.size() == 0 || rx_buffer_[0] != waiting_for_response)) {
-    ESP_LOGV(TAG, "Stop waiting for response from %d", waiting_for_response);
-    waiting_for_response = 0;
+  if (waiting_for_response_ != 0 && millis() - last_send_ > send_wait_time_ &&
+      (rx_buffer_.size() == 0 || rx_buffer_[0] != waiting_for_response_)) {
+    ESP_LOGV(TAG, "Stop waiting for response from %d", waiting_for_response_);
+    waiting_for_response_ = 0;
   }
 
   // If there's no response pending and there's commands in the buffer
@@ -46,7 +46,7 @@ void Modbus::loop() {
 bool Modbus::tx_blocked() {
   const uint32_t now = millis();
 
-  return available() || (rx_buffer_.size() > 0) || (waiting_for_response != 0) ||
+  return available() || (rx_buffer_.size() > 0) || (waiting_for_response_ != 0) ||
          (now - last_send_ < frame_delay_ms_ + (role == ModbusRole::CLIENT ? turnaround_delay_ms_ : 0)) ||
          (now - last_modbus_byte_ < frame_delay_ms_ + (role == ModbusRole::CLIENT ? turnaround_delay_ms_ : 0));
 }
@@ -160,7 +160,7 @@ bool Modbus::parse_modbus_byte_(uint8_t byte) {
       // Is it an error response?
       if ((function_code & 0x80) == 0x80) {
         ESP_LOGD(TAG, "Modbus error function code: 0x%X exception: %d", function_code, raw[2]);
-        if (waiting_for_response == address) {
+        if (waiting_for_response_ == address) {
           device->on_modbus_error(function_code & 0x7F, raw[2]);
         } else {
           // Ignore modbus exception not related to a pending command
@@ -182,8 +182,8 @@ bool Modbus::parse_modbus_byte_(uint8_t byte) {
 
   clear_rx_buffer_("parse succeeded");
 
-  if (waiting_for_response == address)
-    waiting_for_response = 0;
+  if (waiting_for_response_ == address)
+    waiting_for_response_ = 0;
 
   return true;
 }
@@ -198,7 +198,7 @@ void Modbus::send_next_frame_() {
   std::vector<uint8_t> data = this->tx_buffer_.front();
 
   if (this->role == ModbusRole::CLIENT) {
-    waiting_for_response = data[0];
+    waiting_for_response_ = data[0];
   }
 
   if (this->flow_control_pin_ != nullptr)

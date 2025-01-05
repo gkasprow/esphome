@@ -47,7 +47,7 @@ class Modbus : public uart::UARTDevice, public Component {
 
  protected:
   GPIOPin *flow_control_pin_{nullptr};
-  uint8_t waiting_for_response{0};
+  uint8_t waiting_for_response_{0};
 
   bool parse_modbus_byte_(uint8_t byte);
   void receive_and_parse_modbus_bytes_();
