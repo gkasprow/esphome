@@ -215,7 +215,7 @@ LV_LONG_MODES = LvConstant(
 )
 
 STATES = (
-    "default",
+    # default state not included here
     "checked",
     "focused",
     "focus_key",
