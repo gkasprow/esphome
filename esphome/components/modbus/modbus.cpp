@@ -32,13 +32,13 @@ void Modbus::loop() {
 
   // If we're past the send_wait_time timeout and response buffer doesn't have the start of the expected response
   if (waiting_for_response_ != 0 && millis() - last_send_ > send_wait_time_ &&
-      (rx_buffer_.size() == 0 || rx_buffer_[0] != waiting_for_response_)) {
+      (rx_buffer_.empty() || rx_buffer_[0] != waiting_for_response_)) {
     ESP_LOGV(TAG, "Stop waiting for response from %d", waiting_for_response_);
     waiting_for_response_ = 0;
   }
 
   // If there's no response pending and there's commands in the buffer
-  if (!tx_blocked() && this->tx_buffer_.size() > 0) {
+  if (!tx_blocked() && !this->tx_buffer_.empty()) {
     set_timeout("send_next_frame", 0, [this]() { this->send_next_frame_(); });
   }
 }
@@ -46,21 +46,22 @@ void Modbus::loop() {
 bool Modbus::tx_blocked() {
   const uint32_t now = millis();
 
-  return available() || (rx_buffer_.size() > 0) || (waiting_for_response_ != 0) ||
+  return available() || !rx_buffer_.empty() || (waiting_for_response_ != 0) ||
          (now - last_send_ < frame_delay_ms_ + (role == ModbusRole::CLIENT ? turnaround_delay_ms_ : 0)) ||
          (now - last_modbus_byte_ < frame_delay_ms_ + (role == ModbusRole::CLIENT ? turnaround_delay_ms_ : 0));
 }
 
-bool Modbus::tx_buffer_empty() { return tx_buffer_.size() == 0; }
+bool Modbus::tx_buffer_empty() { return tx_buffer_.empty(); }
 
 void Modbus::receive_and_parse_modbus_bytes_() {
   while (this->available()) {
     uint8_t byte;
     this->read_byte(&byte);
-    if (rx_buffer_.size() == 0)
+    if (rx_buffer_.empty()) {
       ESP_LOGV(TAG, "Modbus received first Byte  %d (0X%x) at %d", byte, byte, last_modbus_byte_);
-    else
+    } else {
       ESP_LOGVV(TAG, "Modbus received first Byte  %d (0X%x) at %d", byte, byte, last_modbus_byte_);
+    }
 
     // If the bytes in the rx buffer do not parse, clear out the buffer
     if (!this->parse_modbus_byte_(byte)) {
@@ -215,7 +216,7 @@ void Modbus::send_next_frame_() {
   last_send_ = millis();
   ESP_LOGV(TAG, "Modbus write: %s at %d", format_hex_pretty(data).c_str(), last_send_);
 
-  if (this->tx_buffer_.size() > 0) {
+  if (!this->tx_buffer_.empty()) {
     ESP_LOGV(TAG, "Modbus write queue contains %d items.", this->tx_buffer_.size());
   }
 }
