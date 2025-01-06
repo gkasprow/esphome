@@ -51,8 +51,11 @@ CONF_IGNORE_MISSING_GLYPHS = "ignore_missing_glyphs"
 # Cache loaded freetype fonts
 class FontCache(dict):
     def __missing__(self, key):
-        res = self[key] = freetype.Face(key)
-        return res
+        try:
+            res = self[key] = freetype.Face(key)
+            return res
+        except freetype.FT_Exception as e:
+            raise cv.Invalid(f"Could not load Font file {key}: {e}") from e
 
 
 FONT_CACHE = FontCache()
@@ -373,7 +376,9 @@ def font_file_schema(value):
 # Default if no glyphs or glyphsets are provided
 DEFAULT_GLYPHSET = "GF_Latin_Kernel"
 # default for bitmap fonts
-DEFAULT_GLYPHS = ' !"%()+=,-.:/?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz<C2><B0>'
+DEFAULT_GLYPHS = (
+    ' !"%()+=,-.:/?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz°'
+)
 
 CONF_RAW_GLYPH_ID = "raw_glyph_id"
 

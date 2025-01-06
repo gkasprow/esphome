@@ -163,6 +163,18 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["dashboard", "/config"]
 
 
+ARG BUILD_VERSION=dev
+
+# Labels
+LABEL \
+    org.opencontainers.image.authors="The ESPHome Authors" \
+    org.opencontainers.image.title="ESPHome" \
+    org.opencontainers.image.description="ESPHome is a system to configure your microcontrollers by simple yet powerful configuration files and control them remotely through Home Automation systems" \
+    org.opencontainers.image.url="https://esphome.io/" \
+    org.opencontainers.image.documentation="https://esphome.io/" \
+    org.opencontainers.image.source="https://github.com/esphome/esphome" \
+    org.opencontainers.image.licenses="ESPHome" \
+    org.opencontainers.image.version=${BUILD_VERSION}
 
 
 # ======================= hassio-type image =======================
@@ -194,7 +206,7 @@ RUN if [ "$TARGETARCH$TARGETVARIANT" = "armv7" ]; then \
 # Labels
 LABEL \
     io.hass.name="ESPHome" \
-    io.hass.description="Manage and program ESP8266/ESP32 microcontrollers through YAML configuration files" \
+    io.hass.description="ESPHome is a system to configure your microcontrollers by simple yet powerful configuration files and control them remotely through Home Automation systems" \
     io.hass.type="addon" \
     io.hass.version="${BUILD_VERSION}"
     # io.hass.arch is inherited from addon-debian-base
@@ -220,7 +232,11 @@ RUN \
         nano=7.2-1+deb12u1 \
         build-essential=12.9 \
         python3-dev=3.11.2-1+b1 \
-    && rm -rf \
+    && if [ "$TARGETARCH$TARGETVARIANT" != "armv7" ]; then \
+    # move this up after armv7 is retired
+    apt-get install -y --no-install-recommends clang-tidy-18=1:18.1.8~++20240731024826+3b5b5c1ec4a3-1~exp1~20240731144843.145 ; \
+    fi; \
+    rm -rf \
         /tmp/* \
         /var/{cache,log}/* \
         /var/lib/apt/lists/*
@@ -228,9 +244,6 @@ RUN \
 COPY requirements_test.txt /
 RUN if [ "$TARGETARCH$TARGETVARIANT" = "armv7" ]; then \
         export PIP_EXTRA_INDEX_URL="https://www.piwheels.org/simple"; \
-  else \
-    # move this up into RUN above after armv7 is retired
-    apt-get install -y --no-install-recommends clang-tidy-18=1:18.1.8~++20240731024826+3b5b5c1ec4a3-1~exp1~20240731144843.145 ; \
   fi; \
   pip3 install \
   --break-system-packages --no-cache-dir -r /requirements_test.txt
