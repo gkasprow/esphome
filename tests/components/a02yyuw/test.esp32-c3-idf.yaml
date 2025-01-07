@@ -1,5 +1,15 @@
 substitutions:
-  tx_pin: GPIO4
-  rx_pin: GPIO5
+
+  tx_pin_uw: GPIO4
+  rx_pin_uw: GPIO5
+
+  tx_pin_uw_model: GPIO6
+  rx_pin_uw_model: GPIO7
+
+  tx_pin_tw_model: GPIO10
+  rx_pin_tw_model: GPIO11
+
+  tx_pin_tw_model_interval: GPIO1
+  rx_pin_tw_model_interval: GPIO3
 
 <<: !include common.yaml
