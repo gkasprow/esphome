@@ -2450,12 +2450,12 @@ void WaveshareEPaper7P5InBV3BWR::init_display_() {
   this->data(0x20);
   this->data(0x01);  // gate 480
   this->data(0xE0);
-  
+
   // COMMAND VCOM AND DATA INTERVAL SETTING
   this->command(0x50);
   this->data(0x20);
   this->data(0x00);
-  
+
   // COMMAND TCON SETTING
   this->command(0x60);
   this->data(0x22);
