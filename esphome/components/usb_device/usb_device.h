@@ -14,12 +14,24 @@ class UsbDevice : public PollingComponent {
   void update() override;
   float get_setup_priority() const override;
   void dump_config() override;
+#ifdef USE_VENDOR_ID
+  void set_vendor_id(uint16_t vendor_id);
+#endif
+#ifdef USE_PRODUCT_ID
+  void set_product_id(uint16_t product_id);
+#endif
 #ifdef USE_BINARY_SENSOR
   void set_mounted_binary_sensor(binary_sensor::BinarySensor *sensor);
   void set_ready_binary_sensor(binary_sensor::BinarySensor *sensor);
   void set_suspended_binary_sensor(binary_sensor::BinarySensor *sensor);
 #endif
  protected:
+#ifdef USE_VENDOR_ID
+  uint16_t vendor_id_;
+#endif
+#ifdef USE_PRODUCT_ID
+  uint16_t product_id_;
+#endif
 #ifdef USE_BINARY_SENSOR
   binary_sensor::BinarySensor *mounted_;
   binary_sensor::BinarySensor *ready_;
