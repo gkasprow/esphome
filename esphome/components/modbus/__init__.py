@@ -42,7 +42,7 @@ CONFIG_SCHEMA = (
                 CONF_SEND_WAIT_TIME, default="250ms"
             ): cv.positive_time_period_milliseconds,
             cv.Optional(
-                CONF_TURNAROUND_TIME, default="0ms"
+                CONF_TURNAROUND_TIME, default="100ms"
             ): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_DISABLE_CRC, default=False): cv.boolean,
         }
