@@ -258,7 +258,7 @@ void UDPComponent::setup() {
     }
     for (auto &host : this->providers_) {
       if (host.second.listen_address.is_multicast()) {
-        struct ip_mreq imreq = {0};
+        struct ip_mreq imreq = {{0}};
         imreq.imr_interface.s_addr = IPADDR_ANY;
         inet_aton(host.second.listen_address.str().c_str(), &imreq.imr_multiaddr.s_addr);
         ESP_LOGVV(TAG, "Join multicast %s", host.second.listen_address.str().c_str());
