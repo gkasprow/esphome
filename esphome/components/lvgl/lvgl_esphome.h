@@ -84,7 +84,9 @@ class LvCompound {
   lv_obj_t *obj{};
 };
 
-class LvPageType {
+class LvglComponent;
+
+class LvPageType : public Parented<LvglComponent> {
  public:
   LvPageType(bool skip) : skip(skip) {}
 
@@ -92,6 +94,9 @@ class LvPageType {
     this->index = index;
     this->obj = lv_obj_create(nullptr);
   }
+
+  bool is_showing() const;
+
   lv_obj_t *obj{};
   size_t index{};
   bool skip;
@@ -178,6 +183,7 @@ class LvglComponent : public PollingComponent {
   void show_next_page(lv_scr_load_anim_t anim, uint32_t time);
   void show_prev_page(lv_scr_load_anim_t anim, uint32_t time);
   void set_page_wrap(bool wrap) { this->page_wrap_ = wrap; }
+  size_t get_current_page() const;
   void set_focus_mark(lv_group_t *group) { this->focus_marks_[group] = lv_group_get_focused(group); }
   void restore_focus_mark(lv_group_t *group) {
     auto *mark = this->focus_marks_[group];
@@ -241,14 +247,13 @@ template<typename... Ts> class LvglAction : public Action<Ts...>, public Parente
   std::function<void(LvglComponent *)> action_{};
 };
 
-template<typename... Ts> class LvglCondition : public Condition<Ts...>, public Parented<LvglComponent> {
+template<typename Tc, typename... Ts> class LvglCondition : public Condition<Ts...>, public Parented<Tc> {
  public:
-  LvglCondition(std::function<bool(LvglComponent *)> &&condition_lambda)
-      : condition_lambda_(std::move(condition_lambda)) {}
+  LvglCondition(std::function<bool(Tc *)> &&condition_lambda) : condition_lambda_(std::move(condition_lambda)) {}
   bool check(Ts... x) override { return this->condition_lambda_(this->parent_); }
 
  protected:
-  std::function<bool(LvglComponent *)> condition_lambda_{};
+  std::function<bool(Tc *)> condition_lambda_{};
 };
 
 #ifdef USE_LVGL_TOUCHSCREEN

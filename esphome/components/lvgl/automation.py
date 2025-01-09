@@ -4,7 +4,7 @@ from esphome import automation
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_ACTION, CONF_GROUP, CONF_ID, CONF_TIMEOUT
-from esphome.cpp_generator import get_variable
+from esphome.cpp_generator import TemplateArguments, get_variable
 from esphome.cpp_types import nullptr
 
 from .defines import (
@@ -22,6 +22,7 @@ from .lvcode import (
     UPDATE_EVENT,
     LambdaContext,
     LocalVariable,
+    LvglComponent,
     ReturnStatement,
     add_line_marks,
     lv,
@@ -92,7 +93,11 @@ async def lvgl_is_paused(config, condition_id, template_arg, args):
     lvgl = config[CONF_LVGL_ID]
     async with LambdaContext(LVGL_COMP_ARG, return_type=cg.bool_) as context:
         lv_add(ReturnStatement(lvgl_comp.is_paused()))
-    var = cg.new_Pvariable(condition_id, template_arg, await context.get_lambda())
+    var = cg.new_Pvariable(
+        condition_id,
+        TemplateArguments(LvglComponent, *template_arg),
+        await context.get_lambda(),
+    )
     await cg.register_parented(var, lvgl)
     return var
 
@@ -113,7 +118,11 @@ async def lvgl_is_idle(config, condition_id, template_arg, args):
     timeout = await cg.templatable(config[CONF_TIMEOUT], [], cg.uint32)
     async with LambdaContext(LVGL_COMP_ARG, return_type=cg.bool_) as context:
         lv_add(ReturnStatement(lvgl_comp.is_idle(timeout)))
-    var = cg.new_Pvariable(condition_id, template_arg, await context.get_lambda())
+    var = cg.new_Pvariable(
+        condition_id,
+        TemplateArguments(LvglComponent, *template_arg),
+        await context.get_lambda(),
+    )
     await cg.register_parented(var, lvgl)
     return var
 

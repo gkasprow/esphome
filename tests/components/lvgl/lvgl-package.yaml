@@ -136,6 +136,11 @@ lvgl:
         - logger.log: page loaded
         - lvgl.widget.focus:
             action: restore
+        - if:
+            condition:
+              lvgl.page.is_showing: page1
+            then:
+              logger.log: "Yes, page1 showing"
       on_unload:
         - logger.log: page unloaded
         - lvgl.widget.focus: mark
