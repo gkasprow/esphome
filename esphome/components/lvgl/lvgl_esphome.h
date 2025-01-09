@@ -63,6 +63,12 @@ inline void lv_disp_set_bg_image(lv_disp_t *disp, esphome::image::Image *image) 
 inline void lv_obj_set_style_bg_img_src(lv_obj_t *obj, esphome::image::Image *image, lv_style_selector_t selector) {
   lv_obj_set_style_bg_img_src(obj, image->get_lv_img_dsc(), selector);
 }
+#if LV_USE_METER
+inline lv_meter_indicator_t *lv_meter_add_needle_img(lv_obj_t *obj, lv_meter_scale_t *scale, esphome::image::Image *src,
+                                                     lv_coord_t pivot_x, lv_coord_t pivot_y) {
+  return lv_meter_add_needle_img(obj, scale, src->get_lv_img_dsc(), pivot_x, pivot_y);
+}
+#endif  // LV_USE_METER
 #endif  // USE_LVGL_IMAGE
 #ifdef USE_LVGL_ANIMIMG
 inline void lv_animimg_set_src(lv_obj_t *img, std::vector<image::Image *> images) {
