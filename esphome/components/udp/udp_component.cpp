@@ -245,7 +245,7 @@ void UDPComponent::setup() {
     }
     struct sockaddr_in server {};
 
-    socklen_t sl = socket::set_sockaddr_any((struct sockaddr *) &server, sizeof(server), this->port_);
+    socklen_t sl = socket::set_sockaddr((struct sockaddr *) &server, sizeof(server), "0.0.0.0", this->port_);
     if (sl == 0) {
       ESP_LOGE(TAG, "Socket unable to set sockaddr: errno %d", errno);
       this->mark_failed();
