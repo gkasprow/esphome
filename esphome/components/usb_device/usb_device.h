@@ -20,6 +20,12 @@ class UsbDevice : public PollingComponent {
 #ifdef USE_PRODUCT_ID
   void set_product_id(uint16_t product_id);
 #endif
+#ifdef USE_MANUFACTURER_NAME
+  void set_manufacturer_name(const std::string &manufacturer_name);
+#endif
+#ifdef USE_PRODUCT_NAME
+  void set_product_name(const std::string &product_name);
+#endif
 #ifdef USE_BINARY_SENSOR
   void set_mounted_binary_sensor(binary_sensor::BinarySensor *sensor);
   void set_ready_binary_sensor(binary_sensor::BinarySensor *sensor);
@@ -31,6 +37,12 @@ class UsbDevice : public PollingComponent {
 #endif
 #ifdef USE_PRODUCT_ID
   uint16_t product_id_;
+#endif
+#ifdef USE_MANUFACTURER_NAME
+  std::string manufacturer_name_;
+#endif
+#ifdef USE_PRODUCT_NAME
+  std::string product_name_;
 #endif
 #ifdef USE_BINARY_SENSOR
   binary_sensor::BinarySensor *mounted_;
