@@ -7,38 +7,38 @@ namespace lc709203f {
 static const char *TAG = "lc709203f.sensor";
 
 // Device I2C address. This address is fixed.
-static const uint8_t LC709203F_I2C_ADDR_DEFAULT         = 0x0B;
+static const uint8_t LC709203F_I2C_ADDR_DEFAULT = 0x0B;
 
 // Device registers
-static const uint8_t LC709203F_BEFORE_RSOC              = 0x04;
-static const uint8_t LC709203F_THERMISTOR_B             = 0x06;
-static const uint8_t LC709203F_INITIAL_RSOC             = 0x07;
-static const uint8_t LC709203F_CELL_TEMPERATURE         = 0x08;
-static const uint8_t LC709203F_CELL_VOLTAGE             = 0x09;
-static const uint8_t LC709203F_CURRENT_DIRECTION        = 0x0A;
-static const uint8_t LC709203F_APA                      = 0x0B;
-static const uint8_t LC709203F_APT                      = 0x0C;
-static const uint8_t LC709203F_RSOC                     = 0x0D;
-static const uint8_t LC709203F_ITE                      = 0x0F;
-static const uint8_t LC709203F_IC_VERSION               = 0x11;
-static const uint8_t LC709203F_CHANGE_OF_THE_PARAMETER  = 0x12;
-static const uint8_t LC709203F_ALARM_LOW_RSOC           = 0x13;
-static const uint8_t LC709203F_ALARM_LOW_CELL_VOLTAGE   = 0x14;
-static const uint8_t LC709203F_IC_POWER_MODE            = 0x15;
-static const uint8_t LC709203F_STATUS_BIT               = 0x16;
-static const uint8_t LC709203F_NUMBER_OF_THE_PARAMETER  = 0x1A;
+static const uint8_t LC709203F_BEFORE_RSOC = 0x04;
+static const uint8_t LC709203F_THERMISTOR_B = 0x06;
+static const uint8_t LC709203F_INITIAL_RSOC = 0x07;
+static const uint8_t LC709203F_CELL_TEMPERATURE = 0x08;
+static const uint8_t LC709203F_CELL_VOLTAGE = 0x09;
+static const uint8_t LC709203F_CURRENT_DIRECTION = 0x0A;
+static const uint8_t LC709203F_APA = 0x0B;
+static const uint8_t LC709203F_APT = 0x0C;
+static const uint8_t LC709203F_RSOC = 0x0D;
+static const uint8_t LC709203F_ITE = 0x0F;
+static const uint8_t LC709203F_IC_VERSION = 0x11;
+static const uint8_t LC709203F_CHANGE_OF_THE_PARAMETER = 0x12;
+static const uint8_t LC709203F_ALARM_LOW_RSOC = 0x13;
+static const uint8_t LC709203F_ALARM_LOW_CELL_VOLTAGE = 0x14;
+static const uint8_t LC709203F_IC_POWER_MODE = 0x15;
+static const uint8_t LC709203F_STATUS_BIT = 0x16;
+static const uint8_t LC709203F_NUMBER_OF_THE_PARAMETER = 0x1A;
 
-static const uint8_t LC709203F_POWER_MODE_ON            = 0x0001;
-static const uint8_t LC709203F_POWER_MODE_SLEEP         = 0x0002;
+static const uint8_t LC709203F_POWER_MODE_ON = 0x0001;
+static const uint8_t LC709203F_POWER_MODE_SLEEP = 0x0002;
 
-static const uint8_t LC709203F_STATE_INIT               = 0x01;
-static const uint8_t LC709203F_STATE_RSOC               = 0x02;
-static const uint8_t LC709203F_STATE_TEMP_SETUP         = 0x03;
-static const uint8_t LC709203F_STATE_NORMAL             = 0x00;
+static const uint8_t LC709203F_STATE_INIT = 0x01;
+static const uint8_t LC709203F_STATE_RSOC = 0x02;
+static const uint8_t LC709203F_STATE_TEMP_SETUP = 0x03;
+static const uint8_t LC709203F_STATE_NORMAL = 0x00;
 
 // The number of times to retry an I2C transaction before giving up. In my experience,
 //  10 is a good number here that will take care of most bus issues that require retry.
-static const uint8_t LC709203F_I2C_RETRY_COUNT          = 10;
+static const uint8_t LC709203F_I2C_RETRY_COUNT = 10;
 
 void lc709203f::setup()
 {
