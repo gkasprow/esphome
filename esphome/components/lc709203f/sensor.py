@@ -36,7 +36,9 @@ CONFIG_SCHEMA = (
         {
             cv.GenerateID(): cv.declare_id(lc709203f),
             cv.Optional(CONF_SIZE, default="500"): cv.int_range(200, 3000),
-            cv.Optional(CONF_VOLTAGE, default="3.7"): cv.enum(BATTERY_VOLTAGE_OPTIONS, upper=True),
+            cv.Optional(CONF_VOLTAGE, default="3.7"): cv.enum(
+                BATTERY_VOLTAGE_OPTIONS, upper=True
+            ),
             cv.Optional(CONF_BATTERY_VOLTAGE): sensor.sensor_schema(
                 unit_of_measurement=UNIT_VOLT,
                 accuracy_decimals=3,
@@ -59,7 +61,9 @@ CONFIG_SCHEMA = (
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ).extend(
                 {
-                    cv.Optional(CONF_THERMISTOR_B_CONSTANT, default="0x0D34"): cv.int_range(0, 0xFFFF),
+                    cv.Optional(
+                        CONF_THERMISTOR_B_CONSTANT, default="0x0D34"
+                    ): cv.int_range(0, 0xFFFF),
                 }
             ),
         }
@@ -87,4 +91,8 @@ async def to_code(config):
     if temperature_config := config.get(CONF_TEMPERATURE):
         sens = await sensor.new_sensor(temperature_config)
         cg.add(var.set_temperature_sensor(sens))
-        cg.add(var.set_thermistor_B_constant(temperature_config[CONF_THERMISTOR_B_CONSTANT]))
+        cg.add(
+            var.set_thermistor_B_constant(
+                temperature_config[CONF_THERMISTOR_B_CONSTANT]
+            )
+        )
