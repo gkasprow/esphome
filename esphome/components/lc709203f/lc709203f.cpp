@@ -116,16 +116,16 @@ void lc709203f::update(){
                 this->status_clear_warning();
             }
         }
-        if (this->battery_remaining_sensor_ != nullptr) 
+        if (this->battery_remaining_sensor_ != nullptr)
         {
             if (this->get_register(LC709203F_ITE, &buffer) == i2c::NO_ERROR)
             {
                 //Raw units are .1%
                 this->battery_remaining_sensor_->publish_state(static_cast<float>(buffer)/10.0);
                 this->status_clear_warning();
-            }      
+            }
         }
-        if (this->temperature_sensor_ != nullptr) 
+        if (this->temperature_sensor_ != nullptr)
         {
             //I can't test this with a real thermistor because I don't have a device with
             // an attached thermistor. I have turned on the sensor and made sure that it
@@ -194,7 +194,7 @@ void lc709203f::update(){
 void lc709203f::dump_config(){
     ESP_LOGCONFIG(TAG, "LC709203F:");
     LOG_I2C_DEVICE(this);
-    if (this->is_failed()) 
+    if (this->is_failed())
     {
         //Nothing in this code actually sets the device to failed, so this should never trigger.
         // I am leaving this in incase I want to implement a check during init to verify the
@@ -332,11 +332,11 @@ uint8_t lc709203f::CRC8(uint8_t *byte_buffer, uint8_t length_of_CRC)
     uint8_t crc = 0x00;
     const uint8_t POLYNOMIAL(0x07);
 
-    for (int j = length_of_CRC; j; --j) 
+    for (int j = length_of_CRC; j; --j)
     {
         crc ^= *byte_buffer++;
 
-        for (int i = 8; i; --i) 
+        for (int i = 8; i; --i)
         {
             crc = (crc & 0x80) ? (crc << 1) ^ POLYNOMIAL : (crc << 1);
         }
