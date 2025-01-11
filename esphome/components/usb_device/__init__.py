@@ -79,10 +79,8 @@ async def to_code(config):
         cg.add_define("USE_PRODUCT_ID")
         cg.add(var.set_product_id(config[CONF_PRODUCT_ID]))
     if CONF_MANUFACTURER_NAME in config:
-        cg.add_define("USE_MANUFACTURER_NAME")
         cg.add(var.set_manufacturer_name(config[CONF_MANUFACTURER_NAME]))
     if CONF_PRODUCT_NAME in config:
-        cg.add_define("USE_PRODUCT_NAME")
         cg.add(var.set_product_name(config[CONF_PRODUCT_NAME]))
 
     await cg.register_component(var, config)

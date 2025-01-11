@@ -16,12 +16,12 @@ void UsbDevice::setup() {
 #ifdef USE_PRODUCT_ID
   USB.PID(this->product_id_);
 #endif
-#ifdef USE_MANUFACTURER_NAME
-  USB.manufacturerName(this->manufacturer_name_.c_str());
-#endif
-#ifdef USE_PRODUCT_NAME
-  USB.productName(this->product_name_.c_str());
-#endif
+  if (!this->manufacturer_name_.empty()) {
+    USB.manufacturerName(this->manufacturer_name_.c_str());
+  }
+  if (!this->product_name_.empty()) {
+    USB.productName(this->product_name_.c_str());
+  }
   USB.begin();
 }
 
@@ -49,18 +49,10 @@ void UsbDevice::dump_config() {
                 YESNO(TinyUSBDevice.suspended()), YESNO(TinyUSBDevice.ready()));
 }
 
-#ifdef USE_VENDOR_ID
 void UsbDevice::set_vendor_id(const uint16_t vid) { this->vendor_id_ = vid; }
-#endif
-#ifdef USE_PRODUCT_ID
 void UsbDevice::set_product_id(const uint16_t pid) { this->product_id_ = pid; }
-#endif
-#ifdef USE_MANUFACTURER_NAME
 void UsbDevice::set_manufacturer_name(const std::string &manufacturer_name) { this->manufacturer_name_ = manufacturer_name; }
-#endif
-#ifdef USE_PRODUCT_NAME
 void UsbDevice::set_product_name(const std::string &product_name) { this->product_name_ = product_name; }
-#endif
 
 #ifdef USE_BINARY_SENSOR
 void UsbDevice::set_mounted_binary_sensor(binary_sensor::BinarySensor *sensor) { mounted_ = sensor; };
