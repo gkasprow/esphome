@@ -2,6 +2,7 @@
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 #include "esphome/components/uart/uart_component_esp32_arduino.h"
+#include "esphome/components/uart/uart_component_esp8266.h"
 #include "esphome/components/uart/uart_component_esp_idf.h"
 
 namespace esphome {
@@ -17,6 +18,11 @@ void Modbus::setup() {
   this->frame_delay_ms_ = (3.5 * 11 * 1000 / this->parent_->get_baud_rate()) + 1;
   if (this->frame_delay_ms_ < 2)
     this->frame_delay_ms_ = 2;  // 1750us minimium per spec - rounded up to 2ms.
+
+#ifdef USE_ESP8266
+  if (static_cast<uart::ESP8266UartComponent *>(this->parent_)->get_hw_serial() != nullptr)
+    static_cast<uart::ESP8266UartComponent *>(this->parent_)->get_hw_serial()->setRxFIFOFull(1);
+#endif  // USE_ESP8266
 
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
   static_cast<uart::ESP32ArduinoUARTComponent *>(this->parent_)->get_hw_serial()->setRxFIFOFull(1);
