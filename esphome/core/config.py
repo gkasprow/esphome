@@ -192,8 +192,8 @@ PRELOAD_CONFIG_SCHEMA = cv.Schema(
 
 
 def _is_target_platform(name):
+    from esphome.loader import get_component
     try:
-        from esphome.loader import get_component
         if get_component(name, True).is_target_platform:
             return True
     except KeyError:
