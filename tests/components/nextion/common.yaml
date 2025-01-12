@@ -278,6 +278,7 @@ display:
   - platform: nextion
     id: main_lcd
     update_interval: 5s
+    command_spacing: 5
     on_sleep:
       then:
         lambda: 'ESP_LOGD("display","Display went to sleep");'
