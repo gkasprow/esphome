@@ -181,10 +181,10 @@ std::shared_ptr<HttpContainer> HttpRequestIDF::start(std::string url, std::strin
 int HttpContainerIDF::read(uint8_t *buf, size_t max_len) {
   const uint32_t start = millis();
   watchdog::WatchdogManager wdm(this->parent_->get_watchdog_timeout());
-  
+
   // int bufsize = std::min(max_len, this->content_length - this->bytes_read_);
   int bufsize = this->chunked ? max_len : std::min(max_len, this->content_length - this->bytes_read_);
-  
+
   if (bufsize == 0) {
     this->duration_ms += (millis() - start);
     return 0;
