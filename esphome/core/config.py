@@ -209,9 +209,8 @@ def _supported_target_platforms():
             continue
         if not (path / "__init__.py").is_file():
             continue
-        name = path.name
-        if _is_target_platform(name):
-            target_platforms += [name]
+        if _is_target_platform(path.name):
+            target_platforms += [path.name]
     return target_platforms
 
 
