@@ -194,10 +194,7 @@ PRELOAD_CONFIG_SCHEMA = cv.Schema(
 def _is_target_platform(name):
     try:
         from esphome.loader import get_component
-
-        # some components cannot be loaded without platform
-        component = get_component(name, True)
-        if component.is_target_platform:
+        if get_component(name, True).is_target_platform:
             return True
     except KeyError:
         pass
@@ -206,15 +203,12 @@ def _is_target_platform(name):
 
 def _supported_target_platforms():
     target_platforms = []
-    root = Path(__file__).parent.parent
-    components_dir = root / "components"
-
-    for path in components_dir.iterdir():
+    root = Path(__file__).parents[1]
+    for path in (root / "components").iterdir():
         if not path.is_dir():
             continue
         if not (path / "__init__.py").is_file():
             continue
-
         name = path.name
         if _is_target_platform(name):
             target_platforms += [name]
