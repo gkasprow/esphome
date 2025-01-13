@@ -63,13 +63,13 @@ bool SmlFile::setup_node(std::vector<SmlNode> &nodes) {
       if (!this->setup_node(child_nodes))
         return false;
     }
-    nodes.emplace_back(SmlNode{type, std::move(child_nodes)});
+    nodes.emplace_back(type, std::move(child_nodes));
   } else {
     // Value starts at the current position
     // Value ends "length" bytes later,
     // (since the TL field is counted but already subtracted from length)
     auto value_begin = this->buffer_.begin() + this->pos_;
-    nodes.emplace_back(SmlNode{type, byte_span(value_begin, value_begin + length)});
+    nodes.emplace_back(type, byte_span(value_begin, value_begin + length));
     // Increment the pointer past all consumed bytes
     this->pos_ += length;
   }
@@ -134,7 +134,7 @@ ObisInfo::ObisInfo(byte_span const &server_id, SmlNode const &val_list_entry) : 
   this->status = val_list_entry.nodes[1].value_bytes;
   this->unit = bytes_to_uint(val_list_entry.nodes[3].value_bytes);
   this->scaler = bytes_to_int(val_list_entry.nodes[4].value_bytes);
-  SmlNode value_node = val_list_entry.nodes[5];
+  auto value_node = val_list_entry.nodes[5];
   this->value = value_node.value_bytes;
   this->value_type = value_node.type;
 }
