@@ -31,10 +31,6 @@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/n4820.pdf
 
 // Various feature test macros
 
-#ifndef TCB_SPAN_NAMESPACE_NAME
-#define TCB_SPAN_NAMESPACE_NAME tcb
-#endif
-
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #define TCB_SPAN_HAVE_CPP17
 #endif
@@ -43,7 +39,8 @@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/n4820.pdf
 #define TCB_SPAN_HAVE_CPP14
 #endif
 
-namespace TCB_SPAN_NAMESPACE_NAME {
+namespace esphome {
+namespace sml {
 
 // Establish default contract checking behavior
 #if !defined(TCB_SPAN_THROW_ON_CONTRACT_VIOLATION) && !defined(TCB_SPAN_TERMINATE_ON_CONTRACT_VIOLATION) && \
@@ -431,23 +428,7 @@ span<byte, ((Extent == dynamic_extent) ? dynamic_extent : sizeof(ElementType) * 
 
 template<std::size_t N, typename E, std::size_t S> constexpr auto get(span<E, S> s) -> decltype(s[N]) { return s[N]; }
 
-}  // namespace TCB_SPAN_NAMESPACE_NAME
-
-namespace std {
-
-template<typename ElementType, size_t Extent>
-class tuple_size<TCB_SPAN_NAMESPACE_NAME::span<ElementType, Extent>> : public integral_constant<size_t, Extent> {};
-
-template<typename ElementType>
-class tuple_size<TCB_SPAN_NAMESPACE_NAME::span<ElementType, TCB_SPAN_NAMESPACE_NAME::dynamic_extent>>;  // not defined
-
-template<size_t I, typename ElementType, size_t Extent>
-class tuple_element<I, TCB_SPAN_NAMESPACE_NAME::span<ElementType, Extent>> {
- public:
-  static_assert(Extent != TCB_SPAN_NAMESPACE_NAME::dynamic_extent && I < Extent, "");
-  using type = ElementType;
-};
-
-}  // end namespace std
+}  // namespace sml
+}  // namespace esphome
 
 #endif  // TCB_SPAN_HPP_INCLUDED
