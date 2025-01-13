@@ -1,22 +1,22 @@
 import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome.components import i2c, sensor
+import esphome.config_validation as cv
 from esphome.const import (
     CONF_BATTERY_LEVEL,
     CONF_BATTERY_VOLTAGE,
     CONF_ID,
+    CONF_SIZE,
+    CONF_TEMPERATURE,
+    CONF_THERMISTOR_B_CONSTANT,
+    CONF_VOLTAGE,
     DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLTAGE,
     ENTITY_CATEGORY_DIAGNOSTIC,
     STATE_CLASS_MEASUREMENT,
+    UNIT_CELSIUS,
     UNIT_PERCENT,
     UNIT_VOLT,
-    CONF_SIZE,
-    CONF_TEMPERATURE,
-    UNIT_CELSIUS,
-    DEVICE_CLASS_TEMPERATURE,
-    CONF_THERMISTOR_B_CONSTANT,
-    CONF_VOLTAGE,
 )
 
 DEPENDENCIES = ["i2c"]
@@ -92,7 +92,7 @@ async def to_code(config):
         sens = await sensor.new_sensor(temperature_config)
         cg.add(var.set_temperature_sensor(sens))
         cg.add(
-            var.set_thermistor_B_constant(
+            var.set_thermistor_b_constant(
                 temperature_config[CONF_THERMISTOR_B_CONSTANT]
             )
         )
