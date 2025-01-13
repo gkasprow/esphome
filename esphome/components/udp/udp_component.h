@@ -70,9 +70,7 @@ class UDPComponent : public PollingComponent {
   }
 #endif
   void add_address(const char *addr) { this->addresses_.emplace_back(addr); }
-  void add_listen_address(const char *listen_addr) {
-    this->listen_addresses_.emplace_back(network::IPAddress(listen_addr));
-  }
+  void add_listen_address(const char *listen_addr) { this->listen_addresses_.emplace_back(listen_addr); }
   void set_port(uint16_t port) { this->port_ = port; }
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
