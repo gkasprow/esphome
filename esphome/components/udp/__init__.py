@@ -27,7 +27,7 @@ UDPComponent = udp_ns.class_("UDPComponent", cg.PollingComponent)
 CONF_BROADCAST = "broadcast"
 CONF_BROADCAST_ID = "broadcast_id"
 CONF_ADDRESSES = "addresses"
-CONF_LISTEN_ADDRESS = "listen_address"
+CONF_LISTEN_ADDRESSES = "listen_addresses"
 CONF_PROVIDER = "provider"
 CONF_PROVIDERS = "providers"
 CONF_REMOTE_ID = "remote_id"
@@ -63,9 +63,6 @@ ENCRYPTION_SCHEMA = {
 PROVIDER_SCHEMA = cv.Schema(
     {
         cv.Required(CONF_NAME): cv.valid_name,
-        cv.Optional(
-            CONF_LISTEN_ADDRESS, default="255.255.255.255"
-        ): cv.ipv4address_multi_broadcast,
     }
 ).extend(ENCRYPTION_SCHEMA)
 
@@ -88,6 +85,9 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(UDPComponent),
             cv.Optional(CONF_PORT, default=18511): cv.port,
+            cv.Optional(CONF_LISTEN_ADDRESSES, default=[]): cv.ensure_list(
+                cv.ipv4address_multi_broadcast,
+            ),
             cv.Optional(CONF_ADDRESSES, default=["255.255.255.255"]): cv.ensure_list(
                 cv.ipv4address,
             ),
@@ -158,10 +158,7 @@ async def to_code(config):
     for provider in config.get(CONF_PROVIDERS, ()):
         name = provider[CONF_NAME]
         cg.add(var.add_provider(name))
-        cg.add(
-            var.set_provider_listen_address(
-                name, str(provider.get(CONF_LISTEN_ADDRESS))
-            )
-        )
+        for listen_address in config[CONF_LISTEN_ADDRESSES]:
+            cg.add(var.add_listen_address(str(listen_address)))
         if encryption := provider.get(CONF_ENCRYPTION):
             cg.add(var.set_provider_encryption(name, hash_encryption_key(encryption)))

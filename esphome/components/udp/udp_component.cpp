@@ -257,19 +257,17 @@ void UDPComponent::setup() {
       return;
     }
 #ifndef USE_HOST
-    for (auto &host : this->providers_) {
-      if (host.second.listen_address.is_multicast()) {
-        struct ip_mreq imreq = {{0}};
-        imreq.imr_interface.s_addr = IPADDR_ANY;
-        inet_aton(host.second.listen_address.str().c_str(), &imreq.imr_multiaddr.s_addr);
-        ESP_LOGVV(TAG, "Join multicast %s", host.second.listen_address.str().c_str());
-        err = this->listen_socket_->setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, &imreq, sizeof(struct ip_mreq));
-        if (err < 0) {
-          ESP_LOGE(TAG, "Failed to set IP_ADD_MEMBERSHIP. Error %d", errno);
-          this->mark_failed();
-          this->status_set_error("Failed to set IP_ADD_MEMBERSHIP");
-          return;
-        }
+    for (const auto &listen_address : this->listen_addresses_) {
+      struct ip_mreq imreq = {{0}};
+      imreq.imr_interface.s_addr = IPADDR_ANY;
+      inet_aton(listen_address.str().c_str(), &imreq.imr_multiaddr.s_addr);
+      ESP_LOGVV(TAG, "Join multicast %s", listen_address.str().c_str());
+      err = this->listen_socket_->setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, &imreq, sizeof(struct ip_mreq));
+      if (err < 0) {
+        ESP_LOGE(TAG, "Failed to set IP_ADD_MEMBERSHIP. Error %d", errno);
+        this->mark_failed();
+        this->status_set_error("Failed to set IP_ADD_MEMBERSHIP");
+        return;
       }
     }
 #endif
@@ -582,6 +580,8 @@ void UDPComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "  Ping-pong: %s", YESNO(this->ping_pong_enable_));
   for (const auto &address : this->addresses_)
     ESP_LOGCONFIG(TAG, "  Address: %s", address.c_str());
+  for (const auto &listen_address : this->listen_addresses_)
+    ESP_LOGCONFIG(TAG, "  Listen address: %s", listen_address.str().c_str());
 #ifdef USE_SENSOR
   for (auto sensor : this->sensors_)
     ESP_LOGCONFIG(TAG, "  Sensor: %s", sensor.id);
@@ -592,7 +592,6 @@ void UDPComponent::dump_config() {
 #endif
   for (const auto &host : this->providers_) {
     ESP_LOGCONFIG(TAG, "  Remote host: %s", host.first.c_str());
-    ESP_LOGCONFIG(TAG, "    Listen address: %s", host.second.listen_address.str().c_str());
     ESP_LOGCONFIG(TAG, "    Encrypted: %s", YESNO(!host.second.encryption_key.empty()));
 #ifdef USE_SENSOR
     for (const auto &sensor : this->remote_sensors_[host.first.c_str()])

@@ -22,7 +22,6 @@ namespace udp {
 
 struct Provider {
   std::vector<uint8_t> encryption_key;
-  network::IPAddress listen_address;
   const char *name;
   uint32_t last_code[2];
 };
@@ -71,6 +70,9 @@ class UDPComponent : public PollingComponent {
   }
 #endif
   void add_address(const char *addr) { this->addresses_.emplace_back(addr); }
+  void add_listen_address(const char *listen_addr) {
+    this->listen_addresses_.emplace_back(network::IPAddress(listen_addr));
+  }
   void set_port(uint16_t port) { this->port_ = port; }
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
@@ -97,9 +99,6 @@ class UDPComponent : public PollingComponent {
   void set_ping_pong_recycle_time(uint32_t recycle_time) { this->ping_pong_recyle_time_ = recycle_time; }
   void set_provider_encryption(const char *name, std::vector<uint8_t> key) {
     this->providers_[name].encryption_key = std::move(key);
-  }
-  void set_provider_listen_address(const char *name, const char *address) {
-    this->providers_[name].listen_address = network::IPAddress(address);
   }
 
  protected:
@@ -148,6 +147,7 @@ class UDPComponent : public PollingComponent {
   std::map<std::string, std::map<std::string, binary_sensor::BinarySensor *>> remote_binary_sensors_{};
 #endif
 
+  std::vector<network::IPAddress> listen_addresses_{};
   std::map<std::string, Provider> providers_{};
   std::vector<uint8_t> ping_header_{};
   std::vector<uint8_t> header_{};
