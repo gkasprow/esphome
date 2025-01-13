@@ -11,14 +11,16 @@ template<typename T> class Span {
  public:
   Span() : data_(nullptr), size_(0) {}
   Span(T *data, size_t size) : data_(data), size_(size) {}
-  Span(Span<T> const &orig) : data_(orig.data_), size_(orig.size_) {}
+  Span(const Span<T> &) = default;
 
-  T &operator[](size_t index) { return data_[index]; }
-  const T &operator[](size_t index) const { return data_[index]; }
-
+  Span &operator=(const Span<T> &) = default;
   size_t size() const { return size_; }
+
+  const T &operator[](size_t index) const { return data_[index]; }
   const T *begin() const { return data_; }
   const T *end() const { return data_ + size_; }
+
+  T &operator[](size_t index) { return data_[index]; }
   T *begin() { return data_; }
   T *end() { return data_ + size_; }
 
