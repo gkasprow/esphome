@@ -48,12 +48,13 @@ class OnlineImage : public PollingComponent,
    * @param buffer_size Size of the buffer used to download the image.
    */
   OnlineImage(const std::string &url, int width, int height, ImageFormat format, image::ImageType type,
-              uint32_t buffer_size);
+              image::Transparency transparency, uint32_t buffer_size);
 
   void draw(int x, int y, display::Display *display, Color color_on, Color color_off) override;
 
   void update() override;
   void loop() override;
+  void map_chroma_key(Color &color);
 
   /** Set the URL to download the image from. */
   void set_url(const std::string &url) {
@@ -86,13 +87,9 @@ class OnlineImage : public PollingComponent,
   Allocator allocator_{Allocator::Flags::ALLOW_FAILURE};
 
   uint32_t get_buffer_size_() const { return get_buffer_size_(this->buffer_width_, this->buffer_height_); }
-  int get_buffer_size_(int width, int height) const {
-    return std::ceil(image::image_type_to_bpp(this->type_) * width * height / 8.0);
-  }
+  int get_buffer_size_(int width, int height) const { return (this->get_bpp() * width + 7u) / 8u * height; }
 
-  int get_position_(int x, int y) const {
-    return ((x + y * this->buffer_width_) * image::image_type_to_bpp(this->type_)) / 8;
-  }
+  int get_position_(int x, int y) const { return (x + y * this->buffer_width_) * this->get_bpp() / 8; }
 
   ESPHOME_ALWAYS_INLINE bool auto_resize_() const { return this->fixed_width_ == 0 || this->fixed_height_ == 0; }
 
