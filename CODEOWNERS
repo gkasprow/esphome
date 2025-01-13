@@ -302,7 +302,7 @@ esphome/components/noblex/* @AGalfra
 esphome/components/npi19/* @bakerkj
 esphome/components/number/* @esphome/core
 esphome/components/one_wire/* @ssieb
-esphome/components/online_image/* @guillempages
+esphome/components/online_image/* @clydebarrow @guillempages
 esphome/components/opentherm/* @olegtarasov
 esphome/components/ota/* @esphome/core
 esphome/components/output/* @esphome/core
@@ -355,6 +355,7 @@ esphome/components/sdl/* @clydebarrow
 esphome/components/sdm_meter/* @jesserockz @polyfaces
 esphome/components/sdp3x/* @Azimath
 esphome/components/seeed_mr24hpc1/* @limengdu
+esphome/components/seeed_mr60bha2/* @limengdu
 esphome/components/seeed_mr60fda2/* @limengdu
 esphome/components/selec_meter/* @sourabhjaiswal
 esphome/components/select/* @esphome/core

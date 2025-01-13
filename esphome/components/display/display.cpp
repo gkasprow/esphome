@@ -1,6 +1,6 @@
 #include "display.h"
-#include "display_color_utils.h"
 #include <utility>
+#include "display_color_utils.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
 
@@ -266,8 +266,9 @@ void Display::filled_gauge(int center_x, int center_y, int radius1, int radius2,
         if (dymax < float(-dxmax) * tan_a) {
           upd_dxmax = ceil(float(dymax) / tan_a);
           hline_width = -dxmax - upd_dxmax + 1;
-        } else
+        } else {
           hline_width = 0;
+        }
       }
       if (hline_width > 0)
         this->horizontal_line(center_x + dxmax, center_y - dymax, hline_width, color);
@@ -670,7 +671,7 @@ void Display::strftime(int x, int y, BaseFont *font, Color color, Color backgrou
     this->print(x, y, font, color, align, buffer, background);
 }
 void Display::strftime(int x, int y, BaseFont *font, Color color, TextAlign align, const char *format, ESPTime time) {
-  this->strftime(x, y, font, color, COLOR_OFF, TextAlign::TOP_LEFT, format, time);
+  this->strftime(x, y, font, color, COLOR_OFF, align, format, time);
 }
 void Display::strftime(int x, int y, BaseFont *font, Color color, const char *format, ESPTime time) {
   this->strftime(x, y, font, color, COLOR_OFF, TextAlign::TOP_LEFT, format, time);
