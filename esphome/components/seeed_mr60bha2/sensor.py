@@ -42,7 +42,7 @@ CONFIG_SCHEMA = cv.Schema(
             accuracy_decimals=2,
             icon=ICON_SIGNAL,
         ),
-        cv.Optional(CONF_TARGET_NUM): sensor.sensor_schema(
+        cv.Optional(CONF_NUM_TARGETS): sensor.sensor_schema(
             icon=ICON_COUNTER,
         ),
     }
