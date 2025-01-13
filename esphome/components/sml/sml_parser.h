@@ -11,7 +11,7 @@ namespace esphome {
 namespace sml {
 
 using bytes = std::vector<uint8_t>;
-using byte_span = tcb::span<uint8_t>;
+using byte_span = span<uint8_t>;
 
 class SmlNode {
  public:

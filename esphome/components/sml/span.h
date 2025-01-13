@@ -1,4 +1,3 @@
-
 /*
 This is an implementation of C++20's std::span
 http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/n4820.pdf
@@ -9,8 +8,7 @@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/n4820.pdf
 //    (See accompanying file ../../LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef TCB_SPAN_HPP_INCLUDED
-#define TCB_SPAN_HPP_INCLUDED
+#pragma once
 
 #include <array>
 #include <cstddef>
@@ -430,5 +428,3 @@ template<std::size_t N, typename E, std::size_t S> constexpr auto get(span<E, S>
 
 }  // namespace sml
 }  // namespace esphome
-
-#endif  // TCB_SPAN_HPP_INCLUDED
