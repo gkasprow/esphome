@@ -26,6 +26,7 @@ std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::s
   container->set_parent(this);
 
   const uint32_t start = millis();
+  container->start_ms = start;
 
   bool secure = url.find("https:") != std::string::npos;
   container->set_secure(secure);
@@ -149,9 +150,11 @@ int HttpContainerArduino::read(uint8_t *buf, size_t max_len) {
 
   App.feed_wdt();
   int read_len = stream_ptr->readBytes(buf, bufsize);
-  this->bytes_read_ += read_len;
 
-  this->duration_ms += (millis() - start);
+  if (read_len >= 0) {
+    this->bytes_read_ += read_len;
+    this->duration_ms += (millis() - start);
+  }
 
   return read_len;
 }

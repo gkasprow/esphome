@@ -87,6 +87,7 @@ class HttpContainer : public Parented<HttpRequestComponent> {
   size_t content_length;
   int status_code;
   uint32_t duration_ms;
+  uint32_t start_ms;
 
   virtual int read(uint8_t *buf, size_t max_len) = 0;
   virtual void end() = 0;
@@ -114,6 +115,7 @@ class HttpRequestComponent : public Component {
 
   void set_useragent(const char *useragent) { this->useragent_ = useragent; }
   void set_timeout(uint16_t timeout) { this->timeout_ = timeout; }
+  uint16_t get_timeout() { return this->timeout_; }
   void set_watchdog_timeout(uint32_t watchdog_timeout) { this->watchdog_timeout_ = watchdog_timeout; }
   uint32_t get_watchdog_timeout() const { return this->watchdog_timeout_; }
   void set_follow_redirects(bool follow_redirects) { this->follow_redirects_ = follow_redirects; }
@@ -141,7 +143,7 @@ class HttpRequestComponent : public Component {
   uint32_t watchdog_timeout_{0};
 };
 
-template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
+template<typename... Ts> class HttpRequestSendAction : public Action<Ts...>, public Component {
  public:
   HttpRequestSendAction(HttpRequestComponent *parent) : parent_(parent) {}
   TEMPLATABLE_VALUE(std::string, url)
@@ -188,54 +190,119 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
     auto container = this->parent_->start(this->url_.value(x...), this->method_.value(x...), body, headers);
 
     if (container == nullptr) {
-      for (auto *trigger : this->error_triggers_)
-        trigger->trigger();
+      this->trigger_error_();
       return;
     }
 
+    uint8_t *buf = nullptr;
     size_t content_length = container->content_length;
     size_t max_length = std::min(content_length, this->max_response_buffer_size_);
 
-    std::string response_body;
     if (this->capture_response_.value(x...)) {
       ExternalRAMAllocator<uint8_t> allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
-      uint8_t *buf = allocator.allocate(max_length);
-      if (buf != nullptr) {
-        size_t read_index = 0;
-        while (container->get_bytes_read() < max_length) {
-          int read = container->read(buf + read_index, std::min<size_t>(max_length - read_index, 512));
-          App.feed_wdt();
-          yield();
-          read_index += read;
-        }
-        response_body.reserve(read_index);
-        response_body.assign((char *) buf, read_index);
-        allocator.deallocate(buf, max_length);
-      }
+      buf = allocator.allocate(max_length);
     }
 
-    if (this->response_triggers_.size() == 1) {
-      // if there is only one trigger, no need to copy the response body
-      this->response_triggers_[0]->process(container, response_body);
-    } else {
-      for (auto *trigger : this->response_triggers_) {
-        // with multiple triggers, pass a copy of the response body to each
-        // one so that modifications made in one trigger are not visible to
-        // the others
-        auto response_body_copy = std::string(response_body);
-        trigger->process(container, response_body_copy);
+    this->active_requests_.push_back(std::make_tuple(container, buf, max_length));
+  }
+
+  bool is_running() override { return !this->active_requests_.empty() || Action<Ts...>::is_running(); }
+
+  virtual void stop_complex() {
+    ExternalRAMAllocator<uint8_t> allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
+
+    while (!this->active_requests_.empty()) {
+      const auto request = this->active_requests_.front();
+      auto container = std::get<0>(request);
+      auto buf = std::get<1>(request);
+      auto max_length = std::get<2>(request);
+      container->end();
+      if (buf != nullptr) {
+        allocator.deallocate(buf, max_length);
       }
+      this->active_requests_.pop_front();
     }
-    container->end();
+
+    this->num_running_ = 0;
+    this->stop_next_();
+  }
+
+  void loop() override {
+    ExternalRAMAllocator<uint8_t> allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
+
+    auto now = millis();
+    this->active_requests_.remove_if([&](decltype(*this->active_requests_.cbegin()) &request) {
+      auto container = std::get<0>(request);
+      auto buf = std::get<1>(request);
+      size_t max_length = std::get<2>(request);
+
+      auto duration_ms = now - container->start_ms;
+      if (duration_ms > this->parent_->get_timeout()) {
+        if (buf != nullptr) {
+          allocator.deallocate(buf, max_length);
+        }
+
+        this->trigger_error_();
+        return true;
+      }
+
+      std::string response_body;
+
+      if (buf != nullptr) {
+        if (container->get_bytes_read() < max_length) {
+          int bytes_read = container->read(buf + container->get_bytes_read(),
+                                           std::min<size_t>(max_length - container->get_bytes_read(), 512));
+          if (bytes_read < 0) {
+            allocator.deallocate(buf, max_length);
+            // reader error (e.g. timeout or stream pointer gone)
+            this->trigger_error_();
+            return true;
+          }
+        }
+
+        if (container->get_bytes_read() < max_length) {
+          // not enough data received, continue in next iteration
+          return false;
+        }
+
+        response_body.reserve(container->get_bytes_read());
+        response_body.assign(reinterpret_cast<char *>(buf), container->get_bytes_read());
+        allocator.deallocate(buf, max_length);
+      }
+
+      if (this->response_triggers_.size() == 1) {
+        // if there is only one trigger, no need to copy the response body
+        this->response_triggers_[0]->process(container, response_body);
+      } else {
+        for (auto *trigger : this->response_triggers_) {
+          // with multiple triggers, pass a copy of the response body to each
+          // one so that modifications made in one trigger are not visible to
+          // the others
+          auto response_body_copy = std::string(response_body);
+          trigger->process(container, response_body_copy);
+        }
+      }
+      container->end();
+
+      // request done, can be removed from active list
+      return true;
+    });
   }
 
  protected:
+  std::list<std::tuple<std::shared_ptr<HttpContainer>, uint8_t *, size_t>> active_requests_{};
   void encode_json_(Ts... x, JsonObject root) {
     for (const auto &item : this->json_) {
       auto val = item.second;
       root[item.first] = val.value(x...);
     }
   }
+
+  void trigger_error_() {
+    for (auto *trigger : this->error_triggers_)
+      trigger->trigger();
+  }
+
   void encode_json_func_(Ts... x, JsonObject root) { this->json_func_(x..., root); }
   HttpRequestComponent *parent_;
   std::map<const char *, TemplatableValue<const char *, Ts...>> headers_{};

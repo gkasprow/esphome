@@ -25,7 +25,7 @@ HttpRequestIDF = http_request_ns.class_("HttpRequestIDF", HttpRequestComponent)
 HttpContainer = http_request_ns.class_("HttpContainer")
 
 HttpRequestSendAction = http_request_ns.class_(
-    "HttpRequestSendAction", automation.Action
+    "HttpRequestSendAction", automation.Action, cg.Component
 )
 HttpRequestResponseTrigger = http_request_ns.class_(
     "HttpRequestResponseTrigger",
@@ -285,4 +285,5 @@ async def http_request_action_to_code(config, action_id, template_arg, args):
         cg.add(var.register_error_trigger(trigger))
         await automation.build_automation(trigger, [], conf)
 
+    await cg.register_component(var, {})
     return var
