@@ -1,7 +1,5 @@
 #pragma once
 
-#include "esphome/core/defines.h"
-
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/core/component.h"
 
