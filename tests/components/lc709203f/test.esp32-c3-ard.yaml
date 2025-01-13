@@ -1,20 +1,7 @@
-esphome:
-  name: lc709203f_test
-  friendly_name: LC709203F Test
-
-esp32:
-  board: adafruit_feather_esp32s3
-  framework:
-    type: arduino
-
-# Enable logging
-logger:
-
 i2c:
-  sda: SDA
-  scl: SCL
-  scan: true
-  id: bus_a
+  - id: i2c_lc709203f
+    scl: 5
+    sda: 4
 
 sensor:
   - platform: lc709203f
