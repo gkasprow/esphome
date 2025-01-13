@@ -13,7 +13,7 @@ enum LC709203FBatteryVoltage {
   LC709203F_BATTERY_VOLTAGE_3_7 = 0x0001,
 };
 
-class lc709203f : public sensor::Sensor, public PollingComponent, public i2c::I2CDevice {
+class Lc709203f : public sensor::Sensor, public PollingComponent, public i2c::I2CDevice {
  public:
   void setup() override;
   void update() override;

@@ -40,7 +40,7 @@ static const uint8_t LC709203F_STATE_NORMAL = 0x00;
 //  10 is a good number here that will take care of most bus issues that require retry.
 static const uint8_t LC709203F_I2C_RETRY_COUNT = 10;
 
-void lc709203f::setup() {
+void Lc709203f::setup() {
   // Note: The setup implements a small state machine. This is because we want to have
   //  delays before and after sending the RSOC command. The full init process should be:
   //       INIT->RSOC->TEMP_SETUP->NORMAL
@@ -97,7 +97,7 @@ void lc709203f::setup() {
   // Note: Initialization continues in the update() function.
 }
 
-void lc709203f::update() {
+void Lc709203f::update() {
   uint16_t buffer;
 
   if (this->state_ == LC709203F_STATE_NORMAL) {
@@ -164,7 +164,7 @@ void lc709203f::update() {
   }
 }
 
-void lc709203f::dump_config() {
+void Lc709203f::dump_config() {
   ESP_LOGCONFIG(TAG, "LC709203F:");
   LOG_I2C_DEVICE(this);
   if (this->is_failed()) {
@@ -195,7 +195,7 @@ void lc709203f::dump_config() {
   }
 }
 
-uint8_t lc709203f::get_register_(uint8_t register_to_read, uint16_t *register_value) {
+uint8_t Lc709203f::get_register_(uint8_t register_to_read, uint16_t *register_value) {
   i2c::ErrorCode return_code;
   uint8_t read_buffer[6];
 
@@ -242,7 +242,7 @@ uint8_t lc709203f::get_register_(uint8_t register_to_read, uint16_t *register_va
   }
 }
 
-uint8_t lc709203f::set_register_(uint8_t register_to_set, uint16_t value_to_set) {
+uint8_t Lc709203f::set_register_(uint8_t register_to_set, uint16_t value_to_set) {
   i2c::ErrorCode return_code;
   uint8_t write_buffer[5];
 
@@ -274,7 +274,7 @@ uint8_t lc709203f::set_register_(uint8_t register_to_set, uint16_t value_to_set)
   return return_code;
 }
 
-uint8_t lc709203f::crc8_(uint8_t *byte_buffer, uint8_t length_of_crc) {
+uint8_t Lc709203f::crc8_(uint8_t *byte_buffer, uint8_t length_of_crc) {
   uint8_t crc = 0x00;
   const uint8_t polynomial(0x07);
 
@@ -288,7 +288,7 @@ uint8_t lc709203f::crc8_(uint8_t *byte_buffer, uint8_t length_of_crc) {
   return crc;
 }
 
-void lc709203f::set_pack_size(uint16_t pack_size) {
+void Lc709203f::set_pack_size(uint16_t pack_size) {
   uint16_t pack_size_array[6] = {100, 200, 500, 1000, 2000, 3000};
   uint16_t apa_array[6] = {0x08, 0x0B, 0x10, 0x19, 0x2D, 0x36};
   float slope;
@@ -325,12 +325,12 @@ void lc709203f::set_pack_size(uint16_t pack_size) {
   return;
 }
 
-void lc709203f::set_thermistor_b_constant(uint16_t b_constant) {
+void Lc709203f::set_thermistor_b_constant(uint16_t b_constant) {
   this->b_constant_ = b_constant;
   return;
 }
 
-void lc709203f::set_pack_voltage(LC709203FBatteryVoltage pack_voltage) {
+void Lc709203f::set_pack_voltage(LC709203FBatteryVoltage pack_voltage) {
   this->pack_voltage_ = pack_voltage;
   return;
 }
