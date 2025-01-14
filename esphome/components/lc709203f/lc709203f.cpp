@@ -4,7 +4,7 @@
 namespace esphome {
 namespace lc709203f {
 
-static const char *const *TAG = "lc709203f.sensor";
+static const char *const TAG = "lc709203f.sensor";
 
 // Device I2C address. This address is fixed.
 static const uint8_t LC709203F_I2C_ADDR_DEFAULT = 0x0B;
