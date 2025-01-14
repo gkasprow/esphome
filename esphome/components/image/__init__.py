@@ -84,10 +84,11 @@ class ImageEncoder:
         self.invert_alpha = invert_alpha
         self.path = ""
 
-    def convert(self, image):
+    def convert(self, image, path):
         """
         Convert the image format
         :param image:  Input image
+        :param path:  Path to the image file
         :return: converted image
         """
         return image
@@ -122,7 +123,7 @@ class ImageBinary(ImageEncoder):
         super().__init__(self.width8, height, transparency, dither, invert_alpha)
         self.bitno = 0
 
-    def convert(self, image):
+    def convert(self, image, path):
         if is_alpha_only(image):
             image = image.split()[-1]
         return image.convert("1", dither=self.dither)
@@ -149,8 +150,14 @@ class ImageBinary(ImageEncoder):
 class ImageGrayscale(ImageEncoder):
     allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_INVERT_ALPHA, CONF_OPAQUE}
 
-    def convert(self, image):
+    def convert(self, image, path):
         if is_alpha_only(image):
+            if self.transparency != CONF_ALPHA_CHANNEL:
+                _LOGGER.warning(
+                    "Grayscale image %s is alpha only, but transparency is set to %s",
+                    path,
+                    self.transparency,
+                )
             image = image.split()[-1]
         return image.convert("LA")
 
@@ -181,7 +188,7 @@ class ImageRGB565(ImageEncoder):
             invert_alpha,
         )
 
-    def convert(self, image):
+    def convert(self, image, path):
         return image.convert("RGBA")
 
     def encode(self, pixel):
@@ -219,7 +226,7 @@ class ImageRGB(ImageEncoder):
             invert_alpha,
         )
 
-    def convert(self, image):
+    def convert(self, image, path):
         return image.convert("RGBA")
 
     def encode(self, pixel):
@@ -323,7 +330,7 @@ def is_svg_file(file):
     if not file:
         return False
     with open(file, "rb") as f:
-        return "<svg " in str(f.read(1024))
+        return "<svg" in str(f.read(1024))
 
 
 def validate_cairosvg_installed():
@@ -561,13 +568,9 @@ async def write_image(config, all_frames=False):
 
     total_rows = height * frame_count
     encoder = IMAGE_TYPE[type](width, total_rows, transparency, dither, invert_alpha)
-    if transparency == CONF_OPAQUE:
-        _LOGGER.warning(
-            "Image %s is alpha only, but transparency is set to opaque", path
-        )
     for frame_index in range(frame_count):
         image.seek(frame_index)
-        pixels = encoder.convert(image.resize((width, height))).getdata()
+        pixels = encoder.convert(image.resize((width, height)), path).getdata()
         for row in range(height):
             for col in range(width):
                 encoder.encode(pixels[row * width + col])

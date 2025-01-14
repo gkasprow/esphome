@@ -179,8 +179,16 @@ Color Image::get_rgb565_pixel_(int x, int y) const {
 Color Image::get_grayscale_pixel_(int x, int y) const {
   const uint32_t pos = (x + y * this->width_);
   const uint8_t gray = progmem_read_byte(this->data_start_ + pos);
-  uint8_t alpha = (gray == 1 && this->transparency_ == TRANSPARENCY_CHROMA_KEY) ? 0 : 0xFF;
-  return Color(gray, gray, gray, alpha);
+  switch (this->transparency_) {
+    case TRANSPARENCY_CHROMA_KEY:
+      if (gray == 1)
+        return Color(0, 0, 0, 0);
+      return Color(gray, gray, gray, 0xFF);
+    case TRANSPARENCY_ALPHA_CHANNEL:
+      return Color(0, 0, 0, gray);
+    default:
+      return Color(gray, gray, gray, 0xFF);
+  }
 }
 int Image::get_width() const { return this->width_; }
 int Image::get_height() const { return this->height_; }
