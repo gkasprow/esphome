@@ -322,17 +322,14 @@ void Lc709203f::set_pack_size(uint16_t pack_size) {
   //  not be possible because of the config validation. However, if it does happen, the
   //  consequence is that the RSOC values will likley not be as accurate. However, it should
   //  not cause an error or crash, so I am not doing any additional checking here.
-  return;
 }
 
 void Lc709203f::set_thermistor_b_constant(uint16_t b_constant) {
   this->b_constant_ = b_constant;
-  return;
 }
 
 void Lc709203f::set_pack_voltage(LC709203FBatteryVoltage pack_voltage) {
   this->pack_voltage_ = pack_voltage;
-  return;
 }
 
 }  // namespace lc709203f
