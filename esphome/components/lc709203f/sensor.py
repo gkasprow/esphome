@@ -29,7 +29,7 @@ BATTERY_VOLTAGE_OPTIONS = {
     "3.8": LC709203FBatteryVoltage.LC709203F_BATTERY_VOLTAGE_3_8,
 }
 
-lc709203f = lc709203f_ns.class_("lc709203f", cg.PollingComponent, i2c.I2CDevice)
+lc709203f = lc709203f_ns.class_("Lc709203f", cg.PollingComponent, i2c.I2CDevice)
 
 CONFIG_SCHEMA = (
     cv.Schema(
