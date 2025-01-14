@@ -4,7 +4,7 @@
 namespace esphome {
 namespace lc709203f {
 
-static const char *TAG = "lc709203f.sensor";
+static const char *const *TAG = "lc709203f.sensor";
 
 // Device I2C address. This address is fixed.
 static const uint8_t LC709203F_I2C_ADDR_DEFAULT = 0x0B;
@@ -204,8 +204,6 @@ uint8_t Lc709203f::get_register_(uint8_t register_to_read, uint16_t *register_va
   read_buffer[2] = ((this->address_) << 1) | 0x01;
 
   for (int i = 0; i <= LC709203F_I2C_RETRY_COUNT; i++) {
-    return_code = i2c::NO_ERROR;
-
     // Note: the read_register() function does not send a stop between the write and
     //  the read portions of the I2C transation when you set the last variable to 'false'
     //  as we do below. Some of the other I2C read functions such as the generic read()
@@ -255,8 +253,6 @@ uint8_t Lc709203f::set_register_(uint8_t register_to_set, uint16_t value_to_set)
   write_buffer[4] = this->crc8_(write_buffer, 4);
 
   for (int i = 0; i <= LC709203F_I2C_RETRY_COUNT; i++) {
-    return_code = i2c::NO_ERROR;
-
     // Note: we don't write the first byte of the write buffer to the device.
     //  This is done automatically by the write() function.
     return_code = this->write(&write_buffer[1], 4, true);
