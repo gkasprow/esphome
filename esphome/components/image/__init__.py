@@ -112,6 +112,10 @@ class ImageBinary(ImageEncoder):
         self.bitno = 0
 
     def convert(self, image):
+        if self.transparency != CONF_OPAQUE:
+            alpha = image.split()[-1]
+            if alpha.getextrema()[0] < 0xFF:
+                return alpha.convert("1", dither=self.dither)
         return image.convert("1", dither=self.dither)
 
     def encode(self, pixel):
@@ -137,6 +141,10 @@ class ImageGrayscale(ImageEncoder):
     allow_config = {CONF_ALPHA_CHANNEL, CONF_CHROMA_KEY, CONF_INVERT_ALPHA, CONF_OPAQUE}
 
     def convert(self, image):
+        if self.transparency != CONF_OPAQUE:
+            alpha = image.split()[-1]
+            if alpha.getextrema()[0] < 0xFF:
+                return alpha.convert("LA")
         return image.convert("LA")
 
     def encode(self, pixel):
