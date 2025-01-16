@@ -25,7 +25,7 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_MR60BHA2_ID): cv.use_id(MR60BHA2Component),
         cv.Optional(CONF_BREATH_RATE): sensor.sensor_schema(
-            accuracy_decimals=2,
+            accuracy_decimals=0,
             state_class=STATE_CLASS_MEASUREMENT,
             icon=ICON_PULSE,
         ),
