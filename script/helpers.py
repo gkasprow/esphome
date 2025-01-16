@@ -256,14 +256,6 @@ CONFIG_NEWLIB_LIBC=y
                 idedata["defines"].update(extract_defines(command))
                 idedata["cxx_flags"].update(extract_cxx_flags(command))
 
-            idedata["defines"].update(
-                [
-                    "pthread_attr_t=pthread_attr",
-                    "pthread_mutexattr_t=pthread_mutexattr",
-                    "pthread_condattr_t=pthread_condattr",
-                ]
-            )
-
             # Convert sets to lists for JSON serialization
             idedata["includes"]["build"] = list(idedata["includes"]["build"])
             idedata["defines"] = list(idedata["defines"])
