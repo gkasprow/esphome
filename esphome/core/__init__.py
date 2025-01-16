@@ -504,7 +504,7 @@ class EsphomeCore:
         # A list of statements to insert in the global block (includes and global variables)
         self.global_statements: list[Statement] = []
         # A set of platformio libraries to add to the project
-        self.libraries: list[Library] = []
+        self.platformio_libraries: list[Library] = []
         # A set of build flags to set in the platformio project
         self.build_flags: set[str] = set()
         # A set of defines to set for the compile process in esphome/core/defines.h
@@ -536,7 +536,7 @@ class EsphomeCore:
         self.variables = {}
         self.main_statements = []
         self.global_statements = []
-        self.libraries = []
+        self.platformio_libraries = []
         self.build_flags = set()
         self.defines = set()
         self.platformio_options = {}
@@ -707,7 +707,7 @@ class EsphomeCore:
             raise ValueError(
                 f"Library {library} must be instance of Library, not {type(library)}"
             )
-        for other in self.libraries[:]:
+        for other in self.platformio_libraries[:]:
             if other.name is None or library.name is None:
                 continue
             library_name = (
@@ -729,7 +729,7 @@ class EsphomeCore:
 
             if library.repository is not None:
                 # This is more specific since its using a repository
-                self.libraries.remove(other)
+                self.platformio_libraries.remove(other)
                 continue
 
             if library.version is None:
@@ -737,7 +737,7 @@ class EsphomeCore:
                 break
             if other.version is None:
                 # Found more specific version requirement
-                self.libraries.remove(other)
+                self.platformio_libraries.remove(other)
                 continue
             if other.version == library.version:
                 break
@@ -748,7 +748,7 @@ class EsphomeCore:
             )
         else:
             _LOGGER.debug("Adding library: %s", library)
-            self.libraries.append(library)
+            self.platformio_libraries.append(library)
         return library
 
     def add_build_flag(self, build_flag):

@@ -66,7 +66,7 @@ def choose_prompt(options, purpose: str = None):
         return options[0][1]
 
     safe_print(
-        f'Found multiple options{f" for {purpose}" if purpose else ""}, please choose one:'
+        f"Found multiple options{f' for {purpose}' if purpose else ''}, please choose one:"
     )
     for i, (desc, _) in enumerate(options):
         safe_print(f"  [{i + 1}] {desc}")
@@ -225,7 +225,9 @@ def generate_cpp_contents(config):
 
 
 def write_cpp_file():
-    writer.write_platformio_project()
+    from esphome.build_gen import platformio
+
+    platformio.write_project()
 
     code_s = indent(CORE.cpp_main_section)
     writer.write_cpp(code_s)
