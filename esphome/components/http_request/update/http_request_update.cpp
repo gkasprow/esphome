@@ -72,47 +72,51 @@ void HttpRequestUpdate::update_task(void *params) {
     read_index += read_bytes;
   }
 
-  std::string response((char *) data, read_index);
-  allocator.deallocate(data, container->content_length);
-
   container->end();
+  container.reset();  // Release ownership of the container's shared_ptr
 
-  bool valid = json::parse_json(response, [this_update](JsonObject root) -> bool {
-    if (!root.containsKey("name") || !root.containsKey("version") || !root.containsKey("builds")) {
-      ESP_LOGE(TAG, "Manifest does not contain required fields");
-      return false;
-    }
-    this_update->update_info_.title = root["name"].as<std::string>();
-    this_update->update_info_.latest_version = root["version"].as<std::string>();
+  bool valid = false;
+  {  // Ensures the response string falls out of scope and deallocates before the task ends
+    std::string response((char *) data, read_index);
+    allocator.deallocate(data, container->content_length);
 
-    for (auto build : root["builds"].as<JsonArray>()) {
-      if (!build.containsKey("chipFamily")) {
+    valid = json::parse_json(response, [this_update](JsonObject root) -> bool {
+      if (!root.containsKey("name") || !root.containsKey("version") || !root.containsKey("builds")) {
         ESP_LOGE(TAG, "Manifest does not contain required fields");
         return false;
       }
-      if (build["chipFamily"] == ESPHOME_VARIANT) {
-        if (!build.containsKey("ota")) {
+      this_update->update_info_.title = root["name"].as<std::string>();
+      this_update->update_info_.latest_version = root["version"].as<std::string>();
+
+      for (auto build : root["builds"].as<JsonArray>()) {
+        if (!build.containsKey("chipFamily")) {
           ESP_LOGE(TAG, "Manifest does not contain required fields");
           return false;
         }
-        auto ota = build["ota"];
-        if (!ota.containsKey("path") || !ota.containsKey("md5")) {
-          ESP_LOGE(TAG, "Manifest does not contain required fields");
-          return false;
+        if (build["chipFamily"] == ESPHOME_VARIANT) {
+          if (!build.containsKey("ota")) {
+            ESP_LOGE(TAG, "Manifest does not contain required fields");
+            return false;
+          }
+          auto ota = build["ota"];
+          if (!ota.containsKey("path") || !ota.containsKey("md5")) {
+            ESP_LOGE(TAG, "Manifest does not contain required fields");
+            return false;
+          }
+          this_update->update_info_.firmware_url = ota["path"].as<std::string>();
+          this_update->update_info_.md5 = ota["md5"].as<std::string>();
+
+          if (ota.containsKey("summary"))
+            this_update->update_info_.summary = ota["summary"].as<std::string>();
+          if (ota.containsKey("release_url"))
+            this_update->update_info_.release_url = ota["release_url"].as<std::string>();
+
+          return true;
         }
-        this_update->update_info_.firmware_url = ota["path"].as<std::string>();
-        this_update->update_info_.md5 = ota["md5"].as<std::string>();
-
-        if (ota.containsKey("summary"))
-          this_update->update_info_.summary = ota["summary"].as<std::string>();
-        if (ota.containsKey("release_url"))
-          this_update->update_info_.release_url = ota["release_url"].as<std::string>();
-
-        return true;
       }
-    }
-    return false;
-  });
+      return false;
+    });
+  }
 
   if (!valid) {
     std::string msg = str_sprintf("Failed to parse JSON from %s", this_update->source_url_.c_str());
@@ -132,14 +136,16 @@ void HttpRequestUpdate::update_task(void *params) {
     }
   }
 
-  std::string current_version;
+  {  // Ensures the current version string falls out of scope and deallocates before the task ends
+    std::string current_version;
 #ifdef ESPHOME_PROJECT_VERSION
-  current_version = ESPHOME_PROJECT_VERSION;
+    current_version = ESPHOME_PROJECT_VERSION;
 #else
-  current_version = ESPHOME_VERSION;
+    current_version = ESPHOME_VERSION;
 #endif
 
-  this_update->update_info_.current_version = current_version;
+    this_update->update_info_.current_version = current_version;
+  }
 
   if (this_update->update_info_.latest_version.empty() ||
       this_update->update_info_.latest_version == this_update->update_info_.current_version) {
