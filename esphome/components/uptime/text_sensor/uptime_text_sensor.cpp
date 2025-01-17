@@ -20,8 +20,9 @@ void UptimeTextSensor::update() {
   auto now = millis();
   // get whole seconds since last update. Note that even if the millis count has overflowed between updates,
   // the difference will still be correct due to the way twos-complement arithmetic works.
-  const uint32_t delta = (now - this->last_ms_) / 1000;
-  this->last_ms_ = now;
+  uint32_t delta = now - this->last_ms_;
+  this->last_ms_ = now - delta % 1000;  // save remainder for next update
+  delta /= 1000;
   this->uptime_ += delta;
   auto uptime = this->uptime_;
   unsigned interval = this->get_update_interval() / 1000;
