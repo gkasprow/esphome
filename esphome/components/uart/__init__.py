@@ -122,19 +122,15 @@ def validate_rx_pin(value):
 
 def validate_flow_control_support(config):
     if CORE.is_esp32 and CORE.using_arduino:
-        if CORE.data[KEY_CORE][
-            KEY_FRAMEWORK_VERSION
-        ] >= cv.Version(2, 0, 8):
+        if CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION] >= cv.Version(2, 0, 8):
             cg.add_define("USE_UART_FLOW_CONTROL")
         elif CONF_FLOW_CONTROL_PIN in config:
             raise cv.Invalid(
                 "ESP32 RS485 UART Flow Control requires Arduino framework version 2.0.8 or higher."
             )
-    elif CORE.is_esp32:
-        return config
-    else:
+    elif not CORE.is_esp32:
         raise cv.Invalid("Hardware does not support RS485 flow control.")
-
+    return config
 
 def validate_invert_esp32(config):
     if (
