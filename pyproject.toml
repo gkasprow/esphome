@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Home Automation",
 ]
-requires-python = ">=3.9.0"
+requires-python = ">=3.11.0"
 
 dynamic = ["dependencies", "optional-dependencies", "version"]
 
@@ -52,7 +52,7 @@ version = {attr = "esphome.const.__version__"}
 include = ["esphome*"]
 
 [tool.black]
-target-version = ["py39", "py310"]
+target-version = ["py311", "py312"]
 exclude = 'generated'
 
 [tool.pytest.ini_options]
@@ -65,7 +65,7 @@ addopts = [
 ]
 
 [tool.pylint.MAIN]
-py-version = "3.9"
+py-version = "3.11"
 ignore = [
   "api_pb2.py",
 ]

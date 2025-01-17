@@ -19,7 +19,7 @@ curfile = None
 
 
 def print_error(file, lineno, msg):
-    global curfile
+    global curfile  # noqa PLW0603
 
     if curfile != file:
         print_error_for_file(file, None)
@@ -110,7 +110,7 @@ def main():
         print_error(file_, linno, msg)
         errors += 1
 
-    PYUPGRADE_TARGET = "--py39-plus"
+    PYUPGRADE_TARGET = "--py311-plus"
     cmd = ["pyupgrade", PYUPGRADE_TARGET] + files
     print()
     print("Running pyupgrade...")
