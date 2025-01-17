@@ -86,7 +86,7 @@ float ADS1115Component::request_measurement(ADS1115Multiplexer multiplexer, ADS1
   //        0bxxxxBBBxxxxxxxxx
   config &= 0b1111000111111111;
   config |= (gain & 0b111) << 9;
-  
+
   // Sample rate
   //        0bxxxxxxxxBBBxxxxx
   config &= 0b1111111100011111;
@@ -103,52 +103,52 @@ float ADS1115Component::request_measurement(ADS1115Multiplexer multiplexer, ADS1
       return NAN;
     }
     this->prev_config_ = config;
-    
+
+    // Delay calculated as: ceil((1000/SPS)+.5)
     if (resolution == ADS1015_12_BITS) {
       switch (samplerate) {
         case ADS1115_8SPS:
-          delay(9); // ceil((1000/128)+.5)
+          delay(9);
           break;
         case ADS1115_16SPS:
-          delay(5); // ceil((1000/250)+.5)
+          delay(5);
           break;
         case ADS1115_32SPS:
-          delay(3); // ceil((1000/475)+.5)
+          delay(3);
           break;
         case ADS1115_64SPS:
         case ADS1115_128SPS:
-          delay(2); // ceil((1000/1600)+.5)
+          delay(2);
           break;
         default:
-          delay(1); // ceil((2400/1600)+.5)
+          delay(1);
           break;
       }
-    }
-    else {
+    } else {
       switch (samplerate) {
         case ADS1115_8SPS:
-          delay(126); // ceil((1000/8)+.5)
+          delay(126);  // NOLINT
           break;
         case ADS1115_16SPS:
-          delay(63); // ceil((1000/16)+.5)
+          delay(63);  // NOLINT
           break;
         case ADS1115_32SPS:
-          delay(32); // ceil((1000/32)+.5)
+          delay(32);
           break;
         case ADS1115_64SPS:
-          delay(17); // ceil((1000/64)+.5)
+          delay(17);
           break;
         case ADS1115_128SPS:
-          delay(9); // ceil((1000/128)+.5)
+          delay(9);
           break;
         case ADS1115_250SPS:
-          delay(5); // ceil((1000/250)+.5)
+          delay(5);
           break;
         case ADS1115_475SPS:
-          delay(3); // ceil((1000/475)+.5)
+          delay(3);
           break;
         case ADS1115_860SPS:
-          delay(2); // ceil((1000/860)+.5)
+          delay(2);
           break;
       }
     }

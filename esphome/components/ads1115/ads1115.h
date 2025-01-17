@@ -53,7 +53,8 @@ class ADS1115Component : public Component, public i2c::I2CDevice {
   void set_continuous_mode(bool continuous_mode) { continuous_mode_ = continuous_mode; }
 
   /// Helper method to request a measurement from a sensor.
-  float request_measurement(ADS1115Multiplexer multiplexer, ADS1115Gain gain, ADS1115Resolution resolution, ADS1115Samplerate samplerate);
+  float request_measurement(ADS1115Multiplexer multiplexer, ADS1115Gain gain, ADS1115Resolution resolution,
+                            ADS1115Samplerate samplerate);
 
  protected:
   uint16_t prev_config_{0};

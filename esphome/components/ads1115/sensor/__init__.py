@@ -53,7 +53,7 @@ SAMPLERATE = {
     "128": ADS1115Samplerate.ADS1115_128SPS,
     "250": ADS1115Samplerate.ADS1115_250SPS,
     "475": ADS1115Samplerate.ADS1115_475SPS,
-    "860": ADS1115Samplerate.ADS1115_860SPS
+    "860": ADS1115Samplerate.ADS1115_860SPS,
 }
 
 ADS1115Sensor = ads1115_ns.class_(
@@ -76,7 +76,9 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_RESOLUTION, default="16_BITS"): cv.enum(
                 RESOLUTION, upper=True, space="_"
             ),
-            cv.Optional(CONF_SAMPLE_RATE, default="860"): cv.enum(SAMPLERATE, string=True),
+            cv.Optional(CONF_SAMPLE_RATE, default="860"): cv.enum(
+                SAMPLERATE, string=True
+            ),
         }
     )
     .extend(cv.polling_component_schema("60s"))
