@@ -225,12 +225,12 @@ def generate_cpp_contents(config):
 
 
 def write_cpp_file():
+    code_s = indent(CORE.cpp_main_section)
+    writer.write_cpp(code_s)
+
     from esphome.build_gen import platformio
 
     platformio.write_project()
-
-    code_s = indent(CORE.cpp_main_section)
-    writer.write_cpp(code_s)
     return 0
 
 
