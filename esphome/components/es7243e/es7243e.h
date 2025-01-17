@@ -24,7 +24,7 @@ class ES7243E : public audio_adc::AudioAdc, public Component, public i2c::I2CDev
  protected:
   /// @brief Convert floating point mic gain value to register value
   /// @param mic_gain Gain value to convert
-  /// @return Corresponding register value closest to but not exceeding specified gain
+  /// @return Corresponding register value for specified gain
   uint8_t es7243e_gain_reg_value_(float mic_gain);
 
   bool configure_mic_gain_();
