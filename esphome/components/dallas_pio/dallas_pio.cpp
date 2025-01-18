@@ -373,7 +373,7 @@ void DallasPio::ds2406_write_state_(bool state, bool use_crc = false) {
     this->status_set_warning();
     return;
   }
-}  // ds2406_write_state
+}  // ds2406_write_state_
 
 bool DallasPio::ds2406_verify_crc_(uint8_t control1, uint8_t control2, uint8_t info, uint16_t received_crc) {
   uint16_t computed_crc = 0;
@@ -392,16 +392,118 @@ bool DallasPio::ds2406_verify_crc_(uint8_t control1, uint8_t control2, uint8_t i
 /*  DS2408  */
 /************/
 
-bool DallasPio::ds2408_get_state_(uint8_t &state, bool use_crc = false) {
-  ESP_LOGW(TAG, "DallasPio DS2408 : ds2408_get_state_ to be implemented");
-  this->status_set_warning();
-  return false;
+bool DallasPio::ds2408_read_device_(uint8_t &pio_logic_state, bool use_crc = false) {
+  // Ref Dallas Semiconductor MAXIM DS2408.pdf
+  // PIO Logic State Register Bitmap
+  // ADDR  b7  b6  b5  b4  b3  b2  b1  b0
+  // 0x88  P7  P6  P5  P4  P3  P2  P1  P0
+  // PIO Output Latch State Register Bitmap
+  // ADDR  b7  b6  b5  b4  b3  b2  b1  b0
+  // 0x89  PL7 PL6 PL5 PL4 PL3 PL2 PL1 PL0
+  constexpr uint16_t TARGET_ADDRESS = 0x0088;
+  uint8_t data[8];
+  uint16_t crc_received = 0;
+  // Initialize One-Wire bus for this device
+  if (!this->check_address_()) {
+    this->status_set_warning();
+    return false;
+  }
+  if (!this->bus_->reset()) {
+    ESP_LOGW(TAG, "Failed to reset One-Wire bus.");
+    this->status_set_warning();
+    return false;
+  }
+  {
+    InterruptLock lock;
+    this->send_command_(DALLAS_DS2408_COMMAND_READ_PIO_REGISTERS);
+    // LSB of the address to read from
+    this->bus_->write8(TARGET_ADDRESS & 0xFF);  // LSB
+    // MSB of the address to read from
+    this->bus_->write8((TARGET_ADDRESS >> 8) & 0xFF);  // MSB
+    for (int i = 0; i < 8; i++) {
+      data[i] = this->bus_->read8();
+    }
+    if (use_crc) {
+      crc_received |= this->bus_->read8();         // LSB
+      crc_received |= (this->bus_->read8() << 8);  // MSB
+    }
+  }
+  if (use_crc) {
+    uint8_t crc_input[11];
+    crc_input[0] = DALLAS_DS2408_COMMAND_READ_PIO_REGISTERS;
+    crc_input[1] = TARGET_ADDRESS & 0xFF;
+    crc_input[2] = (TARGET_ADDRESS >> 8) & 0xFF;
+    memcpy(&crc_input[3], data, 8);  // Copier les données dans le tableau CRC
+
+    uint16_t calculated_crc = this->calculate_crc16_(crc_input, 11);
+    if (crc_received != calculated_crc) {
+      ESP_LOGW(TAG, "CRC check failed: received=0x%04X, expected=0x%04X", crc_received, calculated_crc);
+      return false;  // CRC invalide
+    }
+  }
+
+  pio_logic_state = data[0];
+
+  return true;
 }
 
+bool DallasPio::ds2408_get_state_(uint8_t &state, bool use_crc = false) {
+  uint8_t currentState = 0;
+  if (!this->ds2408_read_device_(currentState, use_crc)) {
+    this->status_set_warning();
+    return false;
+  }
+
+  uint8_t pin_index = this->pin_ - 1;
+  if (pin_index >= 8) {
+    ESP_LOGW(TAG, "Invalid pin index: %d", pin_index);
+    return false;
+  }
+
+  state = (currentState >> pin_index) & 0x01;
+
+  return true;
+}  // ds2408_get_state_
+
 void DallasPio::ds2408_write_state_(bool state, bool use_crc = false) {
-  ESP_LOGW(TAG, "DallasPio DS2408 : ds2408_write_state_ to be implemented");
-  this->status_set_warning();
-}
+  // Ref Dallas Semiconductor MAXIM DS2408.pdf
+  // PIO Logic State Register Bitmap
+  // ADDR  b7  b6  b5  b4  b3  b2  b1  b0
+  // 0x88  P7  P6  P5  P4  P3  P2  P1  P0
+  // PIO Output Latch State Register Bitmap
+  // ADDR  b7  b6  b5  b4  b3  b2  b1  b0
+  // 0x89  PL7 PL6 PL5 PL4 PL3 PL2 PL1 PL0
+  // Initialize One-Wire bus for this device
+  uint8_t currentState = 0;
+  uint8_t ack = 0;
+  if (!this->ds2408_read_device_(currentState, use_crc)) {
+    this->status_set_warning();
+    return;
+  }
+  uint8_t newState = state ? (currentState | (1 << this->pin_)) : (currentState & ~(1 << this->pin_));
+
+  if (!this->check_address_()) {
+    this->status_set_warning();
+    return;
+  }
+  if (!this->bus_->reset()) {
+    ESP_LOGW(TAG, "Failed to reset One-Wire bus.");
+    this->status_set_warning();
+    return;
+  }
+  {
+    InterruptLock lock;
+    this->send_command_(DALLAS_DS2408_COMMAND_WRITE_PIO_REGISTERS);
+    this->bus_->write8(newState);
+    this->bus_->write8(~newState);
+    ack = this->bus_->read8();  // 0xAA=success, 0xFF=failure
+  }
+  if (ack != DALLAS_COMMAND_PIO_ACK_SUCCESS) {
+    ESP_LOGW(TAG, "Failed to write One-Wire bus.");
+    this->status_set_warning();
+    return;
+  }
+}  // ds2408_write_state_
 
 void DallasPio::crc_reset_() { this->crc_ = 0x0000; }
 
@@ -416,6 +518,21 @@ void DallasPio::crc_shift_byte_(uint8_t byte) {
 }
 
 uint16_t DallasPio::crc_read_() const { return this->crc_; }
+
+uint16_t DallasPio::calculate_crc16_(const uint8_t *data, size_t length) {
+  uint16_t crc = 0;
+  for (size_t i = 0; i < length; i++) {
+    crc ^= data[i];
+    for (int j = 0; j < 8; j++) {
+      if (crc & 0x01) {
+        crc = (crc >> 1) ^ 0xA001;
+      } else {
+        crc >>= 1;
+      }
+    }
+  }
+  return crc;
+}
 
 }  // namespace dallas_pio
 }  // namespace esphome

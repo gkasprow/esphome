@@ -72,6 +72,7 @@ class DallasPio : public Component, public one_wire::OneWireDevice {
   void ds2413_write_state_(bool state);
   bool ds2406_get_state_(uint8_t &state, bool use_crc);
   void ds2406_write_state_(bool state, bool use_crc);
+  bool ds2408_read_device_(uint8_t &pio_logic_state, bool use_crc);
   bool ds2408_get_state_(uint8_t &state, bool use_crc);
   void ds2408_write_state_(bool state, bool use_crc);
   uint16_t crc_;
@@ -84,6 +85,7 @@ class DallasPio : public Component, public one_wire::OneWireDevice {
   uint8_t pin_;
   bool pin_inverted_;
   uint8_t pio_output_register_;
+  uint16_t calculate_crc16_(const uint8_t *data, size_t length);
 };
 
 }  // namespace dallas_pio
