@@ -77,7 +77,7 @@ jobs:
       - name: Run black or ruff
         run: |
           . venv/bin/activate
-          find esphome -name *.py -type f | parallel 'ruff format --check {} || black --quiet --check {}'
+          find esphome -name *.py -type f | parallel 'ruff format --quiet --check {} || black --quiet --check {}'
 
   flake8:
     name: Check flake8
