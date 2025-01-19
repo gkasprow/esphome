@@ -163,9 +163,10 @@ void WaveshareEPaper2P13InV3::display() {
   }
 }
 
-// int WaveshareEPaper2P13InV3::get_width_internal() { return 122; }
+int WaveshareEPaper2P13InV3::get_width_controller() { return 128; }
+int WaveshareEPaper2P13InV3::get_width_internal() { return 122; }
 
-// int WaveshareEPaper2P13InV3::get_height_internal() { return 250; }
+int WaveshareEPaper2P13InV3::get_height_internal() { return 250; }
 
 uint32_t WaveshareEPaper2P13InV3::idle_timeout_() { return 5000; }
 
