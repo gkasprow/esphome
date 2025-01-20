@@ -154,7 +154,7 @@ lvgl:
       on_all_events:
         logger.log:
           format: "Event %s"
-          args: ['lv_event_code_name_for(event->code).c_str()']
+          args: ["lv_event_code_name_for(event->code).c_str()"]
       skip: true
       layout:
         type: flex
@@ -192,7 +192,7 @@ lvgl:
             on_all_events:
               - logger.log:
                   format: "Event %s"
-                  args: ['lv_event_code_name_for(event->code).c_str()']
+                  args: ["lv_event_code_name_for(event->code).c_str()"]
               - lvgl.animimg.update:
                   id: anim_img
                   src: !lambda "return {dog_image, cat_image};"
@@ -392,8 +392,8 @@ lvgl:
               - lvgl.label.update:
                   id: hello_label
                   text: !lambda |-
-                        ESP_LOGD("label", "multi-line lambda");
-                        return "hello world";
+                    ESP_LOGD("label", "multi-line lambda");
+                    return "hello world";
               - lvgl.label.update:
                   id: hello_label
                   text: !lambda 'return str_sprintf("Hello space");'
@@ -421,8 +421,8 @@ lvgl:
                   text:
                     time_format: "%c"
                     time: !lambda |-
-                        ESP_LOGD("label", "multi-line lambda");
-                        return id(time_id).now();
+                      ESP_LOGD("label", "multi-line lambda");
+                      return id(time_id).now();
             on_value:
               logger.log:
                 format: "state now %d"
@@ -736,7 +736,19 @@ lvgl:
                           - lvgl.dropdown.update:
                               id: lv_dropdown
                               options:
-                                ["First", "Second", "Third", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th"]
+                                [
+                                  "First",
+                                  "Second",
+                                  "Third",
+                                  "4th",
+                                  "5th",
+                                  "6th",
+                                  "7th",
+                                  "8th",
+                                  "9th",
+                                  "10th",
+                                  "11th",
+                                ]
                               selected_index: 3
                           - logger.log: Cat image clicked
                           - lvgl.tabview.select:
@@ -768,8 +780,7 @@ lvgl:
                                 color: 0xFF0000
                                 r_mod: -1
                                 width: 3
-                        -
-                          angle_range: 330
+                        - angle_range: 330
                           rotation: 300
                           range_from: 1
                           range_to: 12
@@ -834,12 +845,12 @@ image:
     resize: 256x48
     file: $component_dir/logo-text.svg
     type: RGB565
-    use_transparency: alpha_channel
+    transparency: alpha_channel
   - id: dog_image
     file: $component_dir/logo-text.svg
     resize: 256x48
     type: BINARY
-    use_transparency: chroma_key
+    transparency: chroma_key
 
 color:
   - id: light_blue
