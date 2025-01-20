@@ -30,7 +30,8 @@ class BLEDescriptor : public EventEmitter<BLEDescriptorEvt::VectorEvt, std::vect
   void do_create(BLECharacteristic *characteristic);
   ESPBTUUID get_uuid() const { return this->uuid_; }
 
-  void set_value(ByteBuffer buffer);
+  void set_value(std::vector<uint8_t> buffer);
+  void set_value(ByteBuffer buffer) { this->set_value(buffer.get_data()); }
 
   void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 

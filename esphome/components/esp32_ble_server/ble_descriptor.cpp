@@ -12,11 +12,13 @@ namespace esp32_ble_server {
 
 static const char *const TAG = "esp32_ble_server.descriptor";
 
+static RAMAllocator<uint8_t> descriptor_allocator{};
+
 BLEDescriptor::BLEDescriptor(ESPBTUUID uuid, uint16_t max_len, bool read, bool write) {
   this->uuid_ = uuid;
   this->value_.attr_len = 0;
   this->value_.attr_max_len = max_len;
-  this->value_.attr_value = (uint8_t *) malloc(max_len);  // NOLINT
+  this->value_.attr_value = descriptor_allocator.allocate(max_len);
   if (read) {
     this->permissions_ |= ESP_GATT_PERM_READ;
   }
@@ -44,15 +46,15 @@ void BLEDescriptor::do_create(BLECharacteristic *characteristic) {
   this->state_ = CREATING;
 }
 
-void BLEDescriptor::set_value(ByteBuffer buffer) {
-  size_t length = buffer.get_capacity();
+void BLEDescriptor::set_value(std::vector<uint8_t> buffer) {
+  size_t length = buffer.size();
 
   if (length > this->value_.attr_max_len) {
     ESP_LOGE(TAG, "Size %d too large, must be no bigger than %d", length, this->value_.attr_max_len);
     return;
   }
   this->value_.attr_len = length;
-  memcpy(this->value_.attr_value, buffer.get_data().data(), length);
+  memcpy(this->value_.attr_value, buffer.data(), length);
 }
 
 void BLEDescriptor::gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if,

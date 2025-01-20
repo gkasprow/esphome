@@ -1,4 +1,5 @@
 import encodings
+
 from esphome import automation
 import esphome.codegen as cg
 from esphome.components import esp32_ble
@@ -6,7 +7,9 @@ from esphome.components.esp32 import add_idf_sdkconfig_option
 from esphome.components.esp32_ble import bt_uuid
 import esphome.config_validation as cv
 from esphome.const import (
+    CONF_DATA,
     CONF_ID,
+    CONF_MAX_LENGTH,
     CONF_MODEL,
     CONF_NOTIFY,
     CONF_ON_CONNECT,
@@ -33,6 +36,7 @@ CONF_MANUFACTURER = "manufacturer"
 CONF_MANUFACTURER_DATA = "manufacturer_data"
 CONF_ON_WRITE = "on_write"
 CONF_READ = "read"
+CONF_STRING = "string"
 CONF_STRING_ENCODING = "string_encoding"
 CONF_WRITE = "write"
 CONF_WRITE_NO_RESPONSE = "write_no_response"
@@ -42,8 +46,6 @@ CONF_CCCD_ID_ = "cccd_id_"
 CONF_CCCD_VALUE_BUFFER_ = "cccd_value_buffer_"
 CONF_CHAR_VALUE_ACTION_ID_ = "char_value_action_id_"
 CONF_CUD_ID_ = "cud_id_"
-CONF_CUD_VALUE_BUFFER_ = "cud_value_buffer_"
-CONF_VALUE_BUFFER_ = "value_buffer_"
 
 # Core key to store the global configuration
 _KEY_NOTIFY_REQUIRED = "esp32_ble_server_notify_required"
@@ -86,6 +88,31 @@ PROPERTY_MAP = {
 }
 
 
+class ValueType:
+    def __init__(self, type_, validator, length):
+        self.type_ = type_
+        self.validator = validator
+        self.length = length
+
+
+VALUE_TYPES = {
+    type_name: ValueType(type_name, validator, length)
+    for type_name, validator, length in (
+        ("uint8_t", cv.uint8_t, 1),
+        ("uint16_t", cv.uint16_t, 2),
+        ("uint32_t", cv.uint32_t, 4),
+        ("uint64_t", cv.uint64_t, 8),
+        ("int8_t", cv.int_range(-128, 127), 1),
+        ("int16_t", cv.int_range(-32768, 32767), 2),
+        ("int32_t", cv.int_range(-2147483648, 2147483647), 4),
+        ("int64_t", cv.int_range(-9223372036854775808, 9223372036854775807), 8),
+        ("float", cv.float_, 4),
+        ("double", cv.float_, 8),
+        ("string", cv.string_strict, None),  # Length is variable
+    )
+}
+
+
 def validate_char_on_write(char_config):
     if CONF_ON_WRITE in char_config:
         if not char_config[CONF_WRITE] and not char_config[CONF_WRITE_NO_RESPONSE]:
@@ -95,12 +122,24 @@ def validate_char_on_write(char_config):
     return char_config
 
 
-def validate_desc_on_write(desc_config):
+def validate_descriptor(desc_config):
     if CONF_ON_WRITE in desc_config:
         if not desc_config[CONF_WRITE]:
             raise cv.Invalid(
                 f"{CONF_ON_WRITE} requires the {CONF_WRITE} property to be set"
             )
+    if CONF_MAX_LENGTH not in desc_config:
+        value = desc_config[CONF_VALUE][CONF_DATA]
+        if cg.is_template(value):
+            raise cv.Invalid(
+                f"Descriptor {desc_config[CONF_UUID]} has a templatable value and the {CONF_MAX_LENGTH} property is not set"
+            )
+        if isinstance(value, list):
+            desc_config[CONF_MAX_LENGTH] = len(value)
+        else:
+            desc_config[CONF_MAX_LENGTH] = VALUE_TYPES[
+                desc_config[CONF_VALUE][CONF_TYPE]
+            ].length
     return desc_config
 
 
@@ -153,12 +192,8 @@ def create_notify_cccd(char_config):
             CONF_UUID: 0x2902,
             CONF_READ: True,
             CONF_WRITE: True,
-            CONF_VALUE: VALUE_SCHEMA(
-                {
-                    CONF_VALUE: "{0, 0}",
-                    CONF_TYPE: "std::vector<uint8_t>",
-                }
-            ),
+            CONF_MAX_LENGTH: 2,
+            CONF_VALUE: VALUE_SCHEMA([0, 0]),
         }
     )
     return char_config
@@ -184,52 +219,67 @@ def final_validate_config(config):
 
 def validate_value_type(value_config):
     # If the value is a not a templatable, the type must be set
-    if not cg.is_template(value_config[CONF_VALUE]):
-        if CONF_TYPE not in value_config:
+    value = value_config[CONF_DATA]
+
+    if type_ := value_config.get(CONF_TYPE):
+        if cg.is_template(value):
             raise cv.Invalid(
-                f"Value {value_config[CONF_VALUE]} is not templatable, so the {CONF_TYPE} property must be set"
+                f'The "{CONF_TYPE}" property is not allowed for templatable values'
             )
+        value_config[CONF_DATA] = VALUE_TYPES[type_].validator(value)
+    elif isinstance(value, float) or isinstance(value, int):
+        raise cv.Invalid(
+            f'The "{CONF_TYPE}" property is required for the value "{value}"'
+        )
+    if isinstance(value, str):
+        # If the value is a string, convert it to a list of bytes
+        value_config[CONF_DATA] = list(value.encode(value_config[CONF_STRING_ENCODING]))
     return value_config
 
 
-VALUE_SCHEMA = cv.Schema(
-    {
-        cv.Required(CONF_VALUE): cv.Any(
-            cv.string_strict,
-            cv.templatable(cv.All(cv.ensure_list(cv.uint8_t), cv.Length(min=1))),
-        ),
-        cv.Optional(CONF_TYPE): cv.string_strict,
-        cv.Optional(CONF_STRING_ENCODING, default="utf-8"): cv.Any(
-            *(
-                list(encodings.aliases.aliases.keys())
-                + [
-                    "utf-8",
-                    "utf8",
-                    "latin-1",
-                    "latin1",
-                    "iso-8859-1",
-                    "iso8859-1",
-                    "ascii",
-                    "us-ascii",
-                    "utf-16",
-                    "utf16",
-                    "utf-32",
-                    "utf32",
-                ]
-            )  # Common encodings
-        ),
-        cv.Optional(CONF_ENDIANNESS, default="LITTLE"): cv.enum(
-            {
-                "LITTLE": Endianness_ns.LITTLE,
-                "BIG": Endianness_ns.BIG,
-            }
-        ),
-        cv.GenerateID(CONF_VALUE_BUFFER_): cv.declare_id(ByteBuffer),
-    },
-    extra_schemas=[validate_value_type],
+VALUE_SCHEMA = cv.maybe_simple_value(
+    cv.All(
+        {
+            cv.Required(CONF_DATA): cv.Any(
+                cv.templatable(cv.All(cv.ensure_list(cv.uint8_t), cv.Length(min=1))),
+                cv.string_strict,
+                cv.float_,
+                cv.int_,
+                [cv.uint8_t],
+            ),
+            cv.Optional(CONF_TYPE): cv.one_of(*VALUE_TYPES, lower=True),
+            cv.Optional(CONF_STRING_ENCODING, default="utf-8"): cv.Any(
+                *(
+                    list(encodings.aliases.aliases.keys())
+                    + [
+                        "utf-8",
+                        "utf8",
+                        "latin-1",
+                        "latin1",
+                        "iso-8859-1",
+                        "iso8859-1",
+                        "ascii",
+                        "us-ascii",
+                        "utf-16",
+                        "utf16",
+                        "utf-32",
+                        "utf32",
+                    ]
+                )  # Common encodings
+            ),
+            cv.Optional(CONF_ENDIANNESS, default="LITTLE"): cv.enum(
+                {
+                    "LITTLE": Endianness_ns.LITTLE,
+                    "BIG": Endianness_ns.BIG,
+                }
+            ),
+        },
+        validate_value_type,
+    ),
+    key=CONF_DATA,
 )
 
-DESCRIPTOR_SCHEMA = cv.Schema(
+DESCRIPTOR_SCHEMA = cv.All(
     {
         cv.GenerateID(): cv.declare_id(BLEDescriptor),
         cv.Required(CONF_UUID): cv.Any(bt_uuid, cv.hex_uint32_t),
@@ -237,8 +287,9 @@ DESCRIPTOR_SCHEMA = cv.Schema(
         cv.Optional(CONF_WRITE, default=True): cv.boolean,
         cv.Optional(CONF_ON_WRITE): automation.validate_automation(single=True),
         cv.Required(CONF_VALUE): VALUE_SCHEMA,
+        cv.Optional(CONF_MAX_LENGTH): cv.uint16_t,
     },
-    extra_schemas=[validate_desc_on_write],
+    validate_descriptor,
 )
 
 SERVICE_CHARACTERISTIC_SCHEMA = cv.Schema(
@@ -253,9 +304,7 @@ SERVICE_CHARACTERISTIC_SCHEMA = cv.Schema(
         cv.Optional(CONF_ON_WRITE): automation.validate_automation(single=True),
         cv.Optional(CONF_DESCRIPTION): VALUE_SCHEMA,
         cv.GenerateID(CONF_CUD_ID_): cv.declare_id(BLEDescriptor),
-        cv.GenerateID(CONF_CUD_VALUE_BUFFER_): cv.declare_id(ByteBuffer),
         cv.GenerateID(CONF_CCCD_ID_): cv.declare_id(BLEDescriptor),
-        cv.GenerateID(CONF_CCCD_VALUE_BUFFER_): cv.declare_id(ByteBuffer),
     },
     extra_schemas=[
         validate_char_on_write,
@@ -306,28 +355,15 @@ def parse_uuid(uuid):
     return ESPBTUUID_ns.from_raw(uuid)
 
 
-def native_value_parser_(value, type_, str_encoding):
-    if type_ == "encoded_string":
-        # Convert to a list of bytes using encoding
-        val = cg.std_vector.template(cg.uint8)(list(value.encode(str_encoding)))
-    else:
-        val = cg.RawExpression(f"{type_}({value})")
-    return val
-
-
 async def parse_value(value_config, args):
-    value = value_config[CONF_VALUE]
+    value = value_config[CONF_DATA]
     if isinstance(value, cv.Lambda):
         return await cg.templatable(value, args, cg.std_vector.template(cg.uint8))
 
-    buffer_id = value_config[CONF_VALUE_BUFFER_]
-    val = native_value_parser_(
-        value, value_config[CONF_TYPE], value_config[CONF_STRING_ENCODING]
-    )
-    buffer_var = cg.variable(
-        buffer_id, ByteBuffer_ns.wrap(val, value_config[CONF_ENDIANNESS])
-    )
-    return buffer_var
+    if isinstance(value, list):
+        return cg.std_vector.template(cg.uint8)(value)
+    val = cg.RawExpression(f"{value_config[CONF_TYPE]}({cg.safe_exp(value)})")
+    return ByteBuffer_ns.wrap(val, value_config[CONF_ENDIANNESS])
 
 
 def calculate_num_handles(service_config):
@@ -345,7 +381,7 @@ async def to_code_descriptor(descriptor_conf, char_var):
     desc_var = cg.new_Pvariable(
         descriptor_conf[CONF_ID],
         parse_uuid(descriptor_conf[CONF_UUID]),
-        value.get_capacity(),  # TODO: FIX this does not work for templatables
+        descriptor_conf[CONF_MAX_LENGTH],
         descriptor_conf[CONF_READ],
         descriptor_conf[CONF_WRITE],
     )
