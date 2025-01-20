@@ -8,7 +8,7 @@ from esphome.const import (
     CONF_SUPPORTS_HEAT,
     CONF_HEATER
 )
-from .. import tuya_ns, CONF_TUYA_ID, Tuya
+from esphome.components.tuya import tuya_ns, CONF_TUYA_ID, Tuya
 
 DEPENDENCIES = ["tuya"]
 CODEOWNERS = ["@jshsltr"]
