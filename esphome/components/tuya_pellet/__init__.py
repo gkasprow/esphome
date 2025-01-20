@@ -6,8 +6,7 @@ from esphome.const import (
     CONF_ID,
     CONF_SWITCH_DATAPOINT,
     CONF_SUPPORTS_HEAT,
-    CONF_HEATER,
-    CONF_TARGET_TEMPERATURE
+    CONF_HEATER
 )
 from .. import tuya_ns, CONF_TUYA_ID, Tuya
 
@@ -33,7 +32,7 @@ CONF_P4_VALUE = "p4_value"
 CONF_REPORTS_FAHRENHEIT = "reports_fahrenheit"
 
 
-TuyaPellet = tuya_ns.class_("TuyaPellet", climate.Climate, cg.Component)
+TuyaPellet = tuya_ns.class_("TuyaPellet", climate.Climate, cg.Component, )
 
 def validate_temperature_multipliers(value):
     if CONF_TEMPERATURE_MULTIPLIER in value:
@@ -99,7 +98,7 @@ HEATER_MODES = cv.Schema(
 CONFIG_SCHEMA = cv.All(
     climate.CLIMATE_SCHEMA.extend(
         {
-            cv.GenerateID(): cv.declare_id(TuyaClimate),
+            cv.GenerateID(): cv.declare_id(TuyaPellet),
             cv.GenerateID(CONF_TUYA_ID): cv.use_id(Tuya),
             cv.Optional(CONF_SUPPORTS_HEAT, default=True): cv.boolean,
             cv.Optional(CONF_SWITCH_DATAPOINT): cv.uint8_t,
