@@ -234,7 +234,6 @@ def preload_core_config(config, result) -> str:
     config[CONF_ESPHOME] = conf
     return target_platform[0]
 
-
 def include_file(path, basename):
     parts = basename.split(os.path.sep)
     dst = CORE.relative_src_path(*parts)
