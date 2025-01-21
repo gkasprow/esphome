@@ -6,7 +6,11 @@ from esphome.const import (
     DEVICE_CLASS_TEMPERATURE,
     STATE_CLASS_MEASUREMENT,
     UNIT_CELSIUS,
+    # CONF_IGNORE_THERMOCOUPLE_SHORT_CIRCUIT_ERRORS,
 )
+
+# TODO For testing, remove before merging.
+CONF_IGNORE_THERMOCOUPLE_SHORT_CIRCUIT_ERRORS = "ignore_thermocouple_short_circuit_errors"
 
 max31855_ns = cg.esphome_ns.namespace("max31855")
 MAX31855Sensor = max31855_ns.class_(
@@ -28,6 +32,7 @@ CONFIG_SCHEMA = (
                 device_class=DEVICE_CLASS_TEMPERATURE,
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
+            cv.Optional(CONF_IGNORE_THERMOCOUPLE_SHORT_CIRCUIT_ERRORS): cv.boolean,
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -42,3 +47,5 @@ async def to_code(config):
     if CONF_REFERENCE_TEMPERATURE in config:
         tc_ref = await sensor.new_sensor(config[CONF_REFERENCE_TEMPERATURE])
         cg.add(var.set_reference_sensor(tc_ref))
+    if CONF_IGNORE_THERMOCOUPLE_SHORT_CIRCUIT_ERRORS in config:
+        cg.add(var.set_ignore_short_circuit_errors(config[CONF_IGNORE_THERMOCOUPLE_SHORT_CIRCUIT_ERRORS]))

@@ -74,23 +74,25 @@ void MAX31855Sensor::read_data_() {
     this->status_set_warning();
     return;
   }
-  if (mem & 0x00000002) {
-    ESP_LOGW(TAG, "Thermocouple short circuit to ground fault from MAX31855 (0x%08" PRIX32 ")", mem);
-    this->publish_state(NAN);
-    this->status_set_warning();
-    return;
-  }
-  if (mem & 0x00000004) {
-    ESP_LOGW(TAG, "Thermocouple short circuit to VCC fault from MAX31855 (0x%08" PRIX32 ")", mem);
-    this->publish_state(NAN);
-    this->status_set_warning();
-    return;
-  }
-  if (mem & 0x00010000) {
-    ESP_LOGW(TAG, "Got faulty reading from MAX31855 (0x%08" PRIX32 ")", mem);
-    this->publish_state(NAN);
-    this->status_set_warning();
-    return;
+  if (!this->ignore_short_circuit_errors_) {
+    if (mem & 0x00000002) {
+        ESP_LOGW(TAG, "Thermocouple short circuit to ground fault from MAX31855 (0x%08" PRIX32 ")", mem);
+        this->publish_state(NAN);
+        this->status_set_warning();
+        return;
+    }
+    if (mem & 0x00000004) {
+        ESP_LOGW(TAG, "Thermocouple short circuit to VCC fault from MAX31855 (0x%08" PRIX32 ")", mem);
+        this->publish_state(NAN);
+        this->status_set_warning();
+        return;
+    }
+    if (mem & 0x00010000) {
+        ESP_LOGW(TAG, "Got faulty reading from MAX31855 (0x%08" PRIX32 ")", mem);
+        this->publish_state(NAN);
+        this->status_set_warning();
+        return;
+    }
   }
 
   // Decode thermocouple temperature
