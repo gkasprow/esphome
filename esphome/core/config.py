@@ -185,7 +185,7 @@ def _is_target_platform(name):
     return False
 
 
-def _supported_target_platforms():
+def _list_target_platforms():
     target_platforms = []
     root = Path(__file__).parents[1]
     for path in (root / "components").iterdir():
@@ -220,7 +220,7 @@ def preload_core_config(config, result) -> str:
     if not target_platforms:
         raise cv.Invalid(
             "Platform missing. You must include one of the available platform keys: "
-            + ", ".join(_supported_target_platforms()),
+            + ", ".join(_list_target_platforms()),
             [CONF_ESPHOME],
         )
     if len(target_platforms) > 1:
