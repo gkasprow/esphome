@@ -98,10 +98,6 @@ UARTDummyReceiver = uart_ns.class_("UARTDummyReceiver", cg.Component)
 MULTI_CONF = True
 MULTI_CONF_NO_DEFAULT = True
 
-CONF_RX_FULL_THRESHOLD = "rx_full_threshold"
-CONF_RX_TIMEOUT = "rx_timeout"
-
-
 def validate_raw_data(value):
     if isinstance(value, str):
         return value.encode("utf-8")
@@ -176,6 +172,8 @@ UART_PARITY_OPTIONS = {
 CONF_STOP_BITS = "stop_bits"
 CONF_DATA_BITS = "data_bits"
 CONF_PARITY = "parity"
+CONF_RX_FULL_THRESHOLD = "rx_full_threshold"
+CONF_RX_TIMEOUT = "rx_timeout"
 
 UARTDirection = uart_ns.enum("UARTDirection")
 UART_DIRECTIONS = {
