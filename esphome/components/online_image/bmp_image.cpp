@@ -13,21 +13,42 @@ static const char *const TAG = "online_image.bmp";
 
 int HOT BmpDecoder::decode(uint8_t *buffer, size_t size) {
   size_t index = 0;
-  this->decoded_bytes_ += size;
-  if (this->current_index_ == 0 && this->decoded_bytes_ > 14) {
+  if (this->current_index_ == 0 && index == 0 && size > 14) {
+    /**
+     * BMP file format:
+     * 0-1: Signature (BM)
+     * 2-5: File size
+     * 6-9: Reserved
+     * 10-13: Pixel data offset
+     */
+
     // Check if the file is a BMP image
     if (buffer[0] != 'B' || buffer[1] != 'M') {
       ESP_LOGE(TAG, "Not a BMP file");
-      return -1;
+      return DECODE_ERROR_INVALID_TYPE;
     }
 
-    this->total_size_ = encode_uint32(buffer[5], buffer[4], buffer[3], buffer[2]);
+    this->download_size_ = encode_uint32(buffer[5], buffer[4], buffer[3], buffer[2]);
     this->data_offset_ = encode_uint32(buffer[13], buffer[12], buffer[11], buffer[10]);
 
     this->current_index_ = 14;
     index = 14;
   }
-  if (this->current_index_ == 14 && this->decoded_bytes_ > this->data_offset_) {
+  if (this->current_index_ == 14 && index == 14 && size > this->data_offset_) {
+    /**
+     * BMP DIB header:
+     * 14-17: DIB header size
+     * 18-21: Image width
+     * 22-25: Image height
+     * 26-27: Number of color planes
+     * 28-29: Bits per pixel
+     * 30-33: Compression method
+     * 34-37: Image data size
+     * 38-41: Horizontal resolution
+     * 42-45: Vertical resolution
+     * 46-49: Number of colors in the color table
+     */
+
     this->width_ = encode_uint32(buffer[21], buffer[20], buffer[19], buffer[18]);
     this->height_ = encode_uint32(buffer[25], buffer[24], buffer[23], buffer[22]);
     this->bits_per_pixel_ = encode_uint16(buffer[29], buffer[28]);
@@ -41,16 +62,21 @@ int HOT BmpDecoder::decode(uint8_t *buffer, size_t size) {
         break;
       default:
         ESP_LOGE(TAG, "Unsupported bits per pixel: %d", this->bits_per_pixel_);
-        return -2;
+        return DECODE_ERROR_UNSUPPORTED_FORMAT;
+    }
+
+    if (this->compression_method_ != 0) {
+      ESP_LOGE(TAG, "Unsupported compression method: %d", this->compression_method_);
+      return DECODE_ERROR_UNSUPPORTED_FORMAT;
     }
 
     if (!this->set_size(this->width_, this->height_)) {
-      return -3;
+      return DECODE_ERROR_OUT_OF_MEMORY;
     }
     this->current_index_ = this->data_offset_;
     index = this->data_offset_;
   }
-  while (this->current_index_ < this->decoded_bytes_) {
+  while (index < size) {
     size_t paint_index = this->current_index_ - this->data_offset_;
 
     uint8_t current_byte = buffer[index];
@@ -63,6 +89,7 @@ int HOT BmpDecoder::decode(uint8_t *buffer, size_t size) {
     this->current_index_++;
     index++;
   }
+  this->decoded_bytes_ += size;
   return size;
 };
 

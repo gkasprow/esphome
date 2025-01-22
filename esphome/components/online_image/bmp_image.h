@@ -31,7 +31,6 @@ class BmpDecoder : public ImageDecoder {
   uint32_t image_data_size_{0};
   uint32_t color_table_entries_{0};
   size_t width_bytes_{0};
-  size_t total_size_{0};
   size_t data_offset_{0};
 };
 
