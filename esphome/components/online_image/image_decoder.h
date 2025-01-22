@@ -4,7 +4,7 @@
 namespace esphome {
 namespace online_image {
 
-enum DECODE_ERROR : int {
+enum DecodeError : int {
   DECODE_ERROR_INVALID_TYPE = -1,
   DECODE_ERROR_UNSUPPORTED_FORMAT = -2,
   DECODE_ERROR_OUT_OF_MEMORY = -3,
