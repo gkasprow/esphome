@@ -305,6 +305,7 @@ async def to_code(config):
     cg.add(var.set_rx_buffer_size(config[CONF_RX_BUFFER_SIZE]))
     cg.add(var.set_stop_bits(config[CONF_STOP_BITS]))
     cg.add(var.set_data_bits(config[CONF_DATA_BITS]))
+    cg.add(var.set_parity(config[CONF_PARITY]))
     if CONF_RX_FULL_THRESHOLD in config:
         cg.add(var.set_rx_full_threshold(config[CONF_RX_FULL_THRESHOLD]))
     if CONF_RX_TIMEOUT in config:
