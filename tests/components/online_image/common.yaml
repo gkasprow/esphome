@@ -27,7 +27,7 @@ online_image:
     type: RGB
     transparency: chroma_key
   - id: online_binary_bmp
-    url: http://www.libpng.org/pub/png/img_png/pnglogo-blk-tiny.png
+    url: https://samples-files.com/samples/images/bmp/480-360-sample.bmp
     format: BMP
     type: BINARY
 

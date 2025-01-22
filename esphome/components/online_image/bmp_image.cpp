@@ -20,6 +20,8 @@ int HOT BmpDecoder::decode(uint8_t *buffer, size_t size) {
      * 2-5: File size
      * 6-9: Reserved
      * 10-13: Pixel data offset
+     *
+     * Integer values are stored in little-endian format.
      */
 
     // Check if the file is a BMP image
