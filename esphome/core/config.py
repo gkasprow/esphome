@@ -279,7 +279,7 @@ async def add_includes(includes):
     for include in includes:
         # Include <...> includes directly
         if include.startswith("<") and include.endswith(">"):
-            cg.add_global(cg.RawStatement(f'#include {include}'))
+            cg.add_global(cg.RawStatement(f"#include {include}"))
             continue
         path = CORE.relative_config_path(include)
         if os.path.isdir(path):
