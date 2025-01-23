@@ -28,6 +28,18 @@ static const adc_atten_t ADC_ATTEN_DB_12_COMPAT = ADC_ATTEN_DB_11;
 #endif
 #endif  // USE_ESP32
 
+class Aggregator {
+ public:
+  void add_sample(uint32_t value);
+  uint32_t aggreate();
+  Aggregator(uint8_t mode);
+
+ protected:
+  uint8_t mode_{0};
+  uint32_t aggr_{0};
+  uint32_t samples_{0};
+};
+
 class ADCSensor : public sensor::Sensor, public PollingComponent, public voltage_sampler::VoltageSampler {
  public:
 #ifdef USE_ESP32

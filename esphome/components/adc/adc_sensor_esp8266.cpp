@@ -35,19 +35,22 @@ void ADCSensor::dump_config() {
 }
 
 float ADCSensor::sample() {
-  uint32_t raw = 0;
+  auto aggr = Aggregator(this->sampling_mode_);
+
   for (uint8_t sample = 0; sample < this->sample_count_; sample++) {
+    uint32_t raw = 0;
 #ifdef USE_ADC_SENSOR_VCC
-    raw += ESP.getVcc();  // NOLINT(readability-static-accessed-through-instance)
+    raw = ESP.getVcc();  // NOLINT(readability-static-accessed-through-instance)
 #else
-    raw += analogRead(this->pin_->get_pin());  // NOLINT
+    raw = analogRead(this->pin_->get_pin());  // NOLINT
 #endif  // USE_ADC_SENSOR_VCC
+    aggr.add_sample(raw);
   }
-  raw = (raw + (this->sample_count_ >> 1)) / this->sample_count_;  // NOLINT(clang-analyzer-core.DivideZero)
+
   if (this->output_raw_) {
-    return raw;
+    return aggr.aggreate();
   }
-  return raw / 1024.0f;
+  return aggr.aggreate() / 1024.0f;
 }
 
 std::string ADCSensor::unique_id() { return get_mac_address() + "-adc"; }

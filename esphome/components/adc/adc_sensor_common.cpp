@@ -6,6 +6,41 @@ namespace adc {
 
 static const char *const TAG = "adc.common";
 
+Aggregator::Aggregator(uint8_t mode) {
+  mode_ = mode;
+  // set to max uint if mode is "min"
+  if (mode == 1) {
+    aggr_ = UINT32_MAX;
+  }
+}
+
+void Aggregator::add_sample(uint32_t value) {
+  if (mode_ == 0) {
+    // avg
+    aggr_ += value;
+  } else if (mode_ == 1) {
+    // min
+    if (value < aggr_) {
+      aggr_ = value;
+    }
+  } else {
+    // max
+    if (value > aggr_) {
+      aggr_ = value;
+    }
+  }
+
+  samples_ += 1;
+}
+
+uint32_t Aggregator::aggreate() {
+  if (this->mode_ == 0) {
+    return (aggr_ + (this->samples_ >> 1)) / this->samples_;  // NOLINT(clang-analyzer-core.DivideZero)
+  }
+
+  return aggr_;
+}
+
 void ADCSensor::update() {
   float value_v = this->sample();
   ESP_LOGV(TAG, "'%s': Got voltage=%.4fV", this->get_name().c_str(), value_v);
