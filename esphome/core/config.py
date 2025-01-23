@@ -72,6 +72,9 @@ def validate_hostname(config):
 
 
 def valid_include(value):
+    # Look for "<...>" includes
+    if value.startswith("<") and value.endswith(">"):
+        return value
     try:
         return cv.directory(value)
     except cv.Invalid:
@@ -274,6 +277,10 @@ async def add_arduino_global_workaround():
 async def add_includes(includes):
     # Add includes at the very end, so that the included files can access global variables
     for include in includes:
+        # Include <...> includes directly
+        if include.startswith("<") and include.endswith(">"):
+            cg.add_global(cg.RawStatement(f'#include {include}'))
+            continue
         path = CORE.relative_config_path(include)
         if os.path.isdir(path):
             # Directory, copy tree
