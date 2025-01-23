@@ -83,7 +83,12 @@ void ADCSensor::dump_config() {
 
 float ADCSensor::sample() {
   if (!this->autorange_) {
-    uint32_t sum = 0;
+    uint32_t aggr = 0;
+    // min
+    if (this->sampling_mode_ == 1) {
+      aggr = UINT32_MAX;
+    }
+
     for (uint8_t sample = 0; sample < this->sample_count_; sample++) {
       int raw = -1;
       if (this->channel1_ != ADC1_CHANNEL_MAX) {
@@ -94,13 +99,28 @@ float ADCSensor::sample() {
       if (raw == -1) {
         return NAN;
       }
-      sum += raw;
+      if (this->sampling_mode_ == 0) {
+        // avg
+        aggr += raw;
+      } else if (this->sampling_mode_ == 1) {
+        // min
+        if (raw < aggr) {
+          aggr = raw
+        }
+      } else {
+        // max
+        if (raw > aggr) {
+          aggr = raw
+        }
+      }
     }
-    sum = (sum + (this->sample_count_ >> 1)) / this->sample_count_;  // NOLINT(clang-analyzer-core.DivideZero)
+    if (this->sampling_mode_ == 0) {
+      aggr = (aggr + (this->sample_count_ >> 1)) / this->sample_count_;  // NOLINT(clang-analyzer-core.DivideZero)
+    }
     if (this->output_raw_) {
-      return sum;
+      return aggr;
     }
-    uint32_t mv = esp_adc_cal_raw_to_voltage(sum, &this->cal_characteristics_[(int32_t) this->attenuation_]);
+    uint32_t mv = esp_adc_cal_raw_to_voltage(aggr, &this->cal_characteristics_[(int32_t) this->attenuation_]);
     return mv / 1000.0f;
   }
 

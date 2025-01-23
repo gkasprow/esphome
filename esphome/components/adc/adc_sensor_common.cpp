@@ -18,6 +18,12 @@ void ADCSensor::set_sample_count(uint8_t sample_count) {
   }
 }
 
+void ADCSensor::set_sampling_mode(uint8_t sampling_mode) {
+  if (sampling_mode >= 0 && sampling_mode <= 2) {
+    this->sampling_mode_ = sampling_mode;
+  }
+}
+
 float ADCSensor::get_setup_priority() const { return setup_priority::DATA; }
 
 }  // namespace adc
