@@ -48,9 +48,9 @@ float ADCSensor::sample() {
   }
 
   if (this->output_raw_) {
-    return aggr.aggreate();
+    return aggr.aggregate();
   }
-  return aggr.aggreate() / 1024.0f;
+  return aggr.aggregate() / 1024.0f;
 }
 
 std::string ADCSensor::unique_id() { return get_mac_address() + "-adc"; }

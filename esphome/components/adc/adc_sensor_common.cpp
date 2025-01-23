@@ -33,7 +33,7 @@ void Aggregator::add_sample(uint32_t value) {
   samples_ += 1;
 }
 
-uint32_t Aggregator::aggreate() {
+uint32_t Aggregator::aggregate() {
   if (this->mode_ == 0) {
     return (aggr_ + (this->samples_ >> 1)) / this->samples_;  // NOLINT(clang-analyzer-core.DivideZero)
   }
