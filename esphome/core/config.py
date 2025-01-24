@@ -277,10 +277,6 @@ async def add_arduino_global_workaround():
 async def add_includes(includes):
     # Add includes at the very end, so that the included files can access global variables
     for include in includes:
-        # Include <...> includes directly
-        if include.startswith("<") and include.endswith(">"):
-            cg.add_global(cg.RawStatement(f"#include {include}"))
-            continue
         path = CORE.relative_config_path(include)
         if os.path.isdir(path):
             # Directory, copy tree
@@ -367,7 +363,19 @@ async def to_code(config):
         CORE.add_job(add_arduino_global_workaround)
 
     if config[CONF_INCLUDES]:
-        CORE.add_job(add_includes, config[CONF_INCLUDES])
+        # Get the <...> includes
+        system_includes = []
+        other_includes = []
+        for include in config[CONF_INCLUDES]:
+            if include.startswith("<") and include.endswith(">"):
+                system_includes.append(include)
+            else:
+                other_includes.append(include)
+        # <...> includes should be at the start
+        for include in system_includes:
+            cg.add_global(cg.RawStatement(f'#include {include}'), prepend=True)
+        # Other includes should be at the end
+        CORE.add_job(add_includes, other_includes)
 
     if project_conf := config.get(CONF_PROJECT):
         cg.add_define("ESPHOME_PROJECT_NAME", project_conf[CONF_NAME])
