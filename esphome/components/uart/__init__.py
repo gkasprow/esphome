@@ -98,6 +98,7 @@ UARTDummyReceiver = uart_ns.class_("UARTDummyReceiver", cg.Component)
 MULTI_CONF = True
 MULTI_CONF_NO_DEFAULT = True
 
+
 def validate_raw_data(value):
     if isinstance(value, str):
         return value.encode("utf-8")
