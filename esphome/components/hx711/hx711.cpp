@@ -11,24 +11,15 @@ static const char *const TAG = "hx711";
 /// @param[in] gain HX711 gain setting as an enum.
 /// @return Numeric gain value (128, 64, 32, or 0 if invalid).
 constexpr uint8_t hx711_gain_to_linear_gain(const HX711Gain gain) {
-  switch (gain) {
-    case HX711Gain::HX711_GAIN_128:
-      return 128U;
-    case HX711Gain::HX711_GAIN_32:
-      return 32U;
-    case HX711Gain::HX711_GAIN_64:
-      return 64U;
-    default:
-      return 0U;
-  }
+  return (gain == HX711Gain::HX711_GAIN_128) ? 128U :
+         (gain == HX711Gain::HX711_GAIN_64) ? 64U :
+         (gain == HX711Gain::HX711_GAIN_32) ? 32U : 0U;
 }
 
 /// @brief Calculates the elapsed time in milliseconds from a given timestamp.
 /// @param[in] timestamp The reference timestamp (in millis).
 /// @return The elapsed time in milliseconds.
-inline uint32_t millis_elapsed_from(const uint32_t timestamp) {
-  return millis() - timestamp;
-}
+inline uint32_t millis_elapsed_from(const uint32_t timestamp) { return millis() - timestamp; }
 
 void HX711Sensor::setup() {
   ESP_LOGCONFIG(TAG, "Setting up HX711 '%s'...", this->name_.c_str());
@@ -55,8 +46,10 @@ float HX711Sensor::get_setup_priority() const { return setup_priority::DATA; }
 
 void HX711Sensor::update() {
   if (millis_elapsed_from(this->last_change_) < static_cast<uint32_t>(this->settling_time_ms_)) {
-    uint32_t settling_time_remaining_ms = static_cast<uint32_t>(this->settling_time_ms_) - millis_elapsed_from(this->last_change_);
-    ESP_LOGW(TAG, "Waiting %" PRIu32 " ms for HX711 to settle before updating, stopping poller.", settling_time_remaining_ms);
+    uint32_t settling_time_remaining_ms =
+        static_cast<uint32_t>(this->settling_time_ms_) - millis_elapsed_from(this->last_change_);
+    ESP_LOGW(TAG, "Waiting %" PRIu32 " ms for HX711 to settle before updating, stopping poller.",
+             settling_time_remaining_ms);
     this->stop_poller();
     this->status_set_warning();
     this->set_timeout("hx711_settle", settling_time_remaining_ms, [this]() {
@@ -85,8 +78,7 @@ bool HX711Sensor::read_sensor_(uint32_t *result, bool force) {
 
   uint32_t elapsed = millis_elapsed_from(this->last_change_);
   if (!force && (elapsed < static_cast<uint32_t>(this->settling_time_ms_))) {
-    ESP_LOGW(TAG, "HX711 output is not settled yet (%" PRIu32 " ms left)",
-                  this->settling_time_ms_ - elapsed);
+    ESP_LOGW(TAG, "HX711 output is not settled yet (%" PRIu32 " ms left)", this->settling_time_ms_ - elapsed);
     this->status_set_warning();
     return false;
   }
@@ -118,8 +110,8 @@ bool HX711Sensor::read_sensor_(uint32_t *result, bool force) {
     // Timestamp the change
     this->last_change_ = millis();
     this->last_gain_ = this->gain_;
-    ESP_LOGV(TAG, "HX711 gain changed to x%" PRIu8 " at %" PRIu32 " ms",
-                  hx711_gain_to_linear_gain(this->gain_), this->last_change_);
+    ESP_LOGV(TAG, "HX711 gain changed to x%" PRIu8 " at %" PRIu32 " ms", hx711_gain_to_linear_gain(this->gain_),
+             this->last_change_);
   }
 
   if (!final_dout) {
