@@ -53,4 +53,4 @@ async def to_code(config):
     sck_pin = await cg.gpio_pin_expression(config[CONF_CLK_PIN])
     cg.add(var.set_sck_pin(sck_pin))
     cg.add(var.set_gain(config[CONF_GAIN]))
-    cg.add(var.set_settling_time(config[CONF_SETTLING_TIME]))
+    cg.add(var.set_settling_time_ms(config[CONF_SETTLING_TIME]))
