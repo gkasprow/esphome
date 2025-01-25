@@ -45,7 +45,7 @@ CONF_SUPPORTS_PELLET = "supports_pellet"
 CONF_ECO_MODE = "eco_mode"
 CONF_E1_VALUE = "e1_value"
 CONF_E2_VALUE = "e2_value"
-CONF_PELLET_LEVEL = "pellet_level"
+CONF_PELLET_FEED = "pellet_feed"
 CONF_P1_VALUE = "p4_value"
 CONF_P2_VALUE = "p3_value"
 CONF_P3_VALUE = "p2_value"
@@ -137,10 +137,10 @@ def validate_heating_values(value):
                     f" Please add {CONF_SUPPORTS_PELLET} to your configuration."
                 )
             if (
-                CONF_PELLET_LEVEL in value
+                CONF_PELLET_FEED in value
             ):
                 raise cv.Invalid(
-                    f"Device does not support pellet heat, but {CONF_PELLET_LEVEL} specified."
+                    f"Device does not support pellet heat, but {CONF_PELLET_FEED} specified."
                     f" Please add {CONF_SUPPORTS_PELLET} to your configuration."
                 )
     return value
@@ -194,7 +194,7 @@ ECO_MODES = cv.Schema(
     }
 )
 
-PELLET_LEVELS = cv.Schema(
+PELLET_FEEDS = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
         cv.Optional(CONF_P1_VALUE): cv.uint8_t,
@@ -226,7 +226,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_FAN_MODE): FAN_MODES,
             cv.Optional(CONF_SWING_MODE): SWING_MODES,
             cv.Optional(CONF_ECO_MODE): ECO_MODES,
-            cv.Optional(CONF_PELLET_LEVEL): PELLET_LEVELS,
+            cv.Optional(CONF_PELLET_FEED): PELLET_FEEDS,
             cv.Optional("active_state_datapoint"): cv.invalid(
                 "'active_state_datapoint' has been moved inside of the 'active_state' config block as 'datapoint'"
             ),
@@ -341,13 +341,13 @@ async def to_code(config):
         if (eco_mode_e1_value := eco_mode_config.get(CONF_E1_VALUE)) is not None:
             cg.add(var.set_eco_mode_e1_value(eco_mode_e1_value))
 
-    if pellet_level_config := config.get(CONF_PELLET_LEVEL):
-        cg.add(var.set_pellet_level_id(pellet_level_config.get(CONF_DATAPOINT)))
-        if (pellet_level_p1_value := pellet_level_config.get(CONF_P1_VALUE)) is not None:
-            cg.add(var.set_pellet_level_p1_value(pellet_level_p1_value))
-        if (pellet_level_p2_value := pellet_level_config.get(CONF_P2_VALUE)) is not None:
-            cg.add(var.set_pellet_level_p1_value(pellet_level_p2_value))
-        if (pellet_level_p3_value := pellet_level_config.get(CONF_P3_VALUE)) is not None:
-            cg.add(var.set_pellet_level_p1_value(pellet_level_p3_value))
-        if (pellet_level_p4_value := pellet_level_config.get(CONF_P4_VALUE)) is not None:
-            cg.add(var.set_pellet_level_p1_value(pellet_level_p4_value))
+    if pellet_feed_config := config.get(CONF_PELLET_FEED):
+        cg.add(var.set_pellet_feed_id(pellet_feed_config.get(CONF_DATAPOINT)))
+        if (pellet_feed_p1_value := pellet_feed_config.get(CONF_P1_VALUE)) is not None:
+            cg.add(var.set_pellet_feed_p1_value(pellet_feed_p1_value))
+        if (pellet_feed_p2_value := pellet_feed_config.get(CONF_P2_VALUE)) is not None:
+            cg.add(var.set_pellet_feed_p1_value(pellet_feed_p2_value))
+        if (pellet_feed_p3_value := pellet_feed_config.get(CONF_P3_VALUE)) is not None:
+            cg.add(var.set_pellet_feed_p1_value(pellet_feed_p3_value))
+        if (pellet_feed_p4_value := pellet_feed_config.get(CONF_P4_VALUE)) is not None:
+            cg.add(var.set_pellet_feed_p1_value(pellet_feed_p4_value))
