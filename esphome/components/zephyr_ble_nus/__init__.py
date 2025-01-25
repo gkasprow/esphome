@@ -1,10 +1,7 @@
 import esphome.codegen as cg
-import esphome.config_validation as cv
-from esphome.const import (
-    CONF_ID,
-    CONF_LOG,
-)
 from esphome.components.zephyr import zephyr_add_prj_conf
+import esphome.config_validation as cv
+from esphome.const import CONF_ID, CONF_LOG
 
 DEPENDENCIES = ["zephyr_ble_server"]
 
@@ -18,7 +15,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_LOG, default=False): cv.boolean,
         }
     ).extend(cv.COMPONENT_SCHEMA),
-    cv.only_with_zephyr,
+    cv.only_with_framework("zephyr"),
 )
 
 
