@@ -1,15 +1,14 @@
+from esphome import automation
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome import automation
-from esphome.core import CORE, coroutine_with_priority
-
 from esphome.const import CONF_ESPHOME, CONF_OTA, CONF_PLATFORM, CONF_TRIGGER_ID
+from esphome.core import CORE, coroutine_with_priority
 
 CODEOWNERS = ["@esphome/core"]
 
 
 def AUTO_LOAD():
-    if CORE.is_nrf52:
+    if CORE.target_platform == "nrf52":
         return []
     return ["md5", "safe_mode"]
 
