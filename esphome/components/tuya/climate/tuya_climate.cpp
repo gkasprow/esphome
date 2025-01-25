@@ -511,9 +511,9 @@ void TuyaClimate::compute_pellet_rate_() {
       this->pellet_rate = climate::CLIMATE_PELLET_RATE_R3;
     } else if (this->pellet_rate_r4_value_.has_value() && this->pellet_rate_state_ == this->pellet_rate_r4_value_) {
       this->pellet_rate = climate::CLIMATE_PELLET_RATE_R4;
-  }
+    }
+ }
 }
-
 void TuyaClimate::compute_target_temperature_() {
   if (this->eco_ && this->eco_temperature_.has_value()) {
     this->target_temperature = *this->eco_temperature_;
