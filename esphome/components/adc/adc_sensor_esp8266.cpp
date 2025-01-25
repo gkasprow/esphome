@@ -31,21 +31,7 @@ void ADCSensor::dump_config() {
   LOG_PIN("  Pin: ", this->pin_);
 #endif  // USE_ADC_SENSOR_VCC
   ESP_LOGCONFIG(TAG, "  Samples: %i", this->sample_count_);
-  const char *samplingModeStr;
-  switch (this->sampling_mode_) {
-    case SamplingMode::AVG:
-      samplingModeStr = "average";
-      break;
-    case SamplingMode::MIN:
-      samplingModeStr = "minimum";
-      break;
-    case SamplingMode::MAX:
-      samplingModeStr = "maximum";
-      break;
-    default:
-      samplingModeStr = "unknown";
-  }
-  ESP_LOGCONFIG(TAG, "  Sampling mode: %s", samplingModeStr);
+  ESP_LOGCONFIG(TAG, "  Sampling mode: %s", sampling_mode_str(this->sampling_mode_));
   LOG_UPDATE_INTERVAL(this);
 }
 
