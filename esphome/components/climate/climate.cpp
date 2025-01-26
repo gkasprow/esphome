@@ -582,52 +582,51 @@ ClimateCall ClimateDeviceRestoreState::to_call(Climate *climate) {
   return call;
 }
 
-
-  void ClimateDeviceRestoreState::apply(Climate * climate) {
-    auto traits = climate->get_traits();
-    climate->mode = this->mode;
-    if (traits.get_supports_two_point_target_temperature()) {
-      climate->target_temperature_low = this->target_temperature_low;
-      climate->target_temperature_high = this->target_temperature_high;
-    } else {
-      climate->target_temperature = this->target_temperature;
-    }
-    if (traits.get_supports_target_humidity()) {
-      climate->target_humidity = this->target_humidity;
-    }
-    if (traits.get_supports_eco_modes()) {
-      climate->eco_mode = this->eco_mode;
-    }
-    if (traits.get_supports_pellet_rates()) {
-      climate->pellet_rate = this->pellet_rate;
-    }
-    if (traits.get_supports_fan_modes() && !this->uses_custom_fan_mode) {
-      climate->fan_mode = this->fan_mode;
-    }
-    if (!traits.get_supported_custom_fan_modes().empty() && this->uses_custom_fan_mode) {
-      // std::set has consistent order (lexicographic for strings), so this is ok
-      const auto &modes = traits.get_supported_custom_fan_modes();
-      std::vector<std::string> modes_vec{modes.begin(), modes.end()};
-      if (custom_fan_mode < modes_vec.size()) {
-        climate->custom_fan_mode = modes_vec[this->custom_fan_mode];
-      }
-    }
-    if (traits.get_supports_presets() && !this->uses_custom_preset) {
-      climate->preset = this->preset;
-    }
-    if (!traits.get_supported_custom_presets().empty() && uses_custom_preset) {
-      // std::set has consistent order (lexicographic for strings), so this is ok
-      const auto &presets = traits.get_supported_custom_presets();
-      std::vector<std::string> presets_vec{presets.begin(), presets.end()};
-      if (custom_preset < presets_vec.size()) {
-        climate->custom_preset = presets_vec[this->custom_preset];
-      }
-    }
-    if (traits.get_supports_swing_modes()) {
-      climate->swing_mode = this->swing_mode;
-    }
-    climate->publish_state();
-    }
+void ClimateDeviceRestoreState::apply(Climate *climate) {
+  auto traits = climate->get_traits();
+  climate->mode = this->mode;
+  if (traits.get_supports_two_point_target_temperature()) {
+    climate->target_temperature_low = this->target_temperature_low;
+    climate->target_temperature_high = this->target_temperature_high;
+  } else {
+    climate->target_temperature = this->target_temperature;
+  }
+  if (traits.get_supports_target_humidity()) {
+    climate->target_humidity = this->target_humidity;
+  }
+  if (traits.get_supports_eco_modes()) {
+    climate->eco_mode = this->eco_mode;
+  }
+  if (traits.get_supports_pellet_rates()) {
+    climate->pellet_rate = this->pellet_rate;
+  }
+  if (traits.get_supports_fan_modes() && !this->uses_custom_fan_mode) {
+    climate->fan_mode = this->fan_mode;
+  }
+  if (!traits.get_supported_custom_fan_modes().empty() && this->uses_custom_fan_mode) {
+    // std::set has consistent order (lexicographic for strings), so this is ok
+    const auto &modes = traits.get_supported_custom_fan_modes();
+    std::vector<std::string> modes_vec{modes.begin(), modes.end()};
+    if (custom_fan_mode < modes_vec.size()) {
+      climate->custom_fan_mode = modes_vec[this->custom_fan_mode];
+     }
+  }
+  if (traits.get_supports_presets() && !this->uses_custom_preset) {
+    climate->preset = this->preset;
+  }
+  if (!traits.get_supported_custom_presets().empty() && uses_custom_preset) {
+    // std::set has consistent order (lexicographic for strings), so this is ok
+    const auto &presets = traits.get_supported_custom_presets();
+    std::vector<std::string> presets_vec{presets.begin(), presets.end()};
+    if (custom_preset < presets_vec.size()) {
+      climate->custom_preset = presets_vec[this->custom_preset];
+     }
+  }
+  if (traits.get_supports_swing_modes()) {
+    climate->swing_mode = this->swing_mode;
+  }
+  climate->publish_state();
+}
 
 
 template<typename T1, typename T2> bool set_alternative(optional<T1> &dst, optional<T2> &alt, const T1 &src) {
