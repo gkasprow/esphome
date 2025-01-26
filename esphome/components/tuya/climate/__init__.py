@@ -122,24 +122,18 @@ def validate_heating_values(value):
         heating_supported = value[CONF_SUPPORTS_HEAT]
         pellet_supported = value[CONF_SUPPORTS_PELLET]
         if not heating_supported:
-            if (
-                CONF_SUPPORTS_PELLET in value
-            ):
+            if CONF_SUPPORTS_PELLET in value:
                 raise cv.Invalid(
                     f"Device does not support heating, but {CONF_SUPPORTS_PELLET} specified."
                     f" Please add '{CONF_SUPPORTS_HEAT}: true' to your configuration."
                 )
         elif heating_supported and not pellet_supported:
-            if (
-                CONF_PELLET_ECO_MODE in value
-            ):
+            if CONF_PELLET_ECO_MODE in value:
                 raise cv.Invalid(
                     f"Device does not support pellet heat, but pellet {CONF_PELLET_ECO_MODE} specified."
                     f" Please add {CONF_SUPPORTS_PELLET} to your configuration."
                 )
-            if (
-                CONF_PELLET_RATE in value
-            ):
+            if CONF_PELLET_RATE in value:
                 raise cv.Invalid(
                     f"Device does not support pellet heat, but {CONF_PELLET_RATE} specified."
                     f" Please add {CONF_SUPPORTS_PELLET} to your configuration."
@@ -337,19 +331,36 @@ async def to_code(config):
             cg.add(var.set_fan_speed_high_value(fan_high_value))
 
     if pellet_eco_mode_config := config.get(CONF_PELLET_ECO_MODE):
-        cg.add(var.set_pellet_eco_mode_id(pellet_eco_mode_config.get(CONF_DATAPOINT)))
-        if (pellet_eco_mode_on_value := pellet_eco_mode_config.get(CONF_PELLET_ECO_ON_VALUE)) is not None:
+        if (
+            pellet_eco_mode_on_value := pellet_eco_mode_config.get(
+                CONF_PELLET_ECO_ON_VALUE
+            )
+        ) is not None:
             cg.add(var.set_pellet_eco_mode_on_value(pellet_eco_mode_on_value))
-        if (pellet_eco_mode_off_value := pellet_eco_mode_config.get(CONF_PELLET_ECO_OFF_VALUE)) is not None:
+        if (
+            pellet_eco_mode_off_value := pellet_eco_mode_config.get(
+                CONF_PELLET_ECO_OFF_VALUE
+            )
+        ) is not None:
             cg.add(var.set_pellet_eco_mode_off_value(pellet_eco_mode_off_value))
 
     if pellet_rate_config := config.get(CONF_PELLET_RATE):
         cg.add(var.set_pellet_rate_id(pellet_rate_config.get(CONF_DATAPOINT)))
-        if (pellet_rate_low_value := pellet_rate_config.get(CONF_PELLET_RATE_LOW_VALUE)) is not None:
+        if (
+            pellet_rate_low_value := pellet_rate_config.get(CONF_PELLET_RATE_LOW_VALUE)
+        ) is not None:
             cg.add(var.set_pellet_rate_low_value(pellet_rate_low_value))
-        if (pellet_rate_med_value := pellet_rate_config.get(CONF_PELLET_RATE_MED_VALUE)) is not None:
+        if (
+            pellet_rate_med_value := pellet_rate_config.get(CONF_PELLET_RATE_MED_VALUE)
+        ) is not None:
             cg.add(var.set_pellet_rate_med_value(pellet_rate_med_value))
-        if (pellet_rate_high_value := pellet_rate_config.get(CONF_PELLET_RATE_HIGH_VALUE)) is not None:
+        if (
+            pellet_rate_high_value := pellet_rate_config.get(
+                CONF_PELLET_RATE_HIGH_VALUE
+            )
+        ) is not None:
             cg.add(var.set_pellet_rate_high_value(pellet_rate_high_value))
-        if (pellet_rate_max_value := pellet_rate_config.get(CONF_PELLET_RATE_MAX_VALUE)) is not None:
+        if (
+            pellet_rate_max_value := pellet_rate_config.get(CONF_PELLET_RATE_MAX_VALUE)
+        ) is not None:
             cg.add(var.set_pellet_rate_max_value(pellet_rate_max_value))
