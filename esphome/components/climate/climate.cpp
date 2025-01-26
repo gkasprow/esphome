@@ -333,6 +333,7 @@ const optional<std::string> &ClimateCall::get_pellet_rate() const { return this-
 const optional<ClimatePreset> &ClimateCall::get_preset() const { return this->preset_; }
 const optional<std::string> &ClimateCall::get_custom_preset() const { return this->custom_preset_; }
 const optional<ClimateSwingMode> &ClimateCall::get_swing_mode() const { return this->swing_mode_; }
+
 ClimateCall &ClimateCall::set_target_temperature_high(optional<float> target_temperature_high) {
   this->target_temperature_high_ = target_temperature_high;
   return *this;
@@ -362,7 +363,7 @@ ClimateCall &ClimateCall::set_eco_mode(optional<ClimateEcoMode> eco_mode) {
   this->eco_mode_ = eco_mode;
   return *this;
 }
-ClimateCall &ClimateCall::set_fan_mode(optional<ClimateFanMode> pellet_rate) {
+ClimateCall &ClimateCall::set_fan_mode(optional<ClimatePelletRate> pellet_rate) {
   this->pellet_rate_ = pellet_rate;
   return *this;
 }
@@ -419,12 +420,6 @@ void Climate::save_state_() {
   }
   if (traits.get_supports_target_humidity()) {
     state.target_humidity = this->target_humidity;
-  }
-  if (traits.get_supports_eco_modes()) {
-    state.eco_mode = this->eco_mode;
-  }
-  if (traits.get_supports_pellet_rates()) {
-    state.pellet_rate = this->pellet_rate;
   }
   if (traits.get_supports_fan_modes() && fan_mode.has_value()) {
     state.uses_custom_fan_mode = false;
