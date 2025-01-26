@@ -7,9 +7,6 @@ from esphome.const import (
     CONF_SWITCH_DATAPOINT,
     CONF_SUPPORTS_COOL,
     CONF_SUPPORTS_HEAT,
-    CONF_SUPPORTS_PELLET,
-    CONF_PELLET_ECO_MODE,
-    CONF_PELLET_RATE,
     CONF_PRESET,
     CONF_SWING_MODE,
     CONF_FAN_MODE,
@@ -44,6 +41,9 @@ CONF_MEDIUM_VALUE = "medium_value"
 CONF_MIDDLE_VALUE = "middle_value"
 CONF_HIGH_VALUE = "high_value"
 CONF_AUTO_VALUE = "auto_value"
+CONF_SUPPORTS_PELLET = "supports_pellet"
+CONF_PELLET_ECO_MODE = "pellet_eco_mode"
+CONF_PELLET_RATE = "pellet_rate"
 CONF_PELLET_ECO_ON_VALUE = "pellet_eco_on_value"
 CONF_PELLET_ECO_OFF_VALUE = "pellet_eco_off_value"
 CONF_PELLET_RATE_LOW_VALUE = "pellet_rate_low_value"
