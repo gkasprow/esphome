@@ -20,7 +20,7 @@ class HX711Sensor : public sensor::Sensor, public PollingComponent {
   void set_dout_pin(GPIOPin *dout_pin) { dout_pin_ = dout_pin; }
   void set_sck_pin(GPIOPin *sck_pin) { sck_pin_ = sck_pin; }
   void set_gain(HX711Gain gain) { gain_ = gain; }
-  void set_settling_time_ms(const uint16_t settling_time_ms) { this->settling_time_ms_ = settling_time_ms; }
+  void set_settling_time(const uint16_t settling_time_ms) { this->settling_time_ms_ = settling_time_ms; }
   void set_power_down_after_reading(const bool power_down_after_reading) {
     this->power_down_after_reading_ = power_down_after_reading;
   }
