@@ -26,12 +26,9 @@ void HX711Sensor::setup() {
   ESP_LOGCONFIG(TAG, "Setting up HX711 '%s'...", this->name_.c_str());
   this->sck_pin_->setup();
   this->dout_pin_->setup();
-  this->sck_pin_->digital_write(false);
-
-  // Force read sensor once without publishing to set the gain
-  this->read_sensor_(nullptr, true);
-  // Make sure that change is timestamped
-  this->last_change_ = millis();
+  // Reset HX711
+  this->power_down();
+  this->power_up();
 }
 
 void HX711Sensor::dump_config() {
@@ -40,12 +37,23 @@ void HX711Sensor::dump_config() {
   LOG_PIN("  SCK Pin: ", this->sck_pin_);
   ESP_LOGCONFIG(TAG, "  Gain: x%" PRIu8, hx711_gain_to_linear_gain(this->gain_));
   ESP_LOGCONFIG(TAG, "  Settling Time: %" PRIu16 " ms", this->settling_time_ms_);
+  ESP_LOGCONFIG(TAG, "  Powered Down: %s", YESNO(this->is_powered_down()));
+  ESP_LOGCONFIG(TAG, "  Power Down After Reading: %s", YESNO(this->power_down_after_reading_));
   LOG_UPDATE_INTERVAL(this);
 }
 
 float HX711Sensor::get_setup_priority() const { return setup_priority::DATA; }
 
 void HX711Sensor::update() {
+  if (this->is_powered_down()) {
+    if (!this->power_down_after_reading_) {
+      ESP_LOGW(TAG, "HX711 is powered down, skipping update.");
+      return;
+    }
+
+    this->power_up();
+  }
+
   if (millis_elapsed_since(this->last_change_) < static_cast<uint32_t>(this->settling_time_ms_)) {
     uint32_t settling_time_remaining_ms =
         static_cast<uint32_t>(this->settling_time_ms_) - millis_elapsed_since(this->last_change_);
@@ -70,7 +78,63 @@ void HX711Sensor::update() {
   // No need to log warnings here, they're already logged in read_sensor_ everywhere where it returns false
 }
 
+void HX711Sensor::power_down_internal_() {
+  // When PD_SCK pin changes from low to high and stays at high for longer than 60µs, HX711 enters power down mode.
+  this->sck_pin_->digital_write(true);
+}
+
+void HX711Sensor::power_up_internal_() {
+  // When PD_SCK pin changes from high to low and stays at low, HX711 exits power down mode.
+  this->sck_pin_->digital_write(false);
+}
+
+void HX711Sensor::power_up() {
+  // Prevent warning log from being spammed
+  if (!this->is_powered_down()) {
+    ESP_LOGI(TAG, "HX711 is already powered up.");
+    return;
+  }
+
+  ESP_LOGW(TAG, "Powering up HX711.");
+  this->power_up_internal_();
+
+  // After a reset or power-down event, input selection is default to Channel A with a gain of 128.
+  if (this->gain_ != HX711Gain::HX711_GAIN_128) {
+    // Force read sensor once without publishing to set the gain
+    this->read_sensor_(nullptr, true);
+  }
+
+  this->last_change_ = millis();
+}
+
+bool HX711Sensor::is_powered_down() const {
+  // PD_SCK pin is always left low after reading data.
+  return this->sck_pin_->digital_read();
+}
+
+void HX711Sensor::power_down() {
+  // Prevent warning log from being spammed
+  if (this->is_powered_down()) {
+    ESP_LOGI(TAG, "HX711 is already powered down.");
+    return;
+  }
+
+  ESP_LOGW(TAG, "Powering down HX711.");
+  this->power_down_internal_();
+  delayMicroseconds(60);
+  this->last_change_ = millis();
+}
+
+void HX711Sensor::on_safe_shutdown() { this->power_down(); }
+
+void HX711Sensor::on_shutdown() { this->power_down_internal_(); }
+
 bool HX711Sensor::read_sensor_(uint32_t *result, const bool force) {
+  if (this->is_powered_down()) {
+    ESP_LOGE(TAG, "HX711 is powered down, cannot read.");
+    return false;
+  }
+
   if (this->dout_pin_->digital_read()) {
     ESP_LOGW(TAG, "HX711 is not ready for new measurements yet!");
     this->status_set_warning();
@@ -86,6 +150,7 @@ bool HX711Sensor::read_sensor_(uint32_t *result, const bool force) {
 
   // After a reset or power-down event, input selection is default to Channel A with a gain of 128.
   static HX711Gain last_gain = HX711Gain::HX711_GAIN_128;
+  ESP_LOGV(TAG, "Reading sensor with gain x%" PRIu8, hx711_gain_to_linear_gain(last_gain));
   uint32_t data = 0;
   bool final_dout;
 
@@ -115,6 +180,10 @@ bool HX711Sensor::read_sensor_(uint32_t *result, const bool force) {
     last_gain = this->gain_;
     ESP_LOGV(TAG, "HX711 gain changed to x%" PRIu8 " at %" PRIu32 " ms", hx711_gain_to_linear_gain(this->gain_),
              this->last_change_);
+  }
+
+  if (this->power_down_after_reading_) {
+    this->power_down();
   }
 
   if (!final_dout) {

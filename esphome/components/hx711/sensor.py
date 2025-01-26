@@ -1,19 +1,15 @@
-import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome import pins
+import esphome.codegen as cg
 from esphome.components import sensor
-from esphome.const import (
-    CONF_CLK_PIN,
-    CONF_GAIN,
-    ICON_SCALE,
-    STATE_CLASS_MEASUREMENT,
-)
+import esphome.config_validation as cv
+from esphome.const import CONF_CLK_PIN, CONF_GAIN, ICON_SCALE, STATE_CLASS_MEASUREMENT
 
 hx711_ns = cg.esphome_ns.namespace("hx711")
 HX711Sensor = hx711_ns.class_("HX711Sensor", sensor.Sensor, cg.PollingComponent)
 
 CONF_DOUT_PIN = "dout_pin"
 CONF_SETTLING_TIME = "settling_time"
+CONF_POWER_DOWN_AFTER_READING = "power_down_after_reading"
 
 HX711Gain = hx711_ns.enum("HX711Gain")
 GAINS = {
@@ -38,6 +34,7 @@ CONFIG_SCHEMA = (
                 cv.positive_time_period_milliseconds,
                 cv.Range(max=cv.TimePeriod(milliseconds=65535)),
             ),
+            cv.Optional(CONF_POWER_DOWN_AFTER_READING, default=False): cv.boolean,
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -54,3 +51,4 @@ async def to_code(config):
     cg.add(var.set_sck_pin(sck_pin))
     cg.add(var.set_gain(config[CONF_GAIN]))
     cg.add(var.set_settling_time_ms(config[CONF_SETTLING_TIME]))
+    cg.add(var.set_power_down_after_reading(config[CONF_POWER_DOWN_AFTER_READING]))
