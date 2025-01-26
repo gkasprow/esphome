@@ -696,6 +696,7 @@ void Climate::dump_traits_(const char *tag) {
     for (ClimateFanMode m : traits.get_supported_fan_modes())
       ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_fan_mode_to_string(m)));
   }
- }
- }  // namespace climate
+ 
+}
+}  // namespace climate
 }  // namespace esphome
