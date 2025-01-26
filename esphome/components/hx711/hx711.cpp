@@ -39,7 +39,7 @@ void HX711Sensor::dump_config() {
   LOG_PIN("  DOUT Pin: ", this->dout_pin_);
   LOG_PIN("  SCK Pin: ", this->sck_pin_);
   ESP_LOGCONFIG(TAG, "  Gain: x%" PRIu8, hx711_gain_to_linear_gain(this->gain_));
-  ESP_LOGCONFIG(TAG, "  Settling Time: %" PRIu16 " ms", this->settling_time_ms_);
+  ESP_LOGCONFIG(TAG, "  Settling time: %" PRIu16 " ms", this->settling_time_ms_);
   LOG_UPDATE_INTERVAL(this);
 }
 
