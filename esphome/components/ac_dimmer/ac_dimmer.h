@@ -9,7 +9,12 @@
 namespace esphome {
 namespace ac_dimmer {
 
-enum DimMethod { DIM_METHOD_LEADING_PULSE = 0, DIM_METHOD_LEADING_PULSE_DOUBLE, DIM_METHOD_LEADING, DIM_METHOD_TRAILING };
+enum DimMethod {
+  DIM_METHOD_LEADING_PULSE = 0,
+  DIM_METHOD_LEADING_PULSE_DOUBLE,
+  DIM_METHOD_LEADING,
+  DIM_METHOD_TRAILING
+};
 
 struct AcDimmerDataStore {
   /// Zero-cross pin
@@ -24,7 +29,7 @@ struct AcDimmerDataStore {
   uint16_t min_power;
   /// Once dimming below 100%, don't dim more than this (some dimmers don't work right between 90 and 99%)
   uint16_t max_dimmer;
-   /// Maximum power allowed while dimming
+  /// Time between the last two ZC pulses
   uint32_t cycle_time_us;
   /// Time (in micros()) of last ZC signal
   uint32_t crossed_zero_at;

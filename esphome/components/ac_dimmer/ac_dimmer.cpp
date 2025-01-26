@@ -46,7 +46,6 @@ uint32_t IRAM_ATTR HOT AcDimmerDataStore::timer_intr(uint32_t now) {
   }
 
   if (this->enable_time_us != 0 && time_since_zc >= this->enable_time_us) {
-
     // If we're doing a double time pulse, see if we've done the second one yet
     if (this->method == DIM_METHOD_LEADING_PULSE_DOUBLE) {
       if (!this->first_cycle_done) {
@@ -151,12 +150,13 @@ void IRAM_ATTR HOT AcDimmerDataStore::gpio_intr() {
     } else {
       // calculate time until enable in µs: (1.0-value)*cycle_time, but with integer arithmetic
       // also take into account min_power
-      auto min_us = this->cycle_time_us * this->min_power / 1000; // this will be a minimum cycle length
+      auto min_us = this->cycle_time_us * this->min_power / 1000;  // this will be a minimum cycle length
       this->enable_time_us = std::max((uint32_t) 1, ((65535 - this->value) * (this->cycle_time_us - min_us)) / 65535);
 
-      // Some dimmers don't work correctly when the
+      // Some dimmers don't work correctly when the dimming value is between, say, 90 and 100 -- for example,
+      // the Etekcity dimmer flickers oddly at these levels when used with LED bulbs.
       if (this->max_dimmer > 0) {
-        auto max_us = (this->cycle_time_us * (1000 - this->max_dimmer)) / 1000; // this will be a minimum cycle length
+        auto max_us = (this->cycle_time_us * (1000 - this->max_dimmer)) / 1000;  // this will be a minimum cycle length
         // if we are in LEADING_PULSE_DOUBLE mode, double the calculated number
         if (this->method == DIM_METHOD_LEADING_PULSE_DOUBLE) {
           max_us *= 2;
@@ -165,7 +165,6 @@ void IRAM_ATTR HOT AcDimmerDataStore::gpio_intr() {
         // at less than 100% but more than 90%
         this->enable_time_us = std::max(max_us, this->enable_time_us);
       }
-
 
       if (this->method == DIM_METHOD_LEADING_PULSE) {
         // Minimum pulse time should be enough for the triac to trigger when it is close to the ZC zone
