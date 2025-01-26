@@ -37,8 +37,8 @@ void HX711Sensor::dump_config() {
   LOG_PIN("  SCK Pin: ", this->sck_pin_);
   ESP_LOGCONFIG(TAG, "  Gain: x%" PRIu8, hx711_gain_to_linear_gain(this->gain_));
   ESP_LOGCONFIG(TAG, "  Settling time: %" PRIu16 " ms", this->settling_time_ms_);
-  ESP_LOGCONFIG(TAG, "  Powered Down: %s", YESNO(this->is_powered_down()));
-  ESP_LOGCONFIG(TAG, "  Power Down After Reading: %s", YESNO(this->power_down_after_reading_));
+  ESP_LOGCONFIG(TAG, "  Powered down: %s", YESNO(this->is_powered_down()));
+  ESP_LOGCONFIG(TAG, "  Power down after each reading: %s", YESNO(this->power_down_after_each_reading_));
   LOG_UPDATE_INTERVAL(this);
 }
 
@@ -46,7 +46,7 @@ float HX711Sensor::get_setup_priority() const { return setup_priority::DATA; }
 
 void HX711Sensor::update() {
   if (this->is_powered_down()) {
-    if (!this->power_down_after_reading_) {
+    if (!this->power_down_after_each_reading_) {
       ESP_LOGW(TAG, "HX711 is powered down, skipping update.");
       return;
     }
@@ -182,7 +182,7 @@ bool HX711Sensor::read_sensor_(uint32_t *result, const bool force) {
              this->last_change_);
   }
 
-  if (this->power_down_after_reading_) {
+  if (this->power_down_after_each_reading_) {
     this->power_down();
   }
 

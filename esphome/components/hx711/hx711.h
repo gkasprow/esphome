@@ -21,8 +21,8 @@ class HX711Sensor : public sensor::Sensor, public PollingComponent {
   void set_sck_pin(GPIOPin *sck_pin) { sck_pin_ = sck_pin; }
   void set_gain(HX711Gain gain) { gain_ = gain; }
   void set_settling_time(const uint16_t settling_time_ms) { this->settling_time_ms_ = settling_time_ms; }
-  void set_power_down_after_reading(const bool power_down_after_reading) {
-    this->power_down_after_reading_ = power_down_after_reading;
+  void set_power_down_after_each_reading(const bool power_down_after_each_reading) {
+    this->power_down_after_each_reading_ = power_down_after_each_reading;
   }
 
   void setup() override;
@@ -52,7 +52,7 @@ class HX711Sensor : public sensor::Sensor, public PollingComponent {
   void power_down_internal_();
 
   /// If true, HX711 is powered down after reading data.
-  bool power_down_after_reading_{false};
+  bool power_down_after_each_reading_{false};
   /// Settling time in milliseconds.
   /// Taken from the datasheet: "Settling time refers to the time from power up,
   /// reset, input channel change and gain change to valid stable output data."
