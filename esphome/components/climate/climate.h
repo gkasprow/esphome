@@ -90,6 +90,23 @@ class ClimateCall {
   ClimateCall &set_preset(const std::string &preset);
   /// Set the preset of the climate device based on a string.
   ClimateCall &set_preset(optional<std::string> preset);
+  /// Set the pellet eco mode of the climate device.
+  ClimateCall &set_eco_mode(ClimateEcoMode eco_mode);
+  /// Set the pellet eco mode of the climate device.
+  ClimateCall &set_eco_mode(optional<ClimateEcoMode> eco_mode);
+  /// Set the pellet eco mode of the climate device based on a string.
+  ClimateCall &set_eco_mode(const std::string &eco_mode);
+  /// Set the pellet eco mode of the climate device based on a string.
+  ClimateCall &set_eco_mode(optional<std::string> eco_mode);
+   /// Set the pellet rate of the climate device.
+  ClimateCall &set_pellet_rate(ClimatePelletRate pellet_rate);
+  /// Set the pellet rate of the climate device.
+  ClimateCall &set_pellet_rate(optional<PelletRate> pellet_rate);
+  /// Set the pellet rate of the climate device based on a string.
+  ClimateCall &set_pellet_rate(const std::string &pellet_rate);
+  /// Set the pellet rate of the climate device based on a string.
+  ClimateCall &set_pellet_rate(optional<std::string> pellet_rate);
+  
 
   void perform();
 
@@ -198,6 +215,12 @@ class Climate : public EntityBase {
   /// The active fan mode of the climate device.
   optional<ClimateFanMode> fan_mode;
 
+  /// The active pellet eco mode of the climate device.
+  optional<ClimateEcoMode> eco_mode;
+
+  /// The active pellet eco mode of the climate device.
+  optional<ClimatePelletRate> pellet_rate;
+
   /// The active swing mode of the climate device.
   ClimateSwingMode swing_mode;
 
@@ -265,6 +288,12 @@ class Climate : public EntityBase {
 
   /// Set custom preset. Reset primary preset. Return true if preset has been changed.
   bool set_custom_preset_(const std::string &preset);
+
+  /// Set eco mode. Return true if eco mode has been changed.
+  bool set_eco_mode_(ClimateEcoMode mode);
+
+  /// Set pellet rate. Return true if pellet rate has been changed.
+  bool set_pellet_rate_(ClimatePelletRate mode);
 
   /** Get the default traits of this climate device.
    *

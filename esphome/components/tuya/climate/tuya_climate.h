@@ -36,13 +36,13 @@ class TuyaClimate : public climate::Climate, public Component {
   void set_fan_speed_high_value(uint8_t fan_speed_high_value) { this->fan_speed_high_value_ = fan_speed_high_value; }
   void set_fan_speed_auto_value(uint8_t fan_speed_auto_value) { this->fan_speed_auto_value_ = fan_speed_auto_value; }
   void set_eco_mode_id(uint8_t eco_mode_id) { this->eco_mode_id_ = eco_mode_id; }
-  void set_eco_mode_e1_value(uint8_t eco_mode_e1_value) { this->eco_mode_e1_value_ = eco_mode_e1_value; }
-  void set_eco_mode_e2_value(uint8_t eco_mode_e2_value) { this->eco_mode_e2_value_ = eco_mode_e2_value; }
+  void set_eco_mode_e1_value(uint8_t eco_mode_on_value) { this->eco_mode_on_value_ = eco_mode_on_value; }
+  void set_eco_mode_e2_value(uint8_t eco_mode_off_value) { this->eco_mode_off_value_ = eco_mode_off_value; }
   void set_pellet_rate_id(uint8_t pellet_rate_id) { this->pellet_rate_id_ = pellet_rate_id; }
-  void set_pellet_rate_r1_value(uint8_t pellet_rate_r1_value) { this->pellet_rate_r1_value_ = pellet_rate_r1_value; }
-  void set_pellet_rate_r2_value(uint8_t pellet_rate_r2_value) { this->pellet_rate_r2_value_ = pellet_rate_r2_value; }
-  void set_pellet_rate_r3_value(uint8_t pellet_rate_r3_value) { this->pellet_rate_r3_value_ = pellet_rate_r3_value; }
-  void set_pellet_rate_r4_value(uint8_t pellet_rate_r4_value) { this->pellet_rate_r4_value_ = pellet_rate_r4_value; }
+  void set_pellet_rate_r1_value(uint8_t pellet_rate_low_value) { this->pellet_rate_low_value_ = pellet_rate_low_value; }
+  void set_pellet_rate_r2_value(uint8_t pellet_rate_med_value) { this->pellet_rate_med_value_ = pellet_rate_med_value; }
+  void set_pellet_rate_r3_value(uint8_t pellet_rate_high_value) { this->pellet_rate_high_value_ = pellet_rate_high_value; }
+  void set_pellet_rate_r4_value(uint8_t pellet_rate_max_value) { this->pellet_rate_max_value_ = pellet_rate_max_value; }
   void set_target_temperature_id(uint8_t target_temperature_id) {
     this->target_temperature_id_ = target_temperature_id;
   }
@@ -137,13 +137,13 @@ class TuyaClimate : public climate::Climate, public Component {
   optional<uint8_t> fan_speed_high_value_{};
   optional<uint8_t> fan_speed_auto_value_{};
   optional<uint8_t> eco_mode_id_{};
-  optional<uint8_t> eco_mode_e1_value_{};
-  optional<uint8_t> eco_mode_e2_value_{};
+  optional<uint8_t> eco_mode_on_value_{};
+  optional<uint8_t> eco_mode_off_value_{};
   optional<uint8_t> pellet_rate_id_{};
-  optional<uint8_t> pellet_rate_r1_value_{};
-  optional<uint8_t> pellet_rate_r2_value_{};
-  optional<uint8_t> pellet_rate_r3_value_{};
-  optional<uint8_t> pellet_rate_r4_value_{};
+  optional<uint8_t> pellet_rate_low_value_{};
+  optional<uint8_t> pellet_rate_med_value_{};
+  optional<uint8_t> pellet_rate_high_value_{};
+  optional<uint8_t> pellet_rate_max_value_{};
   bool swing_vertical_{false};
   bool swing_horizontal_{false};
   bool heating_state_{false};

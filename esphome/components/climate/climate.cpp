@@ -196,6 +196,57 @@ ClimateCall &ClimateCall::set_fan_mode(optional<std::string> fan_mode) {
   }
   return *this;
 }
+
+ClimateCall &ClimateCall::set_eco_mode(ClimateEcoMode eco_mode) {
+  this->eco_mode_ = eco_mode;
+  return *this;
+}
+
+ClimateCall &ClimateCall::set_eco_mode(const std::string &eco_mode) {
+  if (str_equals_case_insensitive(eco_mode, "ECO 1")) {
+    this->set_eco_mode(CLIMATE_PELLET_ECO_ON);
+  } else if (str_equals_case_insensitive(eco_mode, "ECO 2")) {
+    this->set_eco_mode(CLIMATE_PELLET_ECO_OFF);
+  } else {
+    ESP_LOGW(TAG, "'%s' - Unrecognized pellet eco mode %s", this->parent_->get_name().c_str(), eco_mode.c_str());
+  }
+  return *this;
+}
+
+ClimateCall &ClimateCall::set_eco_mode(optional<std::string> eco_mode) {
+  if (eco_mode.has_value()) {
+    this->set_eco_mode(eco_mode.value());
+  }
+  return *this;
+}
+
+ClimateCall &ClimateCall::set_pellet_rate(ClimatePelletRate pellet_rate) {
+  this->pellet_rate_ = pellet_rate;
+  return *this;
+}
+
+ClimateCall &ClimateCall::set_pellet_rate(const std::string &pellet_rate) {
+  if (str_equals_case_insensitive(pellet_rate, "PELLET RATE LOW")) {
+    this->set_pellet_rate(CLIMATE_PELLET_RATE_LOW);
+  } else if (str_equals_case_insensitive(pellet_rate, "PELLET RATE MED")) {
+    this->set_pellet_rate(CLIMATE_PELLET_RATE_MED);
+  } else if (str_equals_case_insensitive(pellet_rate, "PELLET RATE HIGH")) {
+    this->set_pellet_rate(CLIMATE_PELLET_RATE_HIGH);
+  } else if (str_equals_case_insensitive(pellet_rate, "PELLET RATE MAX")) {
+    this->set_pellet_rate(CLIMATE_PELLET_RATE_MAX);
+  } else {
+    ESP_LOGW(TAG, "'%s' - Unrecognized pellet rate %s", this->parent_->get_name().c_str(), pellet_rate.c_str());
+  }
+  return *this;
+}
+
+ClimateCall &ClimateCall::set_pellet_rate(optional<std::string> pellet_rate) {
+  if (pellet_rate.has_value()) {
+    this->set_pellet_rate(pellet_rate.value());
+  }
+  return *this;
+}
+
 ClimateCall &ClimateCall::set_preset(ClimatePreset preset) {
   this->preset_ = preset;
   this->custom_preset_.reset();
@@ -277,6 +328,8 @@ const optional<float> &ClimateCall::get_target_temperature_high() const { return
 const optional<float> &ClimateCall::get_target_humidity() const { return this->target_humidity_; }
 const optional<ClimateFanMode> &ClimateCall::get_fan_mode() const { return this->fan_mode_; }
 const optional<std::string> &ClimateCall::get_custom_fan_mode() const { return this->custom_fan_mode_; }
+const optional<std::string> &ClimateCall::get_eco_mode() const { return this->eco_mode_; }
+const optional<std::string> &ClimateCall::get_pellet_rate() const { return this->pellet_rate_; }
 const optional<ClimatePreset> &ClimateCall::get_preset() const { return this->preset_; }
 const optional<std::string> &ClimateCall::get_custom_preset() const { return this->custom_preset_; }
 const optional<ClimateSwingMode> &ClimateCall::get_swing_mode() const { return this->swing_mode_; }
@@ -303,6 +356,14 @@ ClimateCall &ClimateCall::set_mode(optional<ClimateMode> mode) {
 ClimateCall &ClimateCall::set_fan_mode(optional<ClimateFanMode> fan_mode) {
   this->fan_mode_ = fan_mode;
   this->custom_fan_mode_.reset();
+  return *this;
+}
+ClimateCall &ClimateCall::set_eco_mode(optional<ClimateEcoMode> eco_mode) {
+  this->eco_mode_ = eco_mode;
+  return *this;
+}
+ClimateCall &ClimateCall::set_fan_mode(optional<ClimateFanMode> pellet_rate) {
+  this->pellet_rate_= pellet_rate;
   return *this;
 }
 ClimateCall &ClimateCall::set_preset(optional<ClimatePreset> preset) {
@@ -358,6 +419,12 @@ void Climate::save_state_() {
   }
   if (traits.get_supports_target_humidity()) {
     state.target_humidity = this->target_humidity;
+  }
+  if (traits.get_supports_eco_modes()) {
+    state.eco_mode = this->eco_mode;
+  }
+  if (traits.get_supports_pellet_rates()) {
+    state.pellet_rate = this->pellet_rate;
   }
   if (traits.get_supports_fan_modes() && fan_mode.has_value()) {
     state.uses_custom_fan_mode = false;
@@ -430,6 +497,12 @@ void Climate::publish_state() {
   if (traits.get_supports_target_humidity()) {
     ESP_LOGD(TAG, "  Target Humidity: %.0f%%", this->target_humidity);
   }
+  if (traits.get_supports_eco_modes()) {
+    ESP_LOGD(TAG, "  Pellet ECO Mode: %.0f%%", this->eco_mode);
+  }
+  if (traits.get_supports_pellet_rates()) {
+    ESP_LOGD(TAG, "  Pellet Rate: %.0f%%", this->pellet_rate);
+  }
 
   // Send state to frontend
   this->state_callback_.call(*this);
@@ -491,6 +564,10 @@ ClimateCall ClimateDeviceRestoreState::to_call(Climate *climate) {
   if (traits.get_supports_target_humidity()) {
     call.set_target_humidity(this->target_humidity);
   }
+  if (traits.get_supports_eco_modes()) {
+    call.set_eco_mode(this->eco_mode);
+  if (traits.get_supports_pellet_rates()) {
+    call.set_pellet_rate(this->pellet_rate);
   if (traits.get_supports_fan_modes() || !traits.get_supported_custom_fan_modes().empty()) {
     call.set_fan_mode(this->fan_mode);
   }
@@ -513,6 +590,12 @@ void ClimateDeviceRestoreState::apply(Climate *climate) {
   }
   if (traits.get_supports_target_humidity()) {
     climate->target_humidity = this->target_humidity;
+  }
+  if (traits.get_supports_eco_modes()) {
+    climate->eco_mode = this->eco_mode;
+  }
+  if (traits.get_supports_pellet_rates()) {
+    climate->pellet_rate = this->pellet_rate;
   }
   if (traits.get_supports_fan_modes() && !this->uses_custom_fan_mode) {
     climate->fan_mode = this->fan_mode;
@@ -554,6 +637,14 @@ template<typename T1, typename T2> bool set_alternative(optional<T1> &dst, optio
 
 bool Climate::set_fan_mode_(ClimateFanMode mode) {
   return set_alternative(this->fan_mode, this->custom_fan_mode, mode);
+}
+
+bool Climate::set_eco_mode_(ClimateEcoMode mode) {
+  return set_alternative(this->eco_mode, mode);
+}
+
+bool Climate::set_pellet_rate_(ClimatePelletRate mode) {
+  return set_alternative(this->pellet_rate, mode);
 }
 
 bool Climate::set_custom_fan_mode_(const std::string &mode) {
@@ -605,6 +696,16 @@ void Climate::dump_traits_(const char *tag) {
     ESP_LOGCONFIG(tag, "  [x] Supported fan modes:");
     for (ClimateFanMode m : traits.get_supported_fan_modes())
       ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_fan_mode_to_string(m)));
+  }
+  if (!traits.get_supported_eco_modes().empty()) {
+    ESP_LOGCONFIG(tag, "  [x] Supported pellet eco modes:");
+    for (ClimateEcoMode m : traits.get_supported_eco_modes())
+      ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_eco_mode_to_string(m)));
+  }
+  if (!traits.get_supported_pellet_rates().empty()) {
+    ESP_LOGCONFIG(tag, "  [x] Supported pellet rates:");
+    for (ClimatePelletRate m : traits.get_supported_pellet_rates())
+      ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_pellet_rate_to_string(m)));
   }
   if (!traits.get_supported_custom_fan_modes().empty()) {
     ESP_LOGCONFIG(tag, "  [x] Supported custom fan modes:");

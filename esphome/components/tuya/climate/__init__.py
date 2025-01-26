@@ -7,6 +7,9 @@ from esphome.const import (
     CONF_SWITCH_DATAPOINT,
     CONF_SUPPORTS_COOL,
     CONF_SUPPORTS_HEAT,
+    CONF_SUPPORTS_PELLET,
+    CONF_PELLET_ECO_MODE,
+    CONF_PELLET_RATE,
     CONF_PRESET,
     CONF_SWING_MODE,
     CONF_FAN_MODE,
@@ -41,15 +44,12 @@ CONF_MEDIUM_VALUE = "medium_value"
 CONF_MIDDLE_VALUE = "middle_value"
 CONF_HIGH_VALUE = "high_value"
 CONF_AUTO_VALUE = "auto_value"
-CONF_SUPPORTS_PELLET = "supports_pellet"
-CONF_ECO_MODE = "eco_mode"
-CONF_E1_VALUE = "e1_value"
-CONF_E2_VALUE = "e2_value"
-CONF_PELLET_RATE = "pellet_rate"
-CONF_R1_VALUE = "r4_value"
-CONF_R2_VALUE = "r3_value"
-CONF_R3_VALUE = "r2_value"
-CONF_R4_VALUE = "r1_value"
+CONF_PELLET_ECO_ON_VALUE = "on_value"
+CONF_PELLET_ECO_OFF_VALUE = "off_value"
+CONF_PELLET_RATE_LOW_VALUE = "low_value"
+CONF_PELLET_RATE_MED_VALUE = "med_value"
+CONF_PELLET_RATE_HIGH_VALUE = "high_value"
+CONF_PELLET_RATE_MAX_VALUE = "max_value"
 
 TuyaClimate = tuya_ns.class_("TuyaClimate", climate.Climate, cg.Component)
 
@@ -130,10 +130,10 @@ def validate_heating_values(value):
                 )
         elif heating_supported and not pellet_supported:
             if (
-                CONF_ECO_MODE in value
+                CONF_PELLET_ECO_MODE in value
             ):
                 raise cv.Invalid(
-                    f"Device does not support pellet heat, but pellet {CONF_ECO_MODE} specified."
+                    f"Device does not support pellet heat, but pellet {CONF_PELLET_ECO_MODE} specified."
                     f" Please add {CONF_SUPPORTS_PELLET} to your configuration."
                 )
             if (
@@ -189,18 +189,18 @@ SWING_MODES = cv.Schema(
 ECO_MODES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
-        cv.Optional(CONF_E1_VALUE): cv.uint8_t,
-        cv.Optional(CONF_E2_VALUE): cv.uint8_t,       
+        cv.Optional(CONF_PELLET_ECO_ON_VALUE): cv.uint8_t,
+        cv.Optional(CONF_PELLET_ECO_OFF_VALUE): cv.uint8_t,       
     }
 )
 
 PELLET_RATES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
-        cv.Optional(CONF_R1_VALUE): cv.uint8_t,
-        cv.Optional(CONF_R2_VALUE): cv.uint8_t,
-        cv.Optional(CONF_R3_VALUE): cv.uint8_t,
-        cv.Optional(CONF_R4_VALUE): cv.uint8_t,       
+        cv.Optional(CONF_PELLET_RATE_LOW_VALUE): cv.uint8_t,
+        cv.Optional(CONF_PELLET_RATE_MED_VALUE): cv.uint8_t,
+        cv.Optional(CONF_PELLET_RATE_HIGH_VALUE): cv.uint8_t,
+        cv.Optional(CONF_PELLET_RATE_MAX_VALUE): cv.uint8_t,       
     }
 )
 
@@ -225,7 +225,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_PRESET): PRESETS,
             cv.Optional(CONF_FAN_MODE): FAN_MODES,
             cv.Optional(CONF_SWING_MODE): SWING_MODES,
-            cv.Optional(CONF_ECO_MODE): ECO_MODES,
+            cv.Optional(CONF_PELLET_ECO_MODE): ECO_MODES,
             cv.Optional(CONF_PELLET_RATE): PELLET_RATES,
             cv.Optional("active_state_datapoint"): cv.invalid(
                 "'active_state_datapoint' has been moved inside of the 'active_state' config block as 'datapoint'"
@@ -334,20 +334,20 @@ async def to_code(config):
         if (fan_high_value := fan_mode_config.get(CONF_HIGH_VALUE)) is not None:
             cg.add(var.set_fan_speed_high_value(fan_high_value))
 
-    if eco_mode_config := config.get(CONF_ECO_MODE):
-        cg.add(var.set_eco_mode_id(eco_mode_config.get(CONF_DATAPOINT)))
-        if (eco_mode_e1_value := eco_mode_config.get(CONF_E1_VALUE)) is not None:
-            cg.add(var.set_eco_mode_e1_value(eco_mode_e1_value))
-        if (eco_mode_e1_value := eco_mode_config.get(CONF_E1_VALUE)) is not None:
-            cg.add(var.set_eco_mode_e1_value(eco_mode_e1_value))
+    if pellet_eco_mode_config := config.get(CONF_PELLET_ECO_MODE):
+        cg.add(var.set_pellet_eco_mode_id(pellet_eco_mode_config.get(CONF_DATAPOINT)))
+        if (pellet_eco_mode_on_value := pellet_eco_mode_config.get(CONF_PELLET_ECO_ON_VALUE)) is not None:
+            cg.add(var.set_pellet_eco_mode_on_value(pellet_eco_mode_on_value))
+        if (pellet_eco_mode_off_value := pellet_eco_mode_config.get(CONF_PELLET_ECO_OFF_VALUE)) is not None:
+            cg.add(var.set_pellet_eco_mode_off_value(pellet_eco_mode_off_value))
 
     if pellet_rate_config := config.get(CONF_PELLET_RATE):
         cg.add(var.set_pellet_rate_id(pellet_rate_config.get(CONF_DATAPOINT)))
-        if (pellet_rate_r1_value := pellet_rate_config.get(CONF_R1_VALUE)) is not None:
-            cg.add(var.set_pellet_rate_r1_value(pellet_rate_r1_value))
-        if (pellet_rate_r2_value := pellet_rate_config.get(CONF_R2_VALUE)) is not None:
-            cg.add(var.set_pellet_rate_r2_value(pellet_rate_r2_value))
-        if (pellet_rate_r3_value := pellet_rate_config.get(CONF_R3_VALUE)) is not None:
-            cg.add(var.set_pellet_rate_r3_value(pellet_rate_r3_value))
-        if (pellet_rate_r4_value := pellet_rate_config.get(CONF_R4_VALUE)) is not None:
-            cg.add(var.set_pellet_rate_r4_value(pellet_rate_r4_value))
+        if (pellet_rate_low_value := pellet_rate_config.get(CONF_PELLET_RATE_LOW_VALUE)) is not None:
+            cg.add(var.set_pellet_rate_low_value(pellet_rate_low_value))
+        if (pellet_rate_med_value := pellet_rate_config.get(CONF_PELLET_RATE_MED_VALUE)) is not None:
+            cg.add(var.set_pellet_rate_med_value(pellet_rate_med_value))
+        if (pellet_rate_high_value := pellet_rate_config.get(CONF_PELLET_RATE_HIGH_VALUE)) is not None:
+            cg.add(var.set_pellet_rate_high_value(pellet_rate_high_value))
+        if (pellet_rate_max_value := pellet_rate_config.get(CONF_PELLET_RATE_MAX_VALUE)) is not None:
+            cg.add(var.set_pellet_rate_max_value(pellet_rate_max_value))
