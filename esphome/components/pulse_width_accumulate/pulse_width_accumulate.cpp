@@ -78,7 +78,8 @@ void PulseWidthAccumulateSensor::update() {
              "will overflow if pw > 71.58 min",
              polling_interval_s);
   }
-  if (cumulative_width < 0) {  // Clamp cumulative width to valid range,
+  // Clamp cumulative width to valid range
+  if (cumulative_width < 0) {
     ESP_LOGW(TAG,
              "Warning, cumulative pulse width %.1f s doesn't make sense! "
              "Setting to zero.",
