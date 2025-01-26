@@ -22,7 +22,7 @@ class PulseWidthAccumulateSensorStore {
   uint32_t last_rise_us_{0};
   uint32_t last_fall_us_{0};
   uint32_t cumulative_width_us_{0};
-  float cumulative_width_s_{0.0f}; 
+  float cumulative_width_s_{0.0f};
   uint32_t pulse_count_{0};
 };
 class PulseWidthAccumulateSensor : public sensor::Sensor, public PollingComponent {
