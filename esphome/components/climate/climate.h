@@ -98,7 +98,7 @@ class ClimateCall {
   ClimateCall &set_eco_mode(const std::string &eco_mode);
   /// Set the pellet eco mode of the climate device based on a string.
   ClimateCall &set_eco_mode(optional<std::string> eco_mode);
-   /// Set the pellet rate of the climate device.
+  /// Set the pellet rate of the climate device.
   ClimateCall &set_pellet_rate(ClimatePelletRate pellet_rate);
   /// Set the pellet rate of the climate device.
   ClimateCall &set_pellet_rate(optional<PelletRate> pellet_rate);

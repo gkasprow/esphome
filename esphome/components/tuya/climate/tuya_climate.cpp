@@ -512,7 +512,7 @@ void TuyaClimate::compute_pellet_rate_() {
     } else if (this->pellet_rate_max_value_.has_value() && this->pellet_rate_state_ == this->pellet_rate_max_value_) {
       this->pellet_rate = climate::CLIMATE_PELLET_RATE_MAX;
     }
- }
+  }
 }
 void TuyaClimate::compute_target_temperature_() {
   if (this->eco_ && this->eco_temperature_.has_value()) {
