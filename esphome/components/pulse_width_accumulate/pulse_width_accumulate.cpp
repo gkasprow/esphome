@@ -7,16 +7,13 @@ namespace esphome {
 namespace pulse_width_accumulate {
 static const char *const TAG = "pulse_width";
 constexpr uint32_t MICROSECOND_PER_PULSE_LOWER_THRESHOLD = 17;
-PulseWidthAccumulateSensorStore::PulseWidthAccumulateSensorStore() {
-  mux_ = portMUX_INITIALIZER_UNLOCKED;
-}
+PulseWidthAccumulateSensorStore::PulseWidthAccumulateSensorStore() { mux_ = portMUX_INITIALIZER_UNLOCKED; }
 
 void PulseWidthAccumulateSensorStore::setup(InternalGPIOPin *pin) {
   pin->setup();
   this->pin_ = pin->to_isr();
   this->last_rise_us_ = micros();
-  pin->attach_interrupt(&PulseWidthAccumulateSensorStore::gpio_intr, this,
-                        gpio::INTERRUPT_ANY_EDGE);
+  pin->attach_interrupt(&PulseWidthAccumulateSensorStore::gpio_intr, this, gpio::INTERRUPT_ANY_EDGE);
 }
 float PulseWidthAccumulateSensorStore::get_pulses_this_cycle() {
   uint32_t pulse_count = 0;
@@ -48,17 +45,15 @@ float PulseWidthAccumulateSensorStore::get_cumulative_pulse_width_s() {
 }
 
 // ISR. Get in and out ASAP.  No floating point math!
-void IRAM_ATTR PulseWidthAccumulateSensorStore::gpio_intr(
-    PulseWidthAccumulateSensorStore *arg) {
+void IRAM_ATTR PulseWidthAccumulateSensorStore::gpio_intr(PulseWidthAccumulateSensorStore *arg) {
   uint32_t now = micros();
   portENTER_CRITICAL_ISR(&arg->mux_);
   bool pin_state = arg->pin_.digital_read();
-  if (pin_state) { // Rising edge detected
+  if (pin_state) {                                                 // Rising edge detected
     arg->last_rise_us_ = now;
-  } else { // Falling edge detected
+  } else {                                                         // Falling edge detected
     uint32_t pulse_width_us = now - arg->last_rise_us_;
-    if (pulse_width_us >
-        MICROSECOND_PER_PULSE_LOWER_THRESHOLD) { // Filter noise and accumulate
+    if (pulse_width_us > MICROSECOND_PER_PULSE_LOWER_THRESHOLD) {  // Filter noise and accumulate
       arg->cumulative_width_us_ += pulse_width_us;
       arg->pulse_count_ += 1;
     }
@@ -75,8 +70,7 @@ void PulseWidthAccumulateSensor::dump_config() {
 void PulseWidthAccumulateSensor::update() {
   // Retrieve cumulative pulse width, and zero the counter
   float cumulative_width = this->store_.get_cumulative_pulse_width_s();
-  float polling_interval_s =
-      static_cast<float>(this->get_update_interval()) / 1000.0f;
+  float polling_interval_s = static_cast<float>(this->get_update_interval()) / 1000.0f;
   // Check and fix errors, and issue warnings if necessary.
   if (polling_interval_s > 4294.9f) {
     ESP_LOGW(TAG,
@@ -84,7 +78,7 @@ void PulseWidthAccumulateSensor::update() {
              "will overflow if pw > 71.58 min",
              polling_interval_s);
   }
-  if (cumulative_width < 0) { // Clamp cumulative width to valid range,
+  if (cumulative_width < 0) {  // Clamp cumulative width to valid range,
     ESP_LOGW(TAG,
              "Warning, cumulative pulse width %.1f s doesn't make sense! "
              "Setting to zero.",
@@ -97,8 +91,7 @@ void PulseWidthAccumulateSensor::update() {
              "window: %.4f s.",
              cumulative_width, polling_interval_s);
     if ((cumulative_width - polling_interval_s) > 3.0e-3f) {
-      ESP_LOGW(TAG, "Clamping cumulative pulse width to range: %.4f",
-               polling_interval_s);
+      ESP_LOGW(TAG, "Clamping cumulative pulse width to range: %.4f", polling_interval_s);
       cumulative_width = polling_interval_s;
     }
   }
@@ -111,5 +104,5 @@ void PulseWidthAccumulateSensor::update() {
   this->publish_state(cumulative_width);
 }
 
-} // namespace pulse_width_accumulate
-} // namespace esphome
+}  // namespace pulse_width_accumulate
+}  // namespace esphome
