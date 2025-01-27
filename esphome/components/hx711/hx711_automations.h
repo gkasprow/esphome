@@ -16,12 +16,20 @@ template<typename... Ts> class HX711SensorActionBase : public Action<Ts...> {
 
 template<typename... Ts> class PowerUpAction : public HX711SensorActionBase<Ts...> {
  public:
-  void play(Ts... x) override { this->parent_->power_up(); }
+  void play(Ts... x) override {
+    if (!this->parent_->is_ready())
+      return;
+    this->parent_->power_up();
+  }
 };
 
 template<typename... Ts> class PowerDownAction : public HX711SensorActionBase<Ts...> {
  public:
-  void play(Ts... x) override { this->parent_->power_down(); }
+  void play(Ts... x) override {
+    if (!this->parent_->is_ready())
+      return;
+    this->parent_->power_down();
+  }
 };
 
 }  // namespace hx711
