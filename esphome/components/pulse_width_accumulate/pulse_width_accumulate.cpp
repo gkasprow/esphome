@@ -49,11 +49,13 @@ void IRAM_ATTR PulseWidthAccumulateSensorStore::gpio_intr(PulseWidthAccumulateSe
   uint32_t now = micros();
   portENTER_CRITICAL_ISR(&arg->mux_);
   bool pin_state = arg->pin_.digital_read();
-  if (pin_state) {                                                 // Rising edge detected
+  if (pin_state) {  
+    //rising edge detected                                               
     arg->last_rise_us_ = now;
-  } else {                                                         // Falling edge detected
+  } else {   
+    //falling edge detected                                                      
     uint32_t pulse_width_us = now - arg->last_rise_us_;
-    if (pulse_width_us > MICROSECOND_PER_PULSE_LOWER_THRESHOLD) {  // Filter noise and accumulate
+    if (pulse_width_us > MICROSECOND_PER_PULSE_LOWER_THRESHOLD) { 
       arg->cumulative_width_us_ += pulse_width_us;
       arg->pulse_count_ += 1;
     }
@@ -71,30 +73,11 @@ void PulseWidthAccumulateSensor::update() {
   // Retrieve cumulative pulse width, and zero the counter
   float cumulative_width = this->store_.get_cumulative_pulse_width_s();
   float polling_interval_s = static_cast<float>(this->get_update_interval()) / 1000.0f;
-  // Check and fix errors, and issue warnings if necessary.
-  if (polling_interval_s > 4294.9f) {
+  // Warn if outside normal range (0-103% of polling_interval)
+  if (cumulative_width < 0  || cumulative_width > 1.03f*polling_interval_s) {
     ESP_LOGW(TAG,
-             "Error! Polling interval: %.1f s exceeds 71.58 min. Microseconds "
-             "will overflow if pw > 71.58 min",
-             polling_interval_s);
-  }
-  // Clamp cumulative width to valid range
-  if (cumulative_width < 0) {
-    ESP_LOGW(TAG,
-             "Warning, cumulative pulse width %.1f s doesn't make sense! "
-             "Setting to zero.",
-             cumulative_width);
-    cumulative_width = 0.0f;
-  }
-  if (cumulative_width > polling_interval_s) {
-    ESP_LOGW(TAG,
-             "Warning, cumulative pulse width: %.4f s exceeds the polling "
-             "window: %.4f s.",
-             cumulative_width, polling_interval_s);
-    if ((cumulative_width - polling_interval_s) > 3.0e-3f) {
-      ESP_LOGW(TAG, "Clamping cumulative pulse width to range: %.4f", polling_interval_s);
-      cumulative_width = polling_interval_s;
-    }
+             "Warning, cumulative pulse width: %.3f s ouside expected range: %.3f "
+             , cumulative_width, polling_interval_s);
   }
   // get frequency if needed
   if (this->frequency_sensor_ != nullptr) {
