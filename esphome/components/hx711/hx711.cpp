@@ -61,7 +61,7 @@ void HX711Sensor::update() {
              settling_time_remaining_ms);
     this->stop_poller();
     this->status_set_warning();
-    this->set_timeout("hx711_settle", settling_time_remaining_ms, [this]() {
+    this->set_timeout("settle", settling_time_remaining_ms, [this]() {
       ESP_LOGI(TAG, "HX711 output settled, starting poller.");
       this->start_poller();
       this->status_clear_warning();
@@ -103,8 +103,9 @@ void HX711Sensor::power_up() {
     // Force read sensor once without publishing to set the gain
     this->read_sensor_(nullptr, true);
   }
-
   this->last_change_ = millis();
+  ESP_LOGI(TAG, "Starting poller.");
+  this->start_poller();
 }
 
 bool HX711Sensor::is_powered_down() const {
@@ -119,7 +120,8 @@ void HX711Sensor::power_down() {
     return;
   }
 
-  ESP_LOGW(TAG, "Powering down HX711.");
+  ESP_LOGW(TAG, "Stopping poller and powering down HX711.");
+  this->stop_poller();
   this->power_down_internal_();
   delayMicroseconds(60);
   this->last_change_ = millis();
