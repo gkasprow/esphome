@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <utility>
 #include <vector>
-#include "esphome/core/hal.h"
 
 namespace esphome {
 namespace i2c {
@@ -103,8 +102,6 @@ class I2CBus {
       } else if (err == ERROR_UNKNOWN) {
         scan_results_.emplace_back(address, false);
       }
-      // it takes 16sec to scan on nrf52. It prevents board reset.
-      arch_feed_wdt();
     }
   }
   std::vector<std::pair<uint8_t, bool>> scan_results_;  ///< array containing scan results
