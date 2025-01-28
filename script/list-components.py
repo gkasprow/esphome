@@ -173,8 +173,10 @@ def load_external_components(changed_configs):
         if CONF_EXTERNAL_COMPONENTS in config:
             if merged_config is None:
                 merged_config = config
-            # else:
-            #     merged_config[CONF_EXTERNAL_COMPONENTS] += config[CONF_EXTERNAL_COMPONENTS]
+            else:
+                merged_config[CONF_EXTERNAL_COMPONENTS] += config[
+                    CONF_EXTERNAL_COMPONENTS
+                ]
     if CONF_EXTERNAL_COMPONENTS in merged_config:
         from esphome.components.external_components import do_external_components_pass
 
