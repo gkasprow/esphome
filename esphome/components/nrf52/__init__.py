@@ -1,0 +1,162 @@
+from pathlib import Path
+
+import esphome.codegen as cg
+from esphome.components.zephyr import (
+    copy_files as zephyr_copy_files,
+    zephyr_set_core_data,
+    zephyr_to_code,
+)
+from esphome.components.zephyr.const import (
+    BOOTLOADER_MCUBOOT,
+    KEY_BOOTLOADER,
+    KEY_ZEPHYR,
+)
+import esphome.config_validation as cv
+from esphome.const import (
+    CONF_BOARD,
+    CONF_FRAMEWORK,
+    CONF_PLATFORM_VERSION,
+    CONF_TYPE,
+    KEY_CORE,
+    KEY_TARGET_FRAMEWORK,
+    KEY_TARGET_PLATFORM,
+)
+from esphome.core import CORE, coroutine_with_priority
+
+from .boards_zephyr import BOARDS_ZEPHYR
+from .const import BOOTLOADER_ADAFRUIT
+
+# force import gpio to register pin schema
+from .gpio import nrf52_pin_to_code  # noqa
+
+CODEOWNERS = ["@tomaszduda23"]
+AUTO_LOAD = ["zephyr"]
+IS_TARGET_PLATFORM = True
+PLATFORM_NRF52 = "nrf52"
+
+
+def set_core_data(config):
+    zephyr_set_core_data(config)
+    CORE.data[KEY_CORE][KEY_TARGET_PLATFORM] = PLATFORM_NRF52
+    CORE.data[KEY_CORE][KEY_TARGET_FRAMEWORK] = KEY_ZEPHYR
+    return config
+
+
+BOOTLOADERS = [
+    BOOTLOADER_ADAFRUIT,
+    BOOTLOADER_MCUBOOT,
+]
+
+
+def _detect_bootloader(value):
+    value = value.copy()
+    bootloader = None
+
+    if (
+        value[CONF_BOARD] in BOARDS_ZEPHYR
+        and KEY_BOOTLOADER in BOARDS_ZEPHYR[value[CONF_BOARD]]
+    ):
+        bootloader = BOARDS_ZEPHYR[value[CONF_BOARD]][KEY_BOOTLOADER]
+
+    if KEY_BOOTLOADER not in value:
+        if bootloader is None:
+            bootloader = BOOTLOADER_MCUBOOT
+        value[KEY_BOOTLOADER] = bootloader
+    elif bootloader is not None and bootloader != value[KEY_BOOTLOADER]:
+        raise cv.Invalid(
+            f"{value[CONF_FRAMEWORK][CONF_TYPE]} does not support '{bootloader}' bootloader for {value[CONF_BOARD]}"
+        )
+    return value
+
+
+CONFIG_SCHEMA = cv.All(
+    cv.Schema(
+        {
+            cv.Required(CONF_BOARD): cv.string_strict,
+            cv.Optional(KEY_BOOTLOADER): cv.one_of(*BOOTLOADERS, lower=True),
+        }
+    ),
+    _detect_bootloader,
+    set_core_data,
+)
+
+
+@coroutine_with_priority(1000)
+async def to_code(config):
+    cg.add_platformio_option("board", config[CONF_BOARD])
+    cg.add_build_flag("-DUSE_NRF52")
+    cg.add_define("ESPHOME_BOARD", config[CONF_BOARD])
+    cg.add_define("ESPHOME_VARIANT", "NRF52")
+    conf = {CONF_PLATFORM_VERSION: "platformio/nordicnrf52@10.3.0"}
+    cg.add_platformio_option(CONF_FRAMEWORK, CORE.data[KEY_CORE][KEY_TARGET_FRAMEWORK])
+    cg.add_platformio_option("platform", conf[CONF_PLATFORM_VERSION])
+    cg.add_platformio_option(
+        "platform_packages",
+        [
+            "platformio/framework-zephyr@https://github.com/tomaszduda23/framework-sdk-nrf/archive/refs/tags/v2.6.1-3.zip",
+            "platformio/toolchain-gccarmnoneeabi@https://github.com/tomaszduda23/toolchain-sdk-ng/archive/refs/tags/v0.16.1.zip",
+        ],
+    )
+
+    if config[KEY_BOOTLOADER] == BOOTLOADER_ADAFRUIT:
+        # make sure that firmware.zip is created
+        # for Adafruit_nRF52_Bootloader
+        cg.add_platformio_option("board_upload.protocol", "nrfutil")
+        cg.add_platformio_option("board_upload.use_1200bps_touch", "true")
+        cg.add_platformio_option("board_upload.require_upload_port", "true")
+        cg.add_platformio_option("board_upload.wait_for_upload_port", "true")
+
+    zephyr_to_code(conf)
+
+
+def copy_files():
+    zephyr_copy_files()
+
+
+def get_download_types(storage_json):
+    types = []
+    UF2_PATH = "zephyr/zephyr.uf2"
+    DFU_PATH = "firmware.zip"
+    HEX_PATH = "zephyr/zephyr.hex"
+    HEX_MERGED_PATH = "zephyr/merged.hex"
+    APP_IMAGE_PATH = "zephyr/app_update.bin"
+    build_dir = Path(storage_json.firmware_bin_path).parent
+    if (build_dir / UF2_PATH).is_file():
+        types = [
+            {
+                "title": "UF2 package (recommended)",
+                "description": "For flashing via Adafruit nRF52 Bootloader as a flash drive.",
+                "file": UF2_PATH,
+                "download": f"{storage_json.name}.uf2",
+            },
+            {
+                "title": "DFU package",
+                "description": "For flashing via adafruit-nrfutil using USB CDC.",
+                "file": DFU_PATH,
+                "download": f"dfu-{storage_json.name}.zip",
+            },
+        ]
+    else:
+        types = [
+            {
+                "title": "HEX package",
+                "description": "For flashing via pyocd using SWD.",
+                "file": (
+                    HEX_MERGED_PATH
+                    if (build_dir / HEX_MERGED_PATH).is_file()
+                    else HEX_PATH
+                ),
+                "download": f"{storage_json.name}.hex",
+            },
+        ]
+        if (build_dir / APP_IMAGE_PATH).is_file():
+            types += [
+                {
+                    "title": "App update package",
+                    "description": "For flashing via mcumgr-web using BLE or smpclient using USB CDC.",
+                    "file": APP_IMAGE_PATH,
+                    "download": f"app-{storage_json.name}.img",
+                },
+            ]
+
+    return types
