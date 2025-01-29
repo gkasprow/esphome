@@ -68,14 +68,16 @@ void ClimateCall::validate_() {
   if (this->eco_mode_.has_value()) {
     auto eco_mode = *this->eco_mode_;
     if (!traits.supports_eco_modes(eco_mode)) {
-      ESP_LOGW(TAG, "  Eco Mode %s is not supported by this device!", LOG_STR_ARG(climate_eco_mode_to_string(eco_mode)));
+      ESP_LOGW(TAG, "  Eco Mode %s is not supported by this device!",
+      LOG_STR_ARG(climate_eco_mode_to_string(eco_mode)));
       this->eco_mode_.reset();
     }
   }
   if (this->pellet_rate_.has_value()) {
     auto pellet_rate = *this->pellet_rate_;
     if (!traits.supports_pellet_rates(pellet_rate)) {
-      ESP_LOGW(TAG, "  Pellet Rate %s is not supported by this device!", LOG_STR_ARG(climate_pellet_rate_to_string(pellet_rate)));
+      ESP_LOGW(TAG, "  Pellet Rate %s is not supported by this device!",
+      LOG_STR_ARG(climate_pellet_rate_to_string(pellet_rate)));
       this->pellet_rate_.reset();
     }
   }
