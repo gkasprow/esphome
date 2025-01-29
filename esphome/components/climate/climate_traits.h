@@ -56,10 +56,6 @@ class ClimateTraits {
   void set_supports_target_humidity(bool supports_target_humidity) {
     supports_target_humidity_ = supports_target_humidity;
   }
-  bool get_supports_eco_modes() const { return supports_eco_modes_; }
-  void set_supports_eco_modes(bool supports_eco_modes) { supports_eco_modes_ = supports_eco_modes; }
-  bool get_supports_pellet_rates() const { return supports_pellet_rates_; }
-  void set_supports_pellet_rates(bool supports_pellet_rates) { supports_pellet_rates_ = supports_pellet_rates; }
   void set_supported_modes(std::set<ClimateMode> modes) { supported_modes_ = std::move(modes); }
   void add_supported_mode(ClimateMode mode) { supported_modes_.insert(mode); }
   ESPDEPRECATED("This method is deprecated, use set_supported_modes() instead", "v1.20")
@@ -111,11 +107,13 @@ class ClimateTraits {
   bool supports_eco_modes(ClimateEcoMode eco_mode) const { return supported_eco_modes_.count(eco_mode); }
   bool get_supports_eco_modes() const { return !supported_eco_modes_.empty(); }
   const std::set<ClimateEcoMode> &get_supported_eco_modes() const { return supported_eco_modes_; }
+  void set_supports_eco_modes(bool supports_eco_modes) { supports_eco_modes_ = supports_eco_modes; }
 
   void set_supported_pellet_rates(std::set<ClimatePelletRate> modes) { supported_pellet_rates_ = std::move(modes); }
   bool supports_pellet_rates(ClimatePelletRate pellet_rate) const { return supported_pellet_rates_.count(pellet_rate); }
   bool get_supports_pellet_rates() const { return !supported_pellet_rates_.empty(); }
   const std::set<ClimatePelletRate> &get_supported_pellet_rates() const { return supported_pellet_rates_; }
+  void set_supports_pellet_rates(bool supports_pellet_rates) { supports_pellet_rates_ = supports_pellet_rates; }
 
   void set_supported_custom_fan_modes(std::set<std::string> supported_custom_fan_modes) {
     supported_custom_fan_modes_ = std::move(supported_custom_fan_modes);

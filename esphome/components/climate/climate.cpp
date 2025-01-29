@@ -49,10 +49,12 @@ void ClimateCall::perform() {
     ESP_LOGD(TAG, "  Target Humidity: %.0f", *this->target_humidity_);
   }
   if (this->eco_mode_.has_value()) {
-    ESP_LOGD(TAG, "  Pellet Eco Mode: %.d", *this->eco_mode_);
+    const LogString *eco_mode_s = climate_eco_mode_to_string(*this->eco_mode_);
+    ESP_LOGD(TAG, "  Pellet Eco: %s", LOG_STR_ARG(eco_mode_s));
   }
   if (this->pellet_rate_.has_value()) {
-    ESP_LOGD(TAG, "  Pellet Rate: %.d", *this->pellet_rate_);
+    const LogString *pellet_rate_s = climate_pellet_rate_to_string(*this->pellet_rate_);
+    ESP_LOGD(TAG, "  Pellet Rate: %s", LOG_STR_ARG(pellet_rate_s));
   }
   this->parent_->control(*this);
 }
