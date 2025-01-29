@@ -363,7 +363,7 @@ ClimateCall &ClimateCall::set_eco_mode(optional<ClimateEcoMode> eco_mode) {
   this->eco_mode_ = eco_mode;
   return *this;
 }
-ClimateCall &ClimateCall::set_fan_mode(optional<ClimatePelletRate> pellet_rate) {
+ClimateCall &ClimateCall::set_pellet_rate(optional<ClimatePelletRate> pellet_rate) {
   this->pellet_rate_ = pellet_rate;
   return *this;
 }
