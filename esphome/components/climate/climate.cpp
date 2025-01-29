@@ -328,8 +328,8 @@ const optional<float> &ClimateCall::get_target_temperature_high() const { return
 const optional<float> &ClimateCall::get_target_humidity() const { return this->target_humidity_; }
 const optional<ClimateFanMode> &ClimateCall::get_fan_mode() const { return this->fan_mode_; }
 const optional<std::string> &ClimateCall::get_custom_fan_mode() const { return this->custom_fan_mode_; }
-const optional<std::string> &ClimateCall::get_eco_mode() const { return this->eco_mode_; }
-const optional<std::string> &ClimateCall::get_pellet_rate() const { return this->pellet_rate_; }
+const optional<ClimateEcoMode> &ClimateCall::get_eco_mode() const { return this->eco_mode_; }
+const optional<ClimatePelletRate> &ClimateCall::get_pellet_rate() const { return this->pellet_rate_; }
 const optional<ClimatePreset> &ClimateCall::get_preset() const { return this->preset_; }
 const optional<std::string> &ClimateCall::get_custom_preset() const { return this->custom_preset_; }
 const optional<ClimateSwingMode> &ClimateCall::get_swing_mode() const { return this->swing_mode_; }
