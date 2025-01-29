@@ -50,7 +50,7 @@ void ClimateCall::perform() {
   }
   if (this->eco_mode_.has_value()) {
     const LogString *eco_mode_s = climate_eco_mode_to_string(*this->eco_mode_);
-    ESP_LOGD(TAG, "  Pellet Eco: %s", LOG_STR_ARG(eco_mode_s));
+    ESP_LOGD(TAG, "  Pellet Eco Mode: %s", LOG_STR_ARG(eco_mode_s));
   }
   if (this->pellet_rate_.has_value()) {
     const LogString *pellet_rate_s = climate_pellet_rate_to_string(*this->pellet_rate_);
@@ -70,7 +70,7 @@ void ClimateCall::validate_() {
   if (this->eco_mode_.has_value()) {
     auto eco_mode = *this->eco_mode_;
     if (!traits.supports_eco_modes(eco_mode)) {
-      ESP_LOGW(TAG, "  Eco Mode %s is not supported by this device!",
+      ESP_LOGW(TAG, "  Pellet Eco Mode %s is not supported by this device!",
                LOG_STR_ARG(climate_eco_mode_to_string(eco_mode)));
       this->eco_mode_.reset();
     }
@@ -227,9 +227,9 @@ ClimateCall &ClimateCall::set_eco_mode(ClimateEcoMode eco_mode) {
 }
 
 ClimateCall &ClimateCall::set_eco_mode(const std::string &eco_mode) {
-  if (str_equals_case_insensitive(eco_mode, "ECO 1")) {
+  if (str_equals_case_insensitive(eco_mode, "ECO ON")) {
     this->set_eco_mode(CLIMATE_PELLET_ECO_ON);
-  } else if (str_equals_case_insensitive(eco_mode, "ECO 2")) {
+  } else if (str_equals_case_insensitive(eco_mode, "ECO OFF")) {
     this->set_eco_mode(CLIMATE_PELLET_ECO_OFF);
   } else {
     ESP_LOGW(TAG, "'%s' - Unrecognized pellet eco mode %s", this->parent_->get_name().c_str(), eco_mode.c_str());
