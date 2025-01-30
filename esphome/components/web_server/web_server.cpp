@@ -1602,7 +1602,9 @@ bool WebServer::canHandle(AsyncWebServerRequest *request) {
 #endif
 
 #ifdef USE_CAPTIVE_PORTAL
-  return captive_portal::global_captive_portal->canHandle(request);
+  if (captive_portal::global_captive_portal->canHandle(request)) {
+    return true;
+  }
 #endif
 
   UrlMatch match = match_url(request->url().c_str(), true);
