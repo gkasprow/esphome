@@ -10,6 +10,11 @@ namespace captive_portal {
 
 static const char *const TAG = "captive_portal";
 
+void CaptivePortal::handle_captive_portal(AsyncWebServerRequest *request) {
+  auto *response = request->beginResponse_P(200, "text/html", INDEX_GZ, sizeof(INDEX_GZ));
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);
+}
 void CaptivePortal::handle_config(AsyncWebServerRequest *request) {
   AsyncResponseStream *stream = request->beginResponseStream("application/json");
   stream->addHeader("cache-control", "public, max-age=0, must-revalidate");
@@ -39,6 +44,19 @@ void CaptivePortal::handle_wifisave(AsyncWebServerRequest *request) {
   request->redirect("/?save");
   if (wifi::global_wifi_component->is_connected())
     wifi::global_wifi_component->disconnect();
+}
+
+void CaptivePortal::handleRequest(AsyncWebServerRequest *req) {
+  if (req->url() == this->portal_path_) {
+    this->handle_captive_portal(req);
+    return;
+  } else if (req->url() == "/config.json") {
+    this->handle_config(req);
+    return;
+  } else if (req->url() == "/wifisave") {
+    this->handle_wifisave(req);
+    return;
+  }
 }
 
 void CaptivePortal::setup() {}
@@ -81,21 +99,6 @@ void CaptivePortal::end() {
   this->dns_server_->stop();
   this->dns_server_ = nullptr;
 #endif
-}
-
-void CaptivePortal::handleRequest(AsyncWebServerRequest *req) {
-  if (req->url() == this->portal_path_) {
-    auto *response = req->beginResponse_P(200, "text/html", INDEX_GZ, sizeof(INDEX_GZ));
-    response->addHeader("Content-Encoding", "gzip");
-    req->send(response);
-    return;
-  } else if (req->url() == "/config.json") {
-    this->handle_config(req);
-    return;
-  } else if (req->url() == "/wifisave") {
-    this->handle_wifisave(req);
-    return;
-  }
 }
 
 CaptivePortal::CaptivePortal(web_server_base::WebServerBase *base) : base_(base) { global_captive_portal = this; }
