@@ -345,7 +345,7 @@ void TuyaClimate::control_pellet_rate_(const climate::ClimateCall &call) {
         tuya_pellet_rate = 3;
         break;
     }
-    if (this->eco_mode_id_.has_value()) {
+    if (this->pellet_rate_id_.has_value()) {
       this->parent_->set_enum_datapoint_value(*this->pellet_rate_id_, tuya_pellet_rate);
     }
   }
