@@ -323,6 +323,7 @@ void WiFiComponent::save_wifi_sta(const std::string &ssid, const std::string &pa
     sta.set_password(password);
     this->set_sta(sta);
   } else {
+    ESP_LOGV(TAG, "no ssid set");
     // TODO check if ap is enabled in conf and only start it if enabled
     this->clear_sta();
     this->selected_ap_ = WiFiAP{};
@@ -338,6 +339,7 @@ void WiFiComponent::save_wifi_sta(const std::string &ssid, const std::string &pa
   // ensure it's written immediately
   global_preferences->sync();
   this->ap_setup_ = 0;
+  this->disconnect();
 }
 
 void WiFiComponent::start_connecting(const WiFiAP &ap, bool two) {
