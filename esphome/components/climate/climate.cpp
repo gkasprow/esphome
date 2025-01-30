@@ -53,7 +53,7 @@ void ClimateCall::perform() {
     ESP_LOGD(TAG, "  Pellet Eco Mode: %s", LOG_STR_ARG(eco_mode_s));
   }
   if (this->pellet_rate_.has_value()) {
-    const LogString *pellet_rate_s = climate_pellet_rate_to_string(*this->pellet_rate_);
+    const LogString *pellet_rate_s = climate_pellet_rate_mode_to_string(*this->pellet_rate_);
     ESP_LOGD(TAG, "  Pellet Rate: %s", LOG_STR_ARG(pellet_rate_s));
   }
   this->parent_->control(*this);
@@ -79,7 +79,7 @@ void ClimateCall::validate_() {
     auto pellet_rate = *this->pellet_rate_;
     if (!traits.supports_pellet_rates(pellet_rate)) {
       ESP_LOGW(TAG, "  Pellet Rate %s is not supported by this device!",
-               LOG_STR_ARG(climate_pellet_rate_to_string(pellet_rate)));
+               LOG_STR_ARG(climate_pellet_rate_mode_to_string(pellet_rate)));
       this->pellet_rate_.reset();
     }
   }
@@ -520,7 +520,7 @@ void Climate::publish_state() {
     ESP_LOGD(TAG, "  Pellet Eco Mode: %s", LOG_STR_ARG(climate_eco_mode_to_string(this->eco_mode.value())));
   }
   if (traits.get_supports_pellet_rates() && this->pellet_rate.has_value()) {
-    ESP_LOGD(TAG, "  Pellet Feed Rate: %s", LOG_STR_ARG(climate_pellet_rate_to_string(this->pellet_rate.value())));
+    ESP_LOGD(TAG, "  Pellet Feed Rate: %s", LOG_STR_ARG(climate_pellet_rate_mode_to_string(this->pellet_rate.value())));
   }
 
   // Send state to frontend
@@ -719,7 +719,7 @@ void Climate::dump_traits_(const char *tag) {
   if (!traits.get_supported_pellet_rates().empty()) {
     ESP_LOGCONFIG(tag, "  [x] Supported pellet feed rates:");
     for (ClimatePelletRate m : traits.get_supported_pellet_rates())
-      ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_pellet_rate_to_string(m)));
+      ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_pellet_rate_mode_to_string(m)));
   }
 }
 }  // namespace climate
