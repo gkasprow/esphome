@@ -225,6 +225,8 @@ class WiFiComponent : public Component {
    */
   void set_ap(const WiFiAP &ap);
   WiFiAP get_ap() { return this->ap_; }
+  void start_ap();
+  void stop_ap();
 #endif  // USE_WIFI_AP
 
   void enable();
@@ -409,6 +411,7 @@ class WiFiComponent : public Component {
   std::vector<WiFiScanResult> scan_result_;
   bool scan_done_{false};
   bool ap_setup_{false};
+  bool ap_active_{false};
   optional<float> output_power_;
   bool passive_scan_{false};
   ESPPreferenceObject pref_;

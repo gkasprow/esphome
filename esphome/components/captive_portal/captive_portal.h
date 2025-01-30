@@ -16,7 +16,7 @@ namespace captive_portal {
 
 const char WEB_SERVER_CAPTIVE_PORTAL_PATH[] = "/captive_portal";
 
-enum Mode { MODE_ALWAYS_ON, MODE_AP_ONLY };
+enum Mode { MODE_ALWAYS_ACTIVE, MODE_AP_ONLY };
 
 class CaptivePortal : public AsyncWebHandler, public Component {
  public:

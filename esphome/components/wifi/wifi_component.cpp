@@ -113,6 +113,7 @@ void WiFiComponent::start() {
     if (this->output_power_.has_value() && !this->wifi_apply_output_power_(*this->output_power_)) {
       ESP_LOGV(TAG, "Setting Output Power Option failed!");
     }
+    this->start_ap();
 #endif  // USE_WIFI_AP
   }
 #ifdef USE_IMPROV
@@ -193,10 +194,8 @@ void WiFiComponent::loop() {
     }
 
 #ifdef USE_WIFI_AP
-    if (this->has_ap() && !this->ap_setup_) {
-      if (this->ap_timeout_ != 0 && (now - this->last_connected_ > this->ap_timeout_)) {
-        this->setup_ap_config_();
-      }
+    if (this->ap_timeout_ != 0 && (now - this->last_connected_ > this->ap_timeout_)) {
+      this->start_ap();
     }
 #endif  // USE_WIFI_AP
 
@@ -284,21 +283,6 @@ void WiFiComponent::setup_ap_config_() {
     ESP_LOGCONFIG(TAG, "  AP Subnet: '%s'", manual.subnet.str().c_str());
   }
 
-  this->ap_setup_ = this->wifi_start_ap_(this->ap_);
-  ESP_LOGCONFIG(TAG, "  IP Address: %s", this->wifi_soft_ap_ip().str().c_str());
-
-#ifdef USE_CAPTIVE_PORTAL
-  if (captive_portal::global_captive_portal != nullptr) {
-    this->wifi_sta_pre_setup_();
-    this->start_scanning();
-#ifdef USE_WEBSERVER
-    captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_CAPTIVE_PORTAL_PATH);
-#elif
-    captive_portal::global_captive_portal->start("/");
-#endif
-  }
-#endif
-
   if (!this->has_sta()) {
     this->state_ = WIFI_COMPONENT_STATE_AP;
   }
@@ -308,6 +292,45 @@ void WiFiComponent::set_ap(const WiFiAP &ap) {
   this->ap_ = ap;
   this->has_ap_ = true;
 }
+
+void WiFiComponent::start_ap() {
+  if (!this->has_ap_) {
+    ESP_LOGE(TAG, "AP could not be started, no AP set!");
+    return;
+  }
+  if (this->ap_active_) {
+    ESP_LOGD(TAG, "Ap seems to be started already...");
+    return;
+  }
+
+  ESP_LOGI(TAG, "Starting AP...");
+
+  this->ap_setup_ = this->wifi_start_ap_(this->ap_);
+  ESP_LOGCONFIG(TAG, "  IP Address: %s", this->wifi_soft_ap_ip().str().c_str());
+  this->ap_active_ = false;
+
+#ifdef USE_CAPTIVE_PORTAL
+  if (captive_portal::global_captive_portal != nullptr) {
+    // this->wifi_sta_pre_setup_();
+    // this->start_scanning();
+#ifdef USE_WEBSERVER
+    captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_CAPTIVE_PORTAL_PATH);
+#elif
+    captive_portal::global_captive_portal->start("/");
+#endif
+  }
+#endif
+}
+
+void WiFiComponent::stop_ap() {
+  ESP_LOGI(TAG, "Disabling AP...");
+  this->wifi_mode_({}, false);
+  this->ap_active_ = false;
+#ifndef USE_CAPTIVE_PORTAL_MODE_ALWAYS_ACTIVE
+  captive_portal::global_captive_portal->end();
+#endif
+}
+
 #endif  // USE_WIFI_AP
 
 float WiFiComponent::get_loop_priority() const {
@@ -344,20 +367,7 @@ void WiFiComponent::save_wifi_sta(const std::string &ssid, const std::string &pa
       this->disconnect();
     }
     this->clear_sta();
-    this->ap_setup_ = 0;
-    this->setup_ap_config_();
-    // this->selected_ap_ = WiFiAP{};
-    // this->ap_setup_ = 0;
-    // this->state_ = WIFI_COMPONENT_STATE_START_AP;
-    // if (this->is_captive_portal_active_()) {
-    //   captive_portal::global_captive_portal->end();
-    //   // #ifdef USE_WEBSERVER
-    //   //     if (this->is_captive_portal_active_()) {
-    //   //       captive_portal::global_captive_portal->end();
-    //   //       captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_CAPTIVE_PORTAL_PATH);
-    //   //     }
-    //   // #endif
-    // }
+    this->start_ap();
   }
   this->pref_.save(&save);
   // ensure it's written immediately
@@ -678,7 +688,7 @@ void WiFiComponent::check_connecting_finished() {
 
     ESP_LOGI(TAG, "WiFi Connected!");
     this->print_connect_params_();
-
+#ifdef USE_WIFI_AP
     if (this->has_ap()) {
 #ifdef USE_CAPTIVE_PORTAL
       if (this->is_captive_portal_active_()) {
@@ -687,9 +697,9 @@ void WiFiComponent::check_connecting_finished() {
       // TODO do not end captive portel if mode: ALWAYS_ON is set in config
       captive_portal::global_captive_portal->start(captive_portal::WEB_SERVER_CAPTIVE_PORTAL_PATH);
 #endif
-      ESP_LOGD(TAG, "Disabling AP...");
-      this->wifi_mode_({}, false);
+      this->stop_ap();
     }
+#endif  // USE_WIFI_AP
 #ifdef USE_IMPROV
     if (this->is_esp32_improv_active_()) {
       esp32_improv::global_improv_component->stop();

@@ -21,7 +21,7 @@ CaptivePortal = captive_portal_ns.class_("CaptivePortal", cg.Component)
 
 mode = captive_portal_ns.enum("Mode")
 Modes = {
-    "ALWAYS_ON": mode.MODE_ALWAYS_ON,
+    "ALWAYS_ACTIVE": mode.MODE_ALWAYS_ACTIVE,
     "AP_ONLY": mode.MODE_AP_ONLY,
 }
 
