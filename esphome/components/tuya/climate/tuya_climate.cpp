@@ -1,6 +1,7 @@
+#pragma once
 #include "tuya_climate.h"
-#include "esphome/components/climate/climate_traits.h"
 #include "esphome/core/log.h"
+
 
 namespace esphome {
 namespace tuya {
@@ -353,6 +354,7 @@ void TuyaClimate::control_pellet_rate_(const climate::ClimateCall &call) {
 }
 
 climate::ClimateTraits TuyaClimate::traits() {
+  climate::ClimateTraits traits() override;
   auto traits = climate::ClimateTraits();
   traits.set_supports_action(true);
   traits.set_supports_current_temperature(this->current_temperature_id_.has_value());

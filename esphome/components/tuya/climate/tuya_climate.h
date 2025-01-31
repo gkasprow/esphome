@@ -4,6 +4,13 @@
 #include "esphome/components/tuya/tuya.h"
 #include "esphome/components/climate/climate.h"
 
+using climate::ClimateCall;
+using climate::ClimatePreset;
+using climate::ClimateTraits;
+using climate::ClimateMode;
+using climate::ClimateSwingMode;
+using climate::ClimateFanMode;
+
 namespace esphome {
 namespace tuya {
 
