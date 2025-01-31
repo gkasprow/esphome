@@ -95,6 +95,7 @@ CONFIG_SCHEMA = climate_ir.CLIMATE_IR_WITH_RECEIVER_SCHEMA.extend(
     }
 )
 
+
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await climate_ir.register_climate_ir(var, config)
@@ -104,17 +105,17 @@ async def to_code(config):
     if CONF_CUSTOM_COOL in config:
         cg.add(var.set_custom_cool(config[CONF_CUSTOM_COOL][CONF_CUSTOM_COOL_TEMPERATURE], config[CONF_CUSTOM_COOL][CONF_CUSTOM_COOL_SWING], config[CONF_CUSTOM_COOL][CONF_CUSTOM_COOL_FAN_MODE]))
     else:
-        cg.add(var.set_custom_cool(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_AUTO))     
+        cg.add(var.set_custom_cool(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_AUTO))
 
     if CONF_CUSTOM_HEAT in config:
         cg.add(var.set_custom_heat(config[CONF_CUSTOM_HEAT][CONF_CUSTOM_HEAT_TEMPERATURE], config[CONF_CUSTOM_HEAT][CONF_CUSTOM_HEAT_SWING], config[CONF_CUSTOM_HEAT][CONF_CUSTOM_HEAT_FAN_MODE]))
     else:
-        cg.add(var.set_custom_heat(24, climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_AUTO))  
+        cg.add(var.set_custom_heat(24, climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_AUTO))
 
     if CONF_CUSTOM_DRY in config:
         cg.add(var.set_custom_dry(config[CONF_CUSTOM_DRY][CONF_CUSTOM_DRY_TEMPERATURE], config[CONF_CUSTOM_DRY][CONF_CUSTOM_DRY_SWING], config[CONF_CUSTOM_DRY][CONF_CUSTOM_DRY_FAN_MODE]))
     else:
-        cg.add(var.set_custom_dry(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_LOW))  
+        cg.add(var.set_custom_dry(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_LOW))
 
     if CONF_CUSTOM_FAN_ONLY in config:
         cg.add(var.set_custom_fan_only(config[CONF_CUSTOM_FAN_ONLY][CONF_CUSTOM_FAN_ONLY_SWING], config[CONF_CUSTOM_FAN_ONLY][CONF_CUSTOM_FAN_ONLY_FAN_MODE]))
