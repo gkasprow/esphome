@@ -97,7 +97,7 @@ async def to_code(config):
             var.set_custom_cool(
                 config[CONF_CUSTOM_COOL][CONF_TEMPERATURE],
                 config[CONF_CUSTOM_COOL][CONF_SWING],
-                config[CONF_CUSTOM_COOL][CONF_FAN_MODE]
+                config[CONF_CUSTOM_COOL][CONF_FAN_MODE],
             )
         )
     else:
@@ -112,7 +112,7 @@ async def to_code(config):
             var.set_custom_heat(
                 config[CONF_CUSTOM_HEAT][CONF_TEMPERATURE],
                 config[CONF_CUSTOM_HEAT][CONF_SWING],
-                config[CONF_CUSTOM_HEAT][CONF_FAN_MODE]
+                config[CONF_CUSTOM_HEAT][CONF_FAN_MODE],
             )
         )
     else:
@@ -127,7 +127,7 @@ async def to_code(config):
             var.set_custom_dry(
                 config[CONF_CUSTOM_DRY][CONF_TEMPERATURE],
                 config[CONF_CUSTOM_DRY][CONF_SWING],
-                config[CONF_CUSTOM_DRY][CONF_FAN_MODE]
+                config[CONF_CUSTOM_DRY][CONF_FAN_MODE],
             )
         )
     else:
@@ -141,7 +141,7 @@ async def to_code(config):
         cg.add(
             var.set_custom_fan_only(
                 config[CONF_CUSTOM_FAN_ONLY][CONF_SWING],
-                config[CONF_CUSTOM_FAN_ONLY][CONF_FAN_MODE]
+                config[CONF_CUSTOM_FAN_ONLY][CONF_FAN_MODE],
             )
         )
     else:
