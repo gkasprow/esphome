@@ -599,4 +599,4 @@ void TuyaClimate::switch_to_action_(climate::ClimateAction action) {
 }
 
 }  // namespace tuya
-}  // namespace esphome
+}  // namespace esphom
