@@ -112,8 +112,13 @@ void TuyaClimate::setup() {
 
   if (this->eco_mode_id_.has_value()) {
     this->parent_->register_listener(*this->eco_mode_id_, [this](const TuyaDatapoint &datapoint) {
-      ESP_LOGV(TAG, "MCU reported Pellet Eco Mode is: %u", datapoint.value_enum);
-      this->eco_mode_state_ = datapoint.value_enum;
+      ESP_LOGV(TAG, "MCU reported switch is: %s", USE_SELECT(datapoint.value_enum));
+      if (datapoint.value_enum) {
+        if (this->supports_heat_ && this->supports_pellet_) {
+          this->mode = climate::CLIMATE_PELLET_ECO_ON;
+          this->mode = climate::CLIMATE_PELLET_ECO_OFF
+        }
+      }
       this->compute_eco_mode_();
       this->publish_state();
     });
