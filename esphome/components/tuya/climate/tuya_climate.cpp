@@ -1,4 +1,5 @@
 #include "tuya_climate.h"
+#include "esphome/components/climate/climate_traits.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
@@ -404,16 +405,16 @@ climate::ClimateTraits TuyaClimate::traits() {
     if (eco_mode_off_value_)
       traits.add_supported_eco_mode(climate::CLIMATE_PELLET_ECO_OFF);
   }
-//   if (pellet_rate_id_) {
-//     if (pellet_rate_low_value_)
-//       traits.add_supported_pellet_mode(climate::CLIMATE_PELLET_RATE_LOW);
-//     if (pellet_rate_med_value_)
-//       traits.add_supported_pellet_mode(climate::CLIMATE_PELLET_RATE_MED);
-//     if (pellet_rate_high_value_)
-//       traits.add_supported_pellet_mode(climate::CLIMATE_PELLET_RATE_HIGH);
-//     if (pellet_rate_max_value_)
-//       traits.add_supported_pellet_mode(climate::CLIMATE_PELLET_RATE_MAX);
-//   }
+  if (pellet_rate_id_) {
+    if (pellet_rate_low_value_)
+      traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_LOW);
+    if (pellet_rate_med_value_)
+      traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_MED);
+    if (pellet_rate_high_value_)
+      traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_HIGH);
+    if (pellet_rate_max_value_)
+      traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_MAX);
+  }
   return traits;
 }
 
