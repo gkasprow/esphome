@@ -407,7 +407,7 @@ climate::ClimateTraits TuyaClimate::traits() {
   }
   if (supports_pellet_) {
     if (pellet_rate_low_value_)
-      traits.add_supported_pellet_rate_mode(climate::CLIMATE_PELLET_RATE_LOW);
+      traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_LOW);
     if (pellet_rate_med_value_)
       traits.add_supported_pellet_rate(climate::CLIMATE_PELLET_RATE_MED);
     if (pellet_rate_high_value_)
