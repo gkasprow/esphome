@@ -127,7 +127,7 @@ class HitachiClimate : public climate_ir::ClimateIR {
   }
 
   void setup() override;
-  
+
  protected:
   uint8_t remote_state_[HITACHI_AC344_STATE_LENGTH]{0x01, 0x10, 0x00, 0x40, 0x00, 0xFF, 0x00, 0xCC, 0x00, 0x00, 0x00,
                                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -174,7 +174,7 @@ class HitachiClimate : public climate_ir::ClimateIR {
   climate::ClimateTraits traits() override;
 
   void control(const climate::ClimateCall &call) override;
-  
+
 };
 
 }  // namespace hitachi_ac344

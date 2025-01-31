@@ -9,7 +9,7 @@ climate_ns = cg.esphome_ns.namespace("climate")
 hitachi_ac344_ns = cg.esphome_ns.namespace("hitachi_ac344")
 HitachiClimate = hitachi_ac344_ns.class_("HitachiClimate", climate_ir.ClimateIR)
 
-CONF_HORIZONTAL_DEFAULT = "horizontal_default"
+CONF_HITACHI_HORIZONTAL_DEFAULT = "horizontal_default"
 HORIZONTAL_DIRECTIONS = {
     "left_max": hitachi_ac344_ns.HITACHI_AC344_SWINGH_LEFT_MAX,
     "left": hitachi_ac344_ns.HITACHI_AC344_SWINGH_LEFT,
@@ -84,7 +84,7 @@ CONF_MILDEWPROOF = "mildewproof"
 CONFIG_SCHEMA = climate_ir.CLIMATE_IR_WITH_RECEIVER_SCHEMA.extend(
     {
         cv.GenerateID(): cv.declare_id(HitachiClimate),
-        cv.Optional(CONF_HORIZONTAL_DEFAULT, default="middle"): cv.enum(
+        cv.Optional(CONF_HITACHI_HORIZONTAL_DEFAULT, default="middle"): cv.enum(
             HORIZONTAL_DIRECTIONS
         ),
         cv.Optional(CONF_MILDEWPROOF, default=False): cv.boolean,
@@ -99,7 +99,7 @@ CONFIG_SCHEMA = climate_ir.CLIMATE_IR_WITH_RECEIVER_SCHEMA.extend(
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await climate_ir.register_climate_ir(var, config)
-    cg.add(var.set_horizontal_default(config[CONF_HORIZONTAL_DEFAULT]))
+    cg.add(var.set_horizontal_default(config[CONF_HITACHI_HORIZONTAL_DEFAULT]))
     cg.add(var.set_mildewproof(config[CONF_MILDEWPROOF]))
 
     if CONF_CUSTOM_COOL in config:
