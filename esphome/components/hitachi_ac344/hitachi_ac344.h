@@ -78,11 +78,11 @@ const uint16_t HITACHI_AC344_BITS = HITACHI_AC344_STATE_LENGTH * 8;
 #define GETBIT8(a, b) ((a) & ((uint8_t) 1 << (b)))
 #define GETBITS8(data, offset, size) (((data) & (((uint8_t) UINT8_MAX >> (8 - (size))) << (offset))) >> (offset))
 
-typedef struct CustomStruct {
+using CustomStruct = struct CustomStruct {
   uint8_t temperature = 20;
   climate::ClimateSwingMode swing_mode = climate::CLIMATE_SWING_OFF;
   climate::ClimateFanMode fan_mode = climate::CLIMATE_FAN_AUTO;
-} CustomStruct;
+};
 
 class HitachiClimate : public climate_ir::ClimateIR {
  public:
@@ -97,29 +97,29 @@ class HitachiClimate : public climate_ir::ClimateIR {
 
   void set_horizontal_default(uint8_t position) { this->default_horizontal_direction_ = position; }
 
-  void set_mildewproof(bool on) { mildewproof = on; }
+  void set_mildewproof(bool on) { mildewproof_ = on; }
 
   void set_custom_cool(uint8_t temperature, climate::ClimateSwingMode swing_mode, climate::ClimateFanMode fan_mode) {
-    custom_cool.temperature = temperature;
-    custom_cool.swing_mode = swing_mode;
-    custom_cool.fan_mode = fan_mode;
+    custom_cool_.temperature = temperature;
+    custom_cool_.swing_mode = swing_mode;
+    custom_cool_.fan_mode = fan_mode;
   }
 
   void set_custom_heat(uint8_t temperature, climate::ClimateSwingMode swing_mode, climate::ClimateFanMode fan_mode) {
-    custom_heat.temperature = temperature;
-    custom_heat.swing_mode = swing_mode;
-    custom_heat.fan_mode = fan_mode;
+    custom_heat_.temperature = temperature;
+    custom_heat_.swing_mode = swing_mode;
+    custom_heat_.fan_mode = fan_mode;
   }
 
   void set_custom_dry(uint8_t temperature, climate::ClimateSwingMode swing_mode, climate::ClimateFanMode fan_mode) {
-    custom_dry.temperature = temperature;
-    custom_dry.swing_mode = swing_mode;
-    custom_dry.fan_mode = fan_mode;
+    custom_dry_.temperature = temperature;
+    custom_dry_.swing_mode = swing_mode;
+    custom_dry_.fan_mode = fan_mode;
   }
 
   void set_custom_fan_only(climate::ClimateSwingMode swing_mode, climate::ClimateFanMode fan_mode) {
-    custom_fan_only.swing_mode = swing_mode;
-    custom_fan_only.fan_mode = fan_mode;
+    custom_fan_only_.swing_mode = swing_mode;
+    custom_fan_only_.fan_mode = fan_mode;
   }
 
   void setup() override;
@@ -131,11 +131,11 @@ class HitachiClimate : public climate_ir::ClimateIR {
                                                     0x80, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   uint8_t previous_temp_{27};
   uint8_t default_horizontal_direction_;
-  bool mildewproof;
-  CustomStruct custom_cool;
-  CustomStruct custom_heat;
-  CustomStruct custom_dry;
-  CustomStruct custom_fan_only;
+  bool mildewproof_;
+  CustomStruct custom_cool_;
+  CustomStruct custom_heat_;
+  CustomStruct custom_dry_;
+  CustomStruct custom_fan_only_;
 
   // Transmit via IR the state of this climate controller.
   void transmit_state() override;

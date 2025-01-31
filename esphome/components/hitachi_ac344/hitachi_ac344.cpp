@@ -163,30 +163,30 @@ void HitachiClimate::transmit_state() {
   // Custom modes
   if (this->custom_preset == "Cool") {
     this->mode = climate::CLIMATE_MODE_COOL;
-    this->fan_mode = custom_cool.fan_mode;               // climate::CLIMATE_FAN_AUTO;
-    this->swing_mode = custom_cool.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
-    this->target_temperature = custom_cool.temperature;  // 29
+    this->fan_mode = custom_cool_.fan_mode;               // climate::CLIMATE_FAN_AUTO;
+    this->swing_mode = custom_cool_.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
+    this->target_temperature = custom_cool_.temperature;  // 29
   } else if (this->custom_preset == "Heat") {
     this->mode = climate::CLIMATE_MODE_HEAT;
-    this->fan_mode = custom_heat.fan_mode;               // climate::CLIMATE_FAN_AUTO;
-    this->swing_mode = custom_heat.swing_mode;           // climate::CLIMATE_SWING_OFF;
-    this->target_temperature = custom_heat.temperature;  // 24
+    this->fan_mode = custom_heat_.fan_mode;               // climate::CLIMATE_FAN_AUTO;
+    this->swing_mode = custom_heat_.swing_mode;           // climate::CLIMATE_SWING_OFF;
+    this->target_temperature = custom_heat_.temperature;  // 24
   } else if (this->custom_preset == "Dry") {
     this->mode = climate::CLIMATE_MODE_DRY;
-    this->fan_mode = custom_dry.fan_mode;               // climate::CLIMATE_FAN_LOW;
-    this->swing_mode = custom_dry.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
-    this->target_temperature = custom_dry.temperature;  // 29
+    this->fan_mode = custom_dry_.fan_mode;               // climate::CLIMATE_FAN_LOW;
+    this->swing_mode = custom_dry_.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
+    this->target_temperature = custom_dry_.temperature;  // 29
   } else if (this->custom_preset == "Fan_only") {
     this->mode = climate::CLIMATE_MODE_FAN_ONLY;
-    this->fan_mode = custom_fan_only.fan_mode;      // climate::CLIMATE_FAN_LOW;
-    this->swing_mode = custom_fan_only.swing_mode;  // climate::CLIMATE_SWING_OFF;
+    this->fan_mode = custom_fan_only_.fan_mode;      // climate::CLIMATE_FAN_LOW;
+    this->swing_mode = custom_fan_only_.swing_mode;  // climate::CLIMATE_SWING_OFF;
   }
   this->custom_preset = (std::string) "None";
 
   switch (this->mode) {
     case climate::CLIMATE_MODE_COOL:
       set_mode_(HITACHI_AC344_MODE_COOL);
-      set_mildewproof_(mildewproof);
+      set_mildewproof_(mildewproof_);
       break;
     case climate::CLIMATE_MODE_DRY:
       set_mode_(HITACHI_AC344_MODE_DRY);
