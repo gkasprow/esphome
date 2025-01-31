@@ -146,11 +146,13 @@ uint8_t HitachiClimate::get_swing_h_() {
 }
 
 void HitachiClimate::set_mildewproof_(bool on) {
-  set_bits(&remote_state_[HITACHI_AC344_MILDEWPROOF_BYTE], HITACHI_AC344_MILDEWPROOF_OFFSET, HITACHI_AC344_MILDEWPROOF_SIZE, on);
+  set_bits(&remote_state_[HITACHI_AC344_MILDEWPROOF_BYTE], HITACHI_AC344_MILDEWPROOF_OFFSET,
+           HITACHI_AC344_MILDEWPROOF_SIZE, on);
 }
 
 uint8_t HitachiClimate::get_mildewproof_() {
-  return GETBITS8(remote_state_[HITACHI_AC344_MILDEWPROOF_BYTE], HITACHI_AC344_MILDEWPROOF_OFFSET, HITACHI_AC344_MILDEWPROOF_SIZE);
+  return GETBITS8(remote_state_[HITACHI_AC344_MILDEWPROOF_BYTE], HITACHI_AC344_MILDEWPROOF_OFFSET,
+                  HITACHI_AC344_MILDEWPROOF_SIZE);
 }
 
 uint8_t HitachiClimate::get_button_() { return remote_state_[HITACHI_AC344_BUTTON_BYTE]; }
@@ -160,26 +162,26 @@ void HitachiClimate::set_button_(uint8_t button) { remote_state_[HITACHI_AC344_B
 void HitachiClimate::transmit_state() {
   // Custom modes
   if (this->custom_preset == "Cool") {
-      this->mode = climate::CLIMATE_MODE_COOL;
-      this->fan_mode = custom_cool.fan_mode; //climate::CLIMATE_FAN_AUTO;
-      this->swing_mode = custom_cool.swing_mode; //climate::CLIMATE_SWING_HORIZONTAL;
-      this->target_temperature = custom_cool.temperature; // 29
+    this->mode = climate::CLIMATE_MODE_COOL;
+    this->fan_mode = custom_cool.fan_mode;               // climate::CLIMATE_FAN_AUTO;
+    this->swing_mode = custom_cool.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
+    this->target_temperature = custom_cool.temperature;  // 29
   } else if (this->custom_preset == "Heat") {
-      this->mode = climate::CLIMATE_MODE_HEAT;
-      this->fan_mode = custom_heat.fan_mode; //climate::CLIMATE_FAN_AUTO;
-      this->swing_mode = custom_heat.swing_mode; //climate::CLIMATE_SWING_OFF;
-      this->target_temperature = custom_heat.temperature; // 24
+    this->mode = climate::CLIMATE_MODE_HEAT;
+    this->fan_mode = custom_heat.fan_mode;               // climate::CLIMATE_FAN_AUTO;
+    this->swing_mode = custom_heat.swing_mode;           // climate::CLIMATE_SWING_OFF;
+    this->target_temperature = custom_heat.temperature;  // 24
   } else if (this->custom_preset == "Dry") {
-      this->mode = climate::CLIMATE_MODE_DRY;
-      this->fan_mode = custom_dry.fan_mode; //climate::CLIMATE_FAN_LOW;
-      this->swing_mode = custom_dry.swing_mode; //climate::CLIMATE_SWING_HORIZONTAL;
-      this->target_temperature = custom_dry.temperature; // 29
+    this->mode = climate::CLIMATE_MODE_DRY;
+    this->fan_mode = custom_dry.fan_mode;               // climate::CLIMATE_FAN_LOW;
+    this->swing_mode = custom_dry.swing_mode;           // climate::CLIMATE_SWING_HORIZONTAL;
+    this->target_temperature = custom_dry.temperature;  // 29
   } else if (this->custom_preset == "Fan_only") {
-      this->mode = climate::CLIMATE_MODE_FAN_ONLY;
-      this->fan_mode = custom_fan_only.fan_mode; //climate::CLIMATE_FAN_LOW;
-      this->swing_mode = custom_fan_only.swing_mode; //climate::CLIMATE_SWING_OFF;
+    this->mode = climate::CLIMATE_MODE_FAN_ONLY;
+    this->fan_mode = custom_fan_only.fan_mode;      // climate::CLIMATE_FAN_LOW;
+    this->swing_mode = custom_fan_only.swing_mode;  // climate::CLIMATE_SWING_OFF;
   }
-  this->custom_preset = (std::string)"None";
+  this->custom_preset = (std::string) "None";
 
   switch (this->mode) {
     case climate::CLIMATE_MODE_COOL:
@@ -481,7 +483,7 @@ void HitachiClimate::setup() {
     this->fan_mode = climate::CLIMATE_FAN_AUTO;
     this->swing_mode = climate::CLIMATE_SWING_OFF;
     this->preset = climate::CLIMATE_PRESET_NONE;
-    this->custom_preset = (std::string)"None";
+    this->custom_preset = (std::string) "None";
   }
   // Never send nan to HA
   if (std::isnan(this->target_temperature))

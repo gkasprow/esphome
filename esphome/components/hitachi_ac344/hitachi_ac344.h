@@ -66,11 +66,11 @@ const uint8_t HITACHI_AC344_SWINGH_LEFT_MAX = 5;   // 0b101
 
 const uint8_t HITACHI_AC344_SWINGV_BYTE = 37;
 const uint8_t HITACHI_AC344_SWINGV_OFFSET = 5;  // Mask 0b00x00000
-const uint8_t HITACHI_AC344_SWINGV_SIZE = 1;  // Mask 0b00x00000
+const uint8_t HITACHI_AC344_SWINGV_SIZE = 1;    // Mask 0b00x00000
 
 const uint8_t HITACHI_AC344_MILDEWPROOF_BYTE = HITACHI_AC344_SWINGV_BYTE;
 const uint8_t HITACHI_AC344_MILDEWPROOF_OFFSET = 2;  // Mask 0b00000x00
-const uint8_t HITACHI_AC344_MILDEWPROOF_SIZE = 1;       // Mask 0b00000xxx
+const uint8_t HITACHI_AC344_MILDEWPROOF_SIZE = 1;    // Mask 0b00000xxx
 
 const uint16_t HITACHI_AC344_STATE_LENGTH = 43;
 const uint16_t HITACHI_AC344_BITS = HITACHI_AC344_STATE_LENGTH * 8;
@@ -80,7 +80,7 @@ const uint16_t HITACHI_AC344_BITS = HITACHI_AC344_STATE_LENGTH * 8;
 
 typedef struct CustomStruct {
   uint8_t temperature = 20;
-  climate::ClimateSwingMode  swing_mode = climate::CLIMATE_SWING_OFF;
+  climate::ClimateSwingMode swing_mode = climate::CLIMATE_SWING_OFF;
   climate::ClimateFanMode fan_mode = climate::CLIMATE_FAN_AUTO;
 } CustomStruct;
 
@@ -95,13 +95,9 @@ class HitachiClimate : public climate_ir::ClimateIR {
     this->custom_presets_ = {"None", "Cool", "Dry", "Heat", "Fan_only"};
   }
 
-  void set_horizontal_default(uint8_t position) {
-    this->default_horizontal_direction_ = position;
-  }
+  void set_horizontal_default(uint8_t position) { this->default_horizontal_direction_ = position; }
 
-  void set_mildewproof(bool on) {
-    mildewproof = on;
-  }
+  void set_mildewproof(bool on) { mildewproof = on; }
 
   void set_custom_cool(uint8_t temperature, climate::ClimateSwingMode swing_mode, climate::ClimateFanMode fan_mode) {
     custom_cool.temperature = temperature;
@@ -174,7 +170,6 @@ class HitachiClimate : public climate_ir::ClimateIR {
   climate::ClimateTraits traits() override;
 
   void control(const climate::ClimateCall &call) override;
-
 };
 
 }  // namespace hitachi_ac344
