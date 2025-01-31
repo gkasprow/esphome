@@ -93,21 +93,60 @@ async def to_code(config):
     cg.add(var.set_mildewproof(config[CONF_MILDEWPROOF]))
 
     if CONF_CUSTOM_COOL in config:
-        cg.add(var.set_custom_cool(config[CONF_CUSTOM_COOL][CONF_TEMPERATURE], config[CONF_CUSTOM_COOL][CONF_SWING], config[CONF_CUSTOM_COOL][CONF_FAN_MODE]))
+        cg.add(
+            var.set_custom_cool(
+                config[CONF_CUSTOM_COOL][CONF_TEMPERATURE],
+                config[CONF_CUSTOM_COOL][CONF_SWING],
+                config[CONF_CUSTOM_COOL][CONF_FAN_MODE]
+            )
+        )
     else:
-        cg.add(var.set_custom_cool(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_AUTO))
+        cg.add(
+            var.set_custom_cool(
+                28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_AUTO
+            )
+        )
 
     if CONF_CUSTOM_HEAT in config:
-        cg.add(var.set_custom_heat(config[CONF_CUSTOM_HEAT][CONF_TEMPERATURE], config[CONF_CUSTOM_HEAT][CONF_SWING], config[CONF_CUSTOM_HEAT][CONF_FAN_MODE]))
+        cg.add(
+            var.set_custom_heat(
+                config[CONF_CUSTOM_HEAT][CONF_TEMPERATURE],
+                config[CONF_CUSTOM_HEAT][CONF_SWING],
+                config[CONF_CUSTOM_HEAT][CONF_FAN_MODE]
+            )
+        )
     else:
-        cg.add(var.set_custom_heat(24, climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_AUTO))
+        cg.add(
+            var.set_custom_heat(
+                24, climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_AUTO
+            )
+        )
 
     if CONF_CUSTOM_DRY in config:
-        cg.add(var.set_custom_dry(config[CONF_CUSTOM_DRY][CONF_TEMPERATURE], config[CONF_CUSTOM_DRY][CONF_SWING], config[CONF_CUSTOM_DRY][CONF_FAN_MODE]))
+        cg.add(
+            var.set_custom_dry(
+                config[CONF_CUSTOM_DRY][CONF_TEMPERATURE],
+                config[CONF_CUSTOM_DRY][CONF_SWING],
+                config[CONF_CUSTOM_DRY][CONF_FAN_MODE]
+            )
+        )
     else:
-        cg.add(var.set_custom_dry(28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_LOW))
+        cg.add(
+            var.set_custom_dry(
+                28, climate_ns.CLIMATE_SWING_HORIZONTAL, climate_ns.CLIMATE_FAN_LOW
+            )
+        )
 
     if CONF_CUSTOM_FAN_ONLY in config:
-        cg.add(var.set_custom_fan_only(config[CONF_CUSTOM_FAN_ONLY][CONF_SWING], config[CONF_CUSTOM_FAN_ONLY][CONF_FAN_MODE]))
+        cg.add(
+            var.set_custom_fan_only(
+                config[CONF_CUSTOM_FAN_ONLY][CONF_SWING],
+                config[CONF_CUSTOM_FAN_ONLY][CONF_FAN_MODE]
+            )
+        )
     else:
-        cg.add(var.set_custom_fan_only(climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_LOW))
+        cg.add(
+            var.set_custom_fan_only(
+                climate_ns.CLIMATE_SWING_OFF, climate_ns.CLIMATE_FAN_LOW
+            )
+        )
