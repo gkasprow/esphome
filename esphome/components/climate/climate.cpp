@@ -716,9 +716,9 @@ void Climate::dump_traits_(const char *tag) {
     for (ClimateEcoMode m : traits.get_supported_eco_modes())
       ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_eco_mode_to_string(m)));
   }
-  if (!traits.get_supported_pellet_rates().empty()) {
+  if (!traits.get_supported_pellet_modes().empty()) {
     ESP_LOGCONFIG(tag, "  [x] Supported pellet feed rates:");
-    for (ClimatePelletRate m : traits.get_supported_pellet_rates())
+    for (ClimatePelletRate m : traits.get_supported_pellet_modes())
       ESP_LOGCONFIG(tag, "      - %s", LOG_STR_ARG(climate_pellet_rate_to_string(m)));
   }
 }
