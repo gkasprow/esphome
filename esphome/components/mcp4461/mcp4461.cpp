@@ -46,8 +46,8 @@ void MCP4461Component::loop() {
         // set terminal register changes
         if (i == 0 || i == 2) {
           MCP4461TerminalIdx terminal_connector = MCP4461TerminalIdx::MCP4461_TERMINAL_0;
-          if (i > 1)
-          terminal_connector = MCP4461TerminalIdx::MCP4461_TERMINAL_0;
+          if (i > 0)
+            terminal_connector = MCP4461TerminalIdx::MCP4461_TERMINAL_1;
           uint8_t new_terminal_value = this->calc_terminal_connector_byte_(terminal_connector);
           if (new_terminal_value != this->get_terminal_register_(terminal_connector)) {
             ESP_LOGV(TAG, "updating terminal %d to new value %d", (uint8_t) terminal_connector, new_terminal_value);
@@ -63,9 +63,9 @@ void MCP4461Component::loop() {
 uint8_t MCP4461Component::calc_terminal_connector_byte_(MCP4461TerminalIdx terminal_connector) {
   uint8_t i;
   if ((uint8_t) terminal_connector == 0 || (uint8_t) terminal_connector == 1)
-  i = 0;
+    i = 0;
   else
-  i = 2;
+    i = 2;
   uint8_t new_value_byte_array[8];
   new_value_byte_array[0] = (uint8_t) this->reg_[i].terminal_b;
   new_value_byte_array[1] = (uint8_t) this->reg_[i].terminal_w;
@@ -85,13 +85,13 @@ uint8_t MCP4461Component::calc_terminal_connector_byte_(MCP4461TerminalIdx termi
 
 void MCP4461Component::update_terminal_register_(MCP4461TerminalIdx terminal_connector) {
   if ((uint8_t) terminal_connector != 0 && (uint8_t) terminal_connector != 1)
-  return;
+    return;
   uint8_t terminal_data;
   terminal_data = this->get_terminal_register_(terminal_connector);
   ESP_LOGV(TAG, "Got terminal register %d data %0xh", terminal_connector, terminal_data);
   uint8_t wiper_index = 0;
   if ((uint8_t) terminal_connector == 1)
-  wiper_index = 2;
+    wiper_index = 2;
   this->reg_[wiper_index].terminal_b = (((terminal_data) >> (0)) & 0x01);
   this->reg_[wiper_index].terminal_w = (((terminal_data) >> (1)) & 0x01);
   this->reg_[wiper_index].terminal_a = (((terminal_data) >> (2)) & 0x01);
@@ -120,9 +120,9 @@ bool MCP4461Component::is_writing_() { return (bool) bitRead(this->get_status_re
 uint8_t MCP4461Component::get_terminal_register_(MCP4461TerminalIdx terminal_connector) {
   uint8_t reg = 0;
   if ((uint8_t) terminal_connector == 0)
-  reg |= (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON0;
+    reg |= (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON0;
   else
-  reg |= (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON1;
+    reg |= (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON1;
   reg |= (uint8_t) MCP4461_COMMANDS::READ;
   uint16_t buf;
   if (!this->read_byte_16(reg, &buf)) {
@@ -136,59 +136,60 @@ uint8_t MCP4461Component::get_terminal_register_(MCP4461TerminalIdx terminal_con
 void MCP4461Component::set_terminal_register_(MCP4461TerminalIdx terminal_connector, uint8_t data) {
   uint8_t addr;
   if ((uint8_t) terminal_connector == 0)
-  addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON0;
+    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON0;
   else if ((uint8_t) terminal_connector == 1)
-  addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON1;
+    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_TCON1;
   else
-  return;
+    return;
   this->mcp4461_write_(addr, data);
 }
 
 void MCP4461Component::enable_terminal_(uint8_t wiper, char terminal) {
   if (wiper > 3)
-  return;
+    return;
   ESP_LOGV(TAG, "Enabling terminal %c of wiper %d", terminal, wiper);
   switch (terminal) {
-  case 'h':
-    this->reg_[wiper].terminal_hw = true;
-    break;
-  case 'a':
-    this->reg_[wiper].terminal_a = true;
-    break;
-  case 'b':
-    this->reg_[wiper].terminal_b = true;
-    break;
-  case 'w':
-    this->reg_[wiper].terminal_w = true;
-    break;
-  default:
-    this->status_set_warning();
-    ESP_LOGW(TAG, "Unknown terminal %c specified", terminal);
-    return;
+    case 'h':
+      this->reg_[wiper].terminal_hw = true;
+      break;
+    case 'a':
+      this->reg_[wiper].terminal_a = true;
+      break;
+    case 'b':
+      this->reg_[wiper].terminal_b = true;
+      break;
+    case 'w':
+      this->reg_[wiper].terminal_w = true;
+      break;
+    default:
+      this->status_set_warning();
+      ESP_LOGW(TAG, "Unknown terminal %c specified", terminal);
+      return;
   }
   this->update_ = true;
 }
 
 void MCP4461Component::disable_terminal_(uint8_t wiper, char terminal) {
-  if (wiper > 3) return;
+  if (wiper > 3)
+    return;
   ESP_LOGV(TAG, "Disabling terminal %c of wiper %d", terminal, wiper);
   switch (terminal) {
-  case 'h':
-    this->reg_[wiper].terminal_hw = false;
-    break;
-  case 'a':
-    this->reg_[wiper].terminal_a = false;
-    break;
-  case 'b':
-    this->reg_[wiper].terminal_b = false;
-    break;
-  case 'w':
-    this->reg_[wiper].terminal_w = false;
-    break;
-  default:
-    this->status_set_warning();
-    ESP_LOGW(TAG, "Unknown terminal %c specified", terminal);
-    return;
+    case 'h':
+      this->reg_[wiper].terminal_hw = false;
+      break;
+    case 'a':
+      this->reg_[wiper].terminal_a = false;
+      break;
+    case 'b':
+      this->reg_[wiper].terminal_b = false;
+      break;
+    case 'w':
+      this->reg_[wiper].terminal_w = false;
+      break;
+    default:
+      this->status_set_warning();
+      ESP_LOGW(TAG, "Unknown terminal %c specified", terminal);
+      return;
   }
   this->update_ = true;
 }
@@ -201,24 +202,24 @@ uint8_t MCP4461Component::get_wiper_address_(uint8_t wiper) {
     wiper = wiper - 4;
   }
   switch (wiper) {
-  case 0:
-    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW0;
-    break;
-  case 1:
-    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW1;
-    break;
-  case 2:
-    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW2;
-    break;
-  case 3:
-    addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW3;
-    break;
-  default:
-    ESP_LOGE(TAG, "unknown wiper specified");
-    return 0;
+    case 0:
+      addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW0;
+      break;
+    case 1:
+      addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW1;
+      break;
+    case 2:
+      addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW2;
+      break;
+    case 3:
+      addr = (uint8_t) MCP4461_ADDRESSES::MCP4461_VW3;
+      break;
+    default:
+      ESP_LOGE(TAG, "unknown wiper specified");
+      return 0;
   }
   if (nonvolatile)
-  addr = addr + 0x20;
+    addr = addr + 0x20;
   return addr;
 }
 
@@ -316,9 +317,9 @@ uint16_t MCP4461Component::get_eeprom_value(MCP4461EEPRomLocation location) {
 void MCP4461Component::set_eeprom_value(MCP4461EEPRomLocation location, uint16_t value) {
   uint8_t addr = 0;
   if (value > 256)
-  return;
+    return;
   else if (value == 256)
-  addr = 1;
+    addr = 1;
   uint8_t data;
   addr |= (uint8_t) (MCP4461_EEPROM_1 + ((uint8_t) location * 0x10));
   data = (uint8_t) (value & 0x00ff);
@@ -331,9 +332,9 @@ void MCP4461Component::set_eeprom_value(MCP4461EEPRomLocation location, uint16_t
 void MCP4461Component::mcp4461_write_(uint8_t addr, uint16_t data) {
   uint8_t reg = 0;
   if (data > 0x100)
-  return;
+    return;
   if (data > 0xFF)
-  reg = 1;
+    reg = 1;
   uint8_t value_byte;
   value_byte = (uint8_t) (data & 0x00ff);
   ESP_LOGV(TAG, "Writing value %d", data);
