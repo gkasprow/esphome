@@ -22,7 +22,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_DISABLE_WIPER_0, default=False): cv.boolean,
             cv.Optional(CONF_DISABLE_WIPER_1, default=False): cv.boolean,
             cv.Optional(CONF_DISABLE_WIPER_2, default=False): cv.boolean,
-            cv.Optional(CONF_DISABLE_WIPER_3, default=False): cv.boolean
+            cv.Optional(CONF_DISABLE_WIPER_3, default=False): cv.boolean,
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -36,7 +36,7 @@ async def to_code(config):
         config[CONF_DISABLE_WIPER_0],
         config[CONF_DISABLE_WIPER_1],
         config[CONF_DISABLE_WIPER_2],
-        config[CONF_DISABLE_WIPER_3]
+        config[CONF_DISABLE_WIPER_3],
     )
     await cg.register_component(var, config)
     await i2c.register_i2c_device(var, config)
