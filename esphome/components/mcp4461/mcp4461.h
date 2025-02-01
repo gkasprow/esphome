@@ -3,9 +3,6 @@
 #include "esphome/core/component.h"
 #include "esphome/components/i2c/i2c.h"
 
-#define get_single_bit(value, bit)            (((value) >> (bit)) & 0x01)
-#define set_single_bit(value, bit)             ((value) |= (1UL << (bit)))
-
 namespace esphome {
 namespace mcp4461 {
 
