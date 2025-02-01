@@ -13,7 +13,7 @@ void MCP4461Wiper::write_state(float state) {
   ESP_LOGV(TAG, "Got value %02f from frontend", state);
   const float max_taps = 256.0;
   state = state * 1000.0;
-  if(state > max_taps)
+  if (state > max_taps)
     state = 256.0;
   uint16_t taps;
   taps = static_cast<uint16_t>(state);
