@@ -10,13 +10,20 @@ namespace mcp4461 {
 
 class MCP4461Wiper : public output::FloatOutput {
  public:
-  MCP4461Wiper(MCP4461Component *parent, MCP4461WiperIdx wiper, bool enable, uint16_t initial_state, bool terminal_a, bool terminal_b, bool terminal_w)
-      : parent_(parent), wiper_(wiper), enable_(enable), initial_state_(initial_state), terminal_a_(terminal_a), terminal_b_(terminal_b), terminal_w_(terminal_w) {
-    //set initial wiper state if desired
+  MCP4461Wiper(MCP4461Component *parent, MCP4461WiperIdx wiper, bool enable, uint16_t initial_state, bool terminal_a,
+               bool terminal_b, bool terminal_w)
+      : parent_(parent),
+        wiper_(wiper),
+        enable_(enable),
+        initial_state_(initial_state),
+        terminal_a_(terminal_a),
+        terminal_b_(terminal_b),
+        terminal_w_(terminal_w) {
+    // set initial wiper state if desired
     if (initial_state < 257) {
-     parent->set_wiper_level_(wiper,  initial_state);
+      parent->set_wiper_level_(wiper,  initial_state);
     }
-    //update wiper connection state
+    // update wiper connection state
     if (!enable && wiper < 4) {
       parent->reg_[wiper].enabled = false;
       parent->disable_terminal_(wiper, 'h');
