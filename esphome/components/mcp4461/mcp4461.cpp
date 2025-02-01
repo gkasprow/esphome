@@ -92,14 +92,14 @@ void MCP4461Component::update_terminal_register_(MCP4461TerminalIdx terminal_con
   uint8_t wiper_index = 0;
   if ((uint8_t) terminal_connector == 1)
     wiper_index = 2;
-  this->reg_[wiper_index].terminal_b = (((terminal_data) >> (0)) & 0x01);
-  this->reg_[wiper_index].terminal_w = (((terminal_data) >> (1)) & 0x01);
-  this->reg_[wiper_index].terminal_a = (((terminal_data) >> (2)) & 0x01);
-  this->reg_[wiper_index].terminal_hw = (((terminal_data) >> (3)) & 0x01);
-  this->reg_[(wiper_index + 1)].terminal_b = (((terminal_data) >> (4)) & 0x01);
-  this->reg_[(wiper_index + 1)].terminal_w = (((terminal_data) >> (5)) & 0x01);
-  this->reg_[(wiper_index + 1)].terminal_a = (((terminal_data) >> (6)) & 0x01);
-  this->reg_[(wiper_index + 1)].terminal_hw = (((terminal_data) >> (7)) & 0x01);
+  this->reg_[wiper_index].terminal_b = ((terminal_data >> 0) & 0x01);
+  this->reg_[wiper_index].terminal_w = ((terminal_data >> 1) & 0x01);
+  this->reg_[wiper_index].terminal_a = ((terminal_data >> 2) & 0x01);
+  this->reg_[wiper_index].terminal_hw = ((terminal_data >> 3) & 0x01);
+  this->reg_[(wiper_index + 1)].terminal_b = ((terminal_data >> 4) & 0x01);
+  this->reg_[(wiper_index + 1)].terminal_w = ((terminal_data >> 5) & 0x01);
+  this->reg_[(wiper_index + 1)].terminal_a = ((terminal_data >> 6) & 0x01);
+  this->reg_[(wiper_index + 1)].terminal_hw = ((terminal_data >> 7) & 0x01);
 }
 
 uint16_t MCP4461Component::get_status_register_() {
@@ -115,7 +115,7 @@ uint16_t MCP4461Component::get_status_register_() {
   return buf;
 }
 
-bool MCP4461Component::is_writing_() { return (bool) bitRead(this->get_status_register_(), 4); }
+bool MCP4461Component::is_writing_() { return (bool) ((this->get_status_register_() >> 4) & 0x01); }
 
 uint8_t MCP4461Component::get_terminal_register_(MCP4461TerminalIdx terminal_connector) {
   uint8_t reg = 0;
