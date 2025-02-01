@@ -186,6 +186,7 @@ SWING_MODES = cv.Schema(
 ECO_MODES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
+        cv.Required(CONF_ID): cv.string,
         cv.Optional(CONF_PELLET_ECO_ON_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_ECO_OFF_VALUE): cv.uint8_t,
     }
@@ -201,6 +202,7 @@ validate_climate_eco_mode = cv.enum(CLIMATE_PELLET_ECO_MODES, upper=True)
 PELLET_RATES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
+        cv.Required(CONF_ID): cv.string,
         cv.Optional(CONF_PELLET_RATE_LOW_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_RATE_MED_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_RATE_HIGH_VALUE): cv.uint8_t,
