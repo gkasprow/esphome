@@ -11,7 +11,7 @@ CONF_DISABLE_WIPER_1 = "disable_wiper_1"
 CONF_DISABLE_WIPER_2 = "disable_wiper_2"
 CONF_DISABLE_WIPER_3 = "disable_wiper_3"
 
-mcp4461_ns = cg.esphome_ns.namespace("Mcp4461")
+mcp4461_ns = cg.esphome_ns.namespace("MCP4461")
 Mcp4461Component = mcp4461_ns.class_("Mcp4461Component", cg.Component, i2c.I2CDevice)
 CONF_MCP4461_ID = "mcp4461_id"
 
