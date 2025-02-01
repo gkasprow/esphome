@@ -87,14 +87,14 @@ void MCP4461Component::update_terminal_register_(MCP4461TerminalIdx terminal_con
   ESP_LOGV(TAG, "Got terminal register %d data %0xh", terminal_connector, terminal_data);
   uint8_t wiper_index = 0;
   if((uint8_t) terminal_connector == 1) wiper_index = 2;
-  this->reg_[wiper_index].terminal_b = bitRead(terminal_data, 0);
-  this->reg_[wiper_index].terminal_w = bitRead(terminal_data, 1);
-  this->reg_[wiper_index].terminal_a = bitRead(terminal_data, 2);
-  this->reg_[wiper_index].terminal_hw = bitRead(terminal_data, 3);
-  this->reg_[(wiper_index + 1)].terminal_b = bitRead(terminal_data, 4);
-  this->reg_[(wiper_index + 1)].terminal_w = bitRead(terminal_data, 5);
-  this->reg_[(wiper_index + 1)].terminal_a = bitRead(terminal_data, 6);
-  this->reg_[(wiper_index + 1)].terminal_hw = bitRead(terminal_data, 7);
+  this->reg_[wiper_index].terminal_b = get_single_bit(terminal_data, 0);
+  this->reg_[wiper_index].terminal_w = get_single_bit(terminal_data, 1);
+  this->reg_[wiper_index].terminal_a = get_single_bit(terminal_data, 2);
+  this->reg_[wiper_index].terminal_hw = get_single_bit(terminal_data, 3);
+  this->reg_[(wiper_index + 1)].terminal_b = get_single_bit(terminal_data, 4);
+  this->reg_[(wiper_index + 1)].terminal_w = get_single_bit(terminal_data, 5);
+  this->reg_[(wiper_index + 1)].terminal_a = get_single_bit(terminal_data, 6);
+  this->reg_[(wiper_index + 1)].terminal_hw = get_single_bit(terminal_data, 7);
 }
 
 uint16_t MCP4461Component::get_status_register_() {
@@ -191,7 +191,7 @@ void MCP4461Component::disable_terminal_(uint8_t wiper, char terminal) {
 uint8_t MCP4461Component::get_wiper_address_(uint8_t wiper) {
   uint8_t addr;
   bool nonvolatile = false;
-  if(wiper > 3) { 
+  if(wiper > 3) {
     nonvolatile = true;
     wiper = wiper - 4;
   }
