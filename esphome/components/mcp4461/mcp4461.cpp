@@ -19,9 +19,9 @@ void MCP4461Component::setup() {
 }
 
 void MCP4461Component::begin_() {
-  for(uint8_t i=0;i<8;i++) {
+  for (uint8_t i=0;i<8;i++) {
     if (this->reg_[i].enabled)
-    this->reg_[i].state = this->get_wiper_level_(i);
+      this->reg_[i].state = this->get_wiper_level_(i);
   }
 }
 
@@ -36,14 +36,14 @@ void MCP4461Component::dump_config() {
 void MCP4461Component::loop() {
   if (this->update_) {
     uint8_t i;
-    for(i=0;i<8;i++) {
-      //set wiper i state if changed
+    for (i=0;i<8;i++) {
+      // set wiper i state if changed
       if (this->reg_[i].state != this->get_wiper_level_(i)) {
         this->write_wiper_level_(i, this->reg_[i].state);
       }
-      //terminal register changes only applicable to wipers 0-3 !
+      // terminal register changes only applicable to wipers 0-3 !
       if (i < 4) {
-        //set terminal register changes
+        // set terminal register changes
         if (i == 0 || i == 2) {
           MCP4461TerminalIdx terminal_connector = MCP4461TerminalIdx::MCP4461_TERMINAL_0;
           if (i > 1)
