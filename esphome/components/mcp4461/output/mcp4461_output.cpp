@@ -14,6 +14,8 @@ void Mcp4461Wiper::write_state(float state) {
   const float max_taps = 256.0;
   state = state * 1000.0;
   if (state > max_taps) {
+    ESP_LOGW(TAG, "Cannot set taps > 0.256 for wiper %d, clamping to 0.256!", this->wiper_);
+    return;
     state = 256.0;
   }
   uint16_t taps;
