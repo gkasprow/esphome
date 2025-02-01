@@ -190,3 +190,13 @@ button:
         channel: 1
         button: 1
         check: 1
+  - platform: template
+    name: Nexus
+    on_press:
+      remote_transmitter.transmit_nexus:
+        channel: 1
+        address: 42
+        temperature: 42.0
+        humidity: 69
+        battery_level: false
+        force_update: false

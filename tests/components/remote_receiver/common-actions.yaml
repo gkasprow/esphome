@@ -142,3 +142,8 @@ on_mirage:
   then:
     - lambda: |-
         ESP_LOGD("mirage", "Mirage data: %s", format_hex(x.data).c_str());
+on_nexus:
+  then:
+    - logger.log:
+        format: "on_nexus: %u %u %.1f %u %d %d"
+        args: ["x.channel", "x.address", "x.temperature", "x.humidity", "x.battery_level", "x.force_update"]
