@@ -10,14 +10,14 @@ MCP4461Wiper = mcp4461_ns.class_("MCP4461Wiper", output.FloatOutput)
 
 MCP4461WiperIdx = mcp4461_ns.enum("MCP4461WiperIdx")
 CHANNEL_OPTIONS = {
-  'A': MCP4461WiperIdx.MCP4461_WIPER_0,
-  'B': MCP4461WiperIdx.MCP4461_WIPER_1,
-  'C': MCP4461WiperIdx.MCP4461_WIPER_2,
-  'D': MCP4461WiperIdx.MCP4461_WIPER_3,
-  'E': MCP4461WiperIdx.MCP4461_WIPER_4,
-  'F': MCP4461WiperIdx.MCP4461_WIPER_5,
-  'G': MCP4461WiperIdx.MCP4461_WIPER_6,
-  'H': MCP4461WiperIdx.MCP4461_WIPER_7,
+    'A': MCP4461WiperIdx.MCP4461_WIPER_0,
+    'B': MCP4461WiperIdx.MCP4461_WIPER_1,
+    'C': MCP4461WiperIdx.MCP4461_WIPER_2,
+    'D': MCP4461WiperIdx.MCP4461_WIPER_3,
+    'E': MCP4461WiperIdx.MCP4461_WIPER_4,
+    'F': MCP4461WiperIdx.MCP4461_WIPER_5,
+    'G': MCP4461WiperIdx.MCP4461_WIPER_6,
+    'H': MCP4461WiperIdx.MCP4461_WIPER_7,
 }
 
 CONF_ENABLE = "enable"
@@ -36,7 +36,7 @@ CONFIG_SCHEMA = output.FLOAT_OUTPUT_SCHEMA.extend(
         cv.Optional(CONF_INITIAL_STATE, default=257): cv.uint16_t,
         cv.Optional(CONF_TERMINAL_A, default=True): cv.boolean,
         cv.Optional(CONF_TERMINAL_B, default=True): cv.boolean,
-        cv.Optional(CONF_TERMINAL_W, default=True): cv.boolean
+        cv.Optional(CONF_TERMINAL_W, default=True): cv.boolean,
     }
 )
 
