@@ -46,6 +46,7 @@ async def to_code(config):
         parent,
         config[CONF_CHANNEL],
         config[CONF_ENABLE],
+        config[CONF_INITIAL_VALUE],
         config[CONF_TERMINAL_A],
         config[CONF_TERMINAL_B],
         config[CONF_TERMINAL_W],
