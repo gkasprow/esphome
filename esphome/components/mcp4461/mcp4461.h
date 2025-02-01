@@ -53,7 +53,7 @@ enum class Mcp4461TerminalIdx { MCP4461_TERMINAL_0 = 0, MCP4461_TERMINAL_1 = 1 }
 class Mcp4461Wiper;
 
 /// Mcp4461 Component
-class Mcp4461Component : public Component, public i2c::I2CDevice {
+class Mcp4461 : public Component, public i2c::I2CDevice {
  public:
   Mcp4461Component(bool disable_wiper_0, bool disable_wiper_1, bool disable_wiper_2, bool disable_wiper_3)
       : wiper_0_enabled_(false), wiper_1_enabled_(false), wiper_2_enabled_(false), wiper_3_enabled_(false) {
