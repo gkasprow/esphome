@@ -12,6 +12,7 @@ from esphome.const import (
     CONF_FAN_MODE,
     CONF_TEMPERATURE,
     CONF_SENSOR_DATAPOINT,
+    CONF_NAME
 )
 from .. import tuya_ns, CONF_TUYA_ID, Tuya
 
@@ -187,38 +188,23 @@ ECO_MODES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
         cv.Required(CONF_ID): cv.string,
+        cv.Required(CONF_NAME): cv.string,
         cv.Optional(CONF_PELLET_ECO_ON_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_ECO_OFF_VALUE): cv.uint8_t,
     }
 )
 
-ClimateEcoMode = tuya_ns.enum("ClimateEcoMode")
-CLIMATE_PELLET_ECO_MODES = {
-    "ON": ClimateEcoMode.CLIMATE_PELLET_ECO_ON_VALUE,
-    "OFF": ClimateEcoMode.CLIMATE_PELLET_ECO_OFF_VALUE,
-}
-
-validate_climate_eco_mode = cv.enum(CLIMATE_PELLET_ECO_MODES, upper=True)
 PELLET_RATES = cv.Schema(
     {
         cv.Required(CONF_DATAPOINT): cv.uint8_t,
         cv.Required(CONF_ID): cv.string,
+        cv.Required(CONF_NAME): cv.string,
         cv.Optional(CONF_PELLET_RATE_LOW_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_RATE_MED_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_RATE_HIGH_VALUE): cv.uint8_t,
         cv.Optional(CONF_PELLET_RATE_MAX_VALUE): cv.uint8_t,
     }
 )
-
-ClimatePelletRate = tuya_ns.enum("ClimatePelletRate")
-CLIMATE_PELLET_RATES = {
-    "LOW": ClimatePelletRate.CLIMATE_PELLET_RATE_LOW_VALUE,
-    "MED": ClimatePelletRate.CLIMATE_PELLET_RATE_MED_VALUE,
-    "HIGH": ClimatePelletRate.CLIMATE_PELLET_RATE_HIGH_VALUE,
-    "MAX": ClimatePelletRate.CLIMATE_PELLET_RATE_MAX_VALUE,
-}
-
-validate_climate_pellet_rate = cv.enum(CLIMATE_PELLET_RATES, upper=True)
 
 CONFIG_SCHEMA = cv.All(
     climate.CLIMATE_SCHEMA.extend(

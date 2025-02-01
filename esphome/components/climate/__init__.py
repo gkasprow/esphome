@@ -100,6 +100,24 @@ CLIMATE_PRESETS = {
 
 validate_climate_preset = cv.enum(CLIMATE_PRESETS, upper=True)
 
+ClimateEcoMode = climate_ns.enum("ClimateEcoMode")
+CLIMATE_PELLET_ECO_MODES = {
+    "ON": ClimateEcoMode.CLIMATE_PELLET_ECO_ON,
+    "OFF": ClimateEcoMode.CLIMATE_PELLET_ECO_OFF,
+}
+
+validate_climate_eco_mode = cv.enum(CLIMATE_PELLET_ECO_MODES, upper=True)
+
+ClimatePelletRate = climate_ns.enum("ClimatePelletRate")
+CLIMATE_PELLET_RATES = {
+    "LOW": ClimatePelletRate.CLIMATE_PELLET_RATE_LOW,
+    "MED": ClimatePelletRate.CLIMATE_PELLET_RATE_MED,
+    "HIGH": ClimatePelletRate.CLIMATE_PELLET_RATE_HIGH,
+    "MAX": ClimatePelletRate.CLIMATE_PELLET_RATE_MAX,
+}
+
+validate_climate_pellet_rate = cv.enum(CLIMATE_PELLET_RATES, upper=True)
+
 ClimateSwingMode = climate_ns.enum("ClimateSwingMode")
 CLIMATE_SWING_MODES = {
     "OFF": ClimateSwingMode.CLIMATE_SWING_OFF,
