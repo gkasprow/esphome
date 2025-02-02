@@ -21,14 +21,14 @@ class Mcp4461Wiper : public output::FloatOutput {
     // update wiper connection state
     if (!enable && wiper < 4) {
       parent->reg_[wiper].enabled = false;
-      parent->disable_terminal_(wiper, 'h');
+      parent->disable_terminal(wiper, 'h');
     }
     if (!terminal_a && wiper < 4)
-      parent->disable_terminal_(wiper, 'a');
+      parent->disable_terminal(wiper, 'a');
     if (!terminal_b && wiper < 4)
-      parent->disable_terminal_(wiper, 'b');
+      parent->disable_terminal(wiper, 'b');
     if (!terminal_w && wiper < 4)
-      parent->disable_terminal_(wiper, 'w');
+      parent->disable_terminal(wiper, 'w');
   }
   uint16_t get_wiper_level();
   void save_level();
