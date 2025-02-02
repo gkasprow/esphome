@@ -11,7 +11,7 @@ output:
     id: digipot_wiper_1
     mcp4461_id: mcp4461_digipot_01
     channel: A
-  
+
   - platform: mcp4461
     id: digipot_wiper_2
     mcp4461_id: mcp4461_digipot_01
