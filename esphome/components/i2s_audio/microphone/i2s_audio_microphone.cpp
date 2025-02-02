@@ -127,7 +127,7 @@ void I2SAudioMicrophone::start_() {
       .auto_clear = false,
   };
   /* Allocate a new RX channel and get the handle of this channel */
-  err = i2s_new_channel(&chan_cfg, NULL, &this->rx_handle);
+  err = i2s_new_channel(&chan_cfg, NULL, &this->rx_handle_);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error creating new I2S channel: %s", esp_err_to_name(err));
     this->status_set_error();
@@ -160,7 +160,7 @@ void I2SAudioMicrophone::start_() {
       .gpio_cfg = pin_config,
   };
   /* Initialize the channel */
-  err = i2s_channel_init_std_mode(this->rx_handle, &std_cfg);
+  err = i2s_channel_init_std_mode(this->rx_handle_, &std_cfg);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error initializing I2S channel: %s", esp_err_to_name(err));
     this->status_set_error();
@@ -168,7 +168,7 @@ void I2SAudioMicrophone::start_() {
   }
 
   /* Before reading data, start the RX channel first */
-  i2s_channel_enable(this->rx_handle);
+  i2s_channel_enable(this->rx_handle_);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error enabling I2S Microphone: %s", esp_err_to_name(err));
     this->status_set_error();
@@ -218,14 +218,14 @@ void I2SAudioMicrophone::stop_() {
   }
 #else
   /* Have to stop the channel before deleting it */
-  err = i2s_channel_disable(this->rx_handle);
+  err = i2s_channel_disable(this->rx_handle_);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error stopping I2S microphone: %s", esp_err_to_name(err));
     this->status_set_error();
     return;
   }
   /* If the handle is not needed any more, delete it to release the channel resources */
-  err = i2s_del_channel(this->rx_handle);
+  err = i2s_del_channel(this->rx_handle_);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error deleting I2S channel: %s", esp_err_to_name(err));
     this->status_set_error();
@@ -243,7 +243,7 @@ size_t I2SAudioMicrophone::read(int16_t *buf, size_t len) {
 #ifdef USE_I2S_LEGACY
   esp_err_t err = i2s_read(this->parent_->get_port(), buf, len, &bytes_read, (100 / portTICK_PERIOD_MS));
 #else
-  esp_err_t err = i2s_channel_read(this->rx_handle, buf, len, &bytes_read, (100 / portTICK_PERIOD_MS));
+  esp_err_t err = i2s_channel_read(this->rx_handle_, buf, len, &bytes_read, (100 / portTICK_PERIOD_MS));
 #endif
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error reading from I2S microphone: %s", esp_err_to_name(err));
