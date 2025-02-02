@@ -53,6 +53,16 @@ class GPIOPin {
 
   virtual void pin_mode(gpio::Flags flags) = 0;
 
+  /**
+   * @brief Retrieve GPIO pin flags.
+   *
+   * @note This is currently optional to limit changes but will be mandatory in a future update.
+   * It is primarily applied to internal pins for now.
+   *
+   * @return The GPIO flags describing the pin mode and properties.
+   */
+  virtual gpio::Flags get_flags() { return gpio::Flags::FLAG_NONE; }
+
   virtual bool digital_read() = 0;
 
   virtual void digital_write(bool value) = 0;
@@ -87,8 +97,6 @@ class InternalGPIOPin : public GPIOPin {
   virtual ISRInternalGPIOPin to_isr() const = 0;
 
   virtual uint8_t get_pin() const = 0;
-
-  virtual gpio::Flags get_flags() const = 0;
 
   bool is_internal() override { return true; }
 
