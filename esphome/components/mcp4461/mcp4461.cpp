@@ -62,6 +62,22 @@ void Mcp4461Component::loop() {
   }
 }
 
+uint16_t Mcp4461Component::get_status_register_() {
+  uint8_t reg = 0;
+  reg |= (uint8_t) Mcp4461Addresses::MCP4461_STATUS;
+  reg |= (uint8_t) Mcp4461Commands::READ;
+  uint16_t buf;
+  if (!this->read_byte_16(reg, &buf)) {
+    this->status_set_warning();
+    ESP_LOGW(TAG, "Error fetching status register value");
+    return 0;
+  }
+  return buf;
+}
+
+bool Mcp4461Component::is_writing_() { return (bool) ((this->get_status_register_() >> 4) & 0x01); }
+
+
 uint8_t Mcp4461Component::calc_terminal_connector_byte_(Mcp4461TerminalIdx terminal_connector) {
   uint8_t i;
   if (((uint8_t) terminal_connector == 0 || (uint8_t) terminal_connector == 1)) {
@@ -86,6 +102,23 @@ uint8_t Mcp4461Component::calc_terminal_connector_byte_(Mcp4461TerminalIdx termi
   return (uint8_t) new_value_byte;
 }
 
+uint8_t Mcp4461Component::get_terminal_register_(Mcp4461TerminalIdx terminal_connector) {
+  uint8_t reg = 0;
+  if ((uint8_t) terminal_connector == 0) {
+    reg |= (uint8_t) Mcp4461Addresses::MCP4461_TCON0;
+  } else {
+    reg |= (uint8_t) Mcp4461Addresses::MCP4461_TCON1;
+  }
+  reg |= (uint8_t) Mcp4461Commands::READ;
+  uint16_t buf;
+  if (!this->read_byte_16(reg, &buf)) {
+    this->status_set_warning();
+    ESP_LOGW(TAG, "Error fetching terminal register value");
+    return 0;
+  }
+  return (uint8_t) (buf & 0x00ff);
+}
+
 void Mcp4461Component::update_terminal_register_(Mcp4461TerminalIdx terminal_connector) {
   if (((uint8_t) terminal_connector != 0 && (uint8_t) terminal_connector != 1)) {
     return;
@@ -105,38 +138,6 @@ void Mcp4461Component::update_terminal_register_(Mcp4461TerminalIdx terminal_con
   this->reg_[(wiper_index + 1)].terminal_w = ((terminal_data >> 5) & 0x01);
   this->reg_[(wiper_index + 1)].terminal_a = ((terminal_data >> 6) & 0x01);
   this->reg_[(wiper_index + 1)].terminal_hw = ((terminal_data >> 7) & 0x01);
-}
-
-uint16_t Mcp4461Component::get_status_register_() {
-  uint8_t reg = 0;
-  reg |= (uint8_t) Mcp4461Addresses::MCP4461_STATUS;
-  reg |= (uint8_t) Mcp4461Commands::READ;
-  uint16_t buf;
-  if (!this->read_byte_16(reg, &buf)) {
-    this->status_set_warning();
-    ESP_LOGW(TAG, "Error fetching status register value");
-    return 0;
-  }
-  return buf;
-}
-
-bool Mcp4461Component::is_writing_() { return (bool) ((this->get_status_register_() >> 4) & 0x01); }
-
-uint8_t Mcp4461Component::get_terminal_register_(Mcp4461TerminalIdx terminal_connector) {
-  uint8_t reg = 0;
-  if ((uint8_t) terminal_connector == 0) {
-    reg |= (uint8_t) Mcp4461Addresses::MCP4461_TCON0;
-  } else {
-    reg |= (uint8_t) Mcp4461Addresses::MCP4461_TCON1;
-  }
-  reg |= (uint8_t) Mcp4461Commands::READ;
-  uint16_t buf;
-  if (!this->read_byte_16(reg, &buf)) {
-    this->status_set_warning();
-    ESP_LOGW(TAG, "Error fetching terminal register value");
-    return 0;
-  }
-  return (uint8_t) (buf & 0x00ff);
 }
 
 void Mcp4461Component::set_terminal_register_(Mcp4461TerminalIdx terminal_connector, uint8_t data) {
