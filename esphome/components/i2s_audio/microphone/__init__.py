@@ -12,6 +12,7 @@ from .. import (
     i2s_audio_component_schema,
     i2s_audio_ns,
     register_i2s_audio_component,
+    use_legacy,
 )
 
 CODEOWNERS = ["@jesserockz"]
@@ -72,6 +73,17 @@ CONFIG_SCHEMA = cv.All(
     ),
     validate_esp32_variant,
 )
+
+
+def _final_validate(config):
+    if not use_legacy():
+        if config[CONF_ADC_TYPE] == "internal":
+            raise cv.Invalid("Internal DAC is only compatible with legacy i2s driver.")
+        if config.get(CONF_PDM):
+            raise cv.Invalid("PDM mode is only compatible with legacy i2s driver.")
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):

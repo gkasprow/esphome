@@ -14,6 +14,7 @@ from .. import (
     i2s_audio_component_schema,
     i2s_audio_ns,
     register_i2s_audio_component,
+    use_legacy,
 )
 
 AUTO_LOAD = ["audio"]
@@ -108,6 +109,14 @@ CONFIG_SCHEMA = cv.All(
     ),
     validate_esp32_variant,
 )
+
+
+def _final_validate(_):
+    if not use_legacy():
+        raise cv.Invalid("I2S speaker is only compatible with legacy i2s driver.")
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
