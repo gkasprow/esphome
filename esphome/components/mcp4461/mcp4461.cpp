@@ -39,7 +39,7 @@ void Mcp4461Component::loop() {
     uint8_t i;
     for (i = 0; i < 8; i++) {
       // set wiper i state if changed
-      if (this->reg_[i].state != this->get_wiper_level_(i)) {
+      if (this->reg_[i].state != this->get_wiper_level(i)) {
         this->write_wiper_level_(i, this->reg_[i].state);
       }
       // terminal register changes only applicable to wipers 0-3 !
@@ -51,9 +51,9 @@ void Mcp4461Component::loop() {
             terminal_connector = Mcp4461TerminalIdx::MCP4461_TERMINAL_1;
           }
           uint8_t new_terminal_value = this->calc_terminal_connector_byte_(terminal_connector);
-          if (new_terminal_value != this->get_terminal_register_(terminal_connector)) {
+          if (new_terminal_value != this->get_terminal_register(terminal_connector)) {
             ESP_LOGV(TAG, "updating terminal %d to new value %d", (uint8_t) terminal_connector, new_terminal_value);
-            this->set_terminal_register_(terminal_connector, new_terminal_value);
+            this->set_terminal_register(terminal_connector, new_terminal_value);
           }
         }
       }
@@ -75,7 +75,7 @@ uint16_t Mcp4461Component::get_status_register() {
   return buf;
 }
 
-bool Mcp4461Component::is_writing_() { return (bool) ((this->get_status_register_() >> 4) & 0x01); }
+bool Mcp4461Component::is_writing_() { return (bool) ((this->get_status_register() >> 4) & 0x01); }
 
 uint8_t Mcp4461Component::get_wiper_address_(uint8_t wiper) {
   uint8_t addr;
@@ -133,7 +133,7 @@ uint16_t Mcp4461Component::get_wiper_level(uint8_t wiper) {
 
 void Mcp4461Component::update_wiper_level(uint8_t wiper) {
   uint16_t data;
-  data = this->get_wiper_level_(wiper);
+  data = this->get_wiper_level(wiper);
   ESP_LOGV(TAG, "Got value %d from wiper %d", data, wiper);
   this->reg_[wiper].state = data;
 }
@@ -231,7 +231,7 @@ void Mcp4461Component::update_terminal_register(Mcp4461TerminalIdx terminal_conn
     return;
   }
   uint8_t terminal_data;
-  terminal_data = this->get_terminal_register_(terminal_connector);
+  terminal_data = this->get_terminal_register(terminal_connector);
   ESP_LOGV(TAG, "Got terminal register %d data %0xh", (uint8_t) terminal_connector, terminal_data);
   uint8_t wiper_index = 0;
   if ((uint8_t) terminal_connector == 1) {
