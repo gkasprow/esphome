@@ -21,7 +21,7 @@ void Mcp4461Component::setup() {
 void Mcp4461Component::begin_() {
   for (uint8_t i = 0; i < 8; i++) {
     if (this->reg_[i].enabled) {
-      this->reg_[i].state = this->get_wiper_level_(i);
+      this->reg_[i].state = this->get_wiper_level(i);
     }
   }
 }
