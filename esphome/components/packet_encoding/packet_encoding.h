@@ -10,6 +10,14 @@
 #include <vector>
 #include <map>
 
+/**
+ * Providing packet encoding functions for exchanging data with a remote host.
+ *
+ * A transport is required to send the data; this is provided by a child class.
+ * The child class should implement the virtual functions send_packet_ and get_max_packet_size_.
+ * On receipt of a data packet, it should call `this->process_()` with the data.
+ */
+
 namespace esphome {
 namespace packet_encoding {
 
