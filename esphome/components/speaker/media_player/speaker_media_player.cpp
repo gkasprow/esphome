@@ -316,16 +316,23 @@ void SpeakerMediaPlayer::watch_media_commands_() {
           break;
         case media_player::MEDIA_PLAYER_COMMAND_REPEAT_ONE:
           if (this->single_pipeline_() || (media_command.announce.has_value() && media_command.announce.value())) {
-            this->announcement_repeat_ = true;
+            this->announcement_repeat_one_ = true;
           } else {
-            this->media_repeat_ = true;
+            this->media_repeat_one_ = true;
           }
           break;
         case media_player::MEDIA_PLAYER_COMMAND_REPEAT_OFF:
           if (this->single_pipeline_() || (media_command.announce.has_value() && media_command.announce.value())) {
-            this->announcement_repeat_ = false;
+            this->announcement_repeat_one_ = false;
           } else {
-            this->media_repeat_ = false;
+            this->media_repeat_one_ = false;
+          }
+          break;
+        case media_player::MEDIA_PLAYER_COMMAND_CLEAR_PLAYLIST:
+          if (this->single_pipeline_() || (media_command.announce.has_value() && media_command.announce.value())) {
+            this->announcement_queue_.erase(this->announcement_queue_.begin() + 1, this->announcement_queue_.end());
+          } else {
+            this->media_queue_.erase(this->media_queue_.begin() + 1, this->media_queue_.end());
           }
           break;
         default:
@@ -371,7 +378,7 @@ void SpeakerMediaPlayer::loop() {
       uint32_t timeout_ms = 0;
       if (old_announcement_pipeline_state == AudioPipelineState::PLAYING) {
         // Finished the current announcement file. Pop it off the deque if repeat is disabled
-        if (!this->announcement_repeat_) {
+        if (!this->announcement_repeat_one_) {
           this->announcement_queue_.pop_front();
         }
         timeout_ms = this->announcement_playlist_delay_ms_;
@@ -407,7 +414,7 @@ void SpeakerMediaPlayer::loop() {
           uint32_t timeout_ms = 0;
           if (old_media_pipeline_state == AudioPipelineState::PLAYING) {
             // Finished the current media file. Pop it off the deque if repeat is disabled
-            if (!this->media_repeat_) {
+            if (!this->media_repeat_one_) {
               this->media_queue_.pop_front();
             }
             timeout_ms = this->announcement_playlist_delay_ms_;

@@ -27,6 +27,7 @@ enum MediaPlayerCommand : uint8_t {
   MEDIA_PLAYER_COMMAND_ENQUEUE = 8,
   MEDIA_PLAYER_COMMAND_REPEAT_ONE = 9,
   MEDIA_PLAYER_COMMAND_REPEAT_OFF = 10,
+  MEDIA_PLAYER_COMMAND_CLEAR_PLAYLIST = 11,
 };
 const char *media_player_command_to_string(MediaPlayerCommand command);
 

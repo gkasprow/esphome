@@ -47,6 +47,8 @@ const char *media_player_command_to_string(MediaPlayerCommand command) {
       return "REPEAT_ONE";
     case MEDIA_PLAYER_COMMAND_REPEAT_OFF:
       return "REPEAT_OFF";
+    case MEDIA_PLAYER_COMMAND_CLEAR_PLAYLIST:
+      return "CLEAR_PLAYLIST";
     default:
       return "UNKNOWN";
   }

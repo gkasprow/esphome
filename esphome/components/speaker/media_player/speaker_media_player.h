@@ -114,14 +114,14 @@ class SpeakerMediaPlayer : public Component, public media_player::MediaPlayer {
   AudioPipelineState media_pipeline_state_{AudioPipelineState::STOPPED};
   std::string media_url_{};         // only modified by control function
   audio::AudioFile *media_file_{};  // only modified by play_file function
-  bool media_repeat_{false};
+  bool media_repeat_one_{false};
   uint32_t media_playlist_delay_ms_{0};
 
   optional<media_player::MediaPlayerSupportedFormat> announcement_format_;
   AudioPipelineState announcement_pipeline_state_{AudioPipelineState::STOPPED};
   std::string announcement_url_{};         // only modified by control function
   audio::AudioFile *announcement_file_{};  // only modified by play_file function
-  bool announcement_repeat_{false};
+  bool announcement_repeat_one_{false};
   uint32_t announcement_playlist_delay_ms_{0};
 
   QueueHandle_t media_control_command_queue_;
