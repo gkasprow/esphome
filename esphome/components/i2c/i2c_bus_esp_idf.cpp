@@ -8,6 +8,10 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
+#ifdef USE_ESP32_VARIANT_ESP32S2
+#include <soc/i2c_struct.h>
+#endif
+
 namespace esphome {
 namespace i2c {
 
@@ -33,18 +37,6 @@ void IDFI2CBus::setup() {
 
   i2c_config_t conf{};
   memset(&conf, 0, sizeof(conf));
-#ifdef USE_ESP32_VARIANT_ESP32S2
-  // workaround for issue #6718, i2c_param_config doesn't set the clock source in
-  // I2C_MODE_MASTER, timings are programmed for APB but it uses the REF_TICK clock
-  // by default, set I2C_MODE_SLAVE first to set the clock source then switch to
-  // I2C_MODE_MASTER mode
-  conf.mode = I2C_MODE_SLAVE;
-  conf.sda_io_num = sda_pin_;
-  conf.sda_pullup_en = sda_pullup_enabled_;
-  conf.scl_io_num = scl_pin_;
-  conf.scl_pullup_en = scl_pullup_enabled_;
-  i2c_param_config(port_, &conf);
-#endif
   conf.mode = I2C_MODE_MASTER;
   conf.sda_io_num = sda_pin_;
   conf.sda_pullup_en = sda_pullup_enabled_;
@@ -57,6 +49,14 @@ void IDFI2CBus::setup() {
     this->mark_failed();
     return;
   }
+#ifdef USE_ESP32_VARIANT_ESP32S2
+  // workaround for issue #6718, i2c_param_config doesn't set the clock source
+  if (port_ == I2C_NUM_0) {
+    I2C0.ctr.ref_always_on = 1;
+  } else {
+    I2C1.ctr.ref_always_on = 1;
+  }
+#endif
   if (timeout_ > 0) {  // if timeout specified in yaml:
     if (timeout_ > 13000) {
       ESP_LOGW(TAG, "i2c timeout of %" PRIu32 "us greater than max of 13ms on esp-idf, setting to max", timeout_);
