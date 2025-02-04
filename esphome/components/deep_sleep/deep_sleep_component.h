@@ -14,6 +14,8 @@
 #include "esphome/core/time.h"
 #endif
 
+#include "esphome/components/switch/switch.h"
+
 #include <cinttypes>
 
 namespace esphome {
@@ -64,6 +66,8 @@ template<typename... Ts> class PreventDeepSleepAction;
  */
 class DeepSleepComponent : public Component {
  public:
+  SUB_SWITCH(guard)
+
   /// Set the duration in ms the component should sleep once it's in deep sleep mode.
   void set_sleep_duration(uint32_t time_ms);
 #if defined(USE_ESP32)
@@ -103,6 +107,8 @@ class DeepSleepComponent : public Component {
   void prevent_deep_sleep();
   void allow_deep_sleep();
 
+  void set_guard(bool value);
+
  protected:
   // Returns nullopt if no run duration is set. Otherwise, returns the run
   // duration before entering deep sleep.
@@ -127,6 +133,7 @@ class DeepSleepComponent : public Component {
   optional<uint32_t> run_duration_;
   bool next_enter_deep_sleep_{false};
   bool prevent_{false};
+  bool guard_{false};
 };
 
 extern bool global_has_deep_sleep;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)

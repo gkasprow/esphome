@@ -8,3 +8,8 @@ esphome:
 deep_sleep:
   run_duration: 10s
   sleep_duration: 50s
+
+switch:
+  - platform: deep_sleep
+    guard:
+      name: Deep Sleep Guard

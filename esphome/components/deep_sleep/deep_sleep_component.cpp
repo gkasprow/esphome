@@ -20,6 +20,10 @@ void DeepSleepComponent::setup() {
   } else {
     ESP_LOGD(TAG, "Not scheduling Deep Sleep, as no run duration is configured.");
   }
+
+  if (this->guard_switch_ != nullptr) {
+    this->guard_switch_->publish_state(this->guard_);
+  }
 }
 
 void DeepSleepComponent::dump_config() {
@@ -48,7 +52,7 @@ void DeepSleepComponent::set_sleep_duration(uint32_t time_ms) { this->sleep_dura
 void DeepSleepComponent::set_run_duration(uint32_t time_ms) { this->run_duration_ = time_ms; }
 
 void DeepSleepComponent::begin_sleep(bool manual) {
-  if (this->prevent_ && !manual) {
+  if ((this->prevent_ && !manual) || this->guard_) {
     this->next_enter_deep_sleep_ = true;
     return;
   }
@@ -71,6 +75,8 @@ float DeepSleepComponent::get_setup_priority() const { return setup_priority::LA
 void DeepSleepComponent::prevent_deep_sleep() { this->prevent_ = true; }
 
 void DeepSleepComponent::allow_deep_sleep() { this->prevent_ = false; }
+
+void DeepSleepComponent::set_guard(bool value) { this->guard_ = value; }
 
 }  // namespace deep_sleep
 }  // namespace esphome
