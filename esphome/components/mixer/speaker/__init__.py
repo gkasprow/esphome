@@ -20,7 +20,6 @@ import esphome.final_validate as fv
 
 AUTO_LOAD = ["audio"]
 CODEOWNERS = ["@kahrendt"]
-DEPENDENCIES = ["speaker"]
 
 mixer_speaker_ns = cg.esphome_ns.namespace("mixer_speaker")
 MixerSpeaker = mixer_speaker_ns.class_("MixerSpeaker", cg.Component, speaker.Speaker)
@@ -54,7 +53,7 @@ def _set_stream_limits(config):
     audio.set_stream_limits(
         min_bits_per_sample=16,
         max_bits_per_sample=16,
-    )
+    )(config)
 
     return config
 
