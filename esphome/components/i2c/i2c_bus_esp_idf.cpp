@@ -40,7 +40,7 @@ void IDFI2CBus::setup() {
   conf.scl_pullup_en = scl_pullup_enabled_;
   conf.master.clk_speed = frequency_;
 #ifdef USE_ESP32_VARIANT_ESP32S2
-  // workaround for issue #6718, have to use ref clock
+  // workaround for https://github.com/esphome/issues/issues/6718
   conf.clk_flags = I2C_SCLK_SRC_FLAG_AWARE_DFS;
 #endif
   esp_err_t err = i2c_param_config(port_, &conf);
