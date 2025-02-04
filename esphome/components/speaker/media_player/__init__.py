@@ -32,7 +32,6 @@ _LOGGER = logging.getLogger(__name__)
 AUTO_LOAD = ["audio", "psram"]
 
 CODEOWNERS = ["@kahrendt", "@synesthesiam"]
-DEPENDENCIES = ["media_player"]
 DOMAIN = "file"
 
 TYPE_LOCAL = "local"
