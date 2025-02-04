@@ -29,8 +29,8 @@ class UDPComponent : public packet_encoding::PacketEncoding {
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
  protected:
-  bool should_send_() override;
-  size_t get_max_packet_size_() override { return MAX_PACKET_SIZE; }
+  bool should_send() override;
+  size_t get_max_packet_size() override { return MAX_PACKET_SIZE; }
   uint16_t port_{18511};
   bool should_broadcast_{};
   bool should_listen_{};
@@ -48,7 +48,7 @@ class UDPComponent : public packet_encoding::PacketEncoding {
   std::vector<std::string> addresses_{};
 
   optional<network::IPAddress> listen_address_{};
-  void send_packet_(void *data, size_t len) override;
+  void send_packet(void *data, size_t len) override;
 };
 
 }  // namespace udp
