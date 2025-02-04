@@ -18,6 +18,7 @@ i2s_audio:
   i2s_lrclk_pin: 6
   i2s_bclk_pin: 7
   i2s_mclk_pin: 5
+  use_legacy: true
 
 speaker:
   - platform: i2s_audio
