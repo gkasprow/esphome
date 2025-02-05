@@ -338,9 +338,13 @@ void SpeakerMediaPlayer::watch_media_commands_() {
           break;
         case media_player::MEDIA_PLAYER_COMMAND_CLEAR_PLAYLIST:
           if (this->single_pipeline_() || (media_command.announce.has_value() && media_command.announce.value())) {
-            this->announcement_queue_.erase(this->announcement_queue_.begin() + 1, this->announcement_queue_.end());
+            if (this->announcement_queue_.size() > 0) {
+              this->announcement_queue_.resize(1);
+            }
           } else {
-            this->media_queue_.erase(this->media_queue_.begin() + 1, this->media_queue_.end());
+            if (this->media_queue_.size() > 0) {
+              this->media_queue_.resize(1);
+            }
           }
           break;
         default:
