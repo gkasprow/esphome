@@ -4,7 +4,7 @@ from esphome.components.binary_sensor import BinarySensor
 import esphome.config_validation as cv
 from esphome.const import CONF_KEY
 from esphome.core import Lambda
-from esphome.cpp_generator import ExpressionStatement, MockObj
+from esphome.cpp_generator import ExpressionStatement, RawExpression
 
 from .display import CONF_SDL_ID, Sdl
 
@@ -262,8 +262,9 @@ CONFIG_SCHEMA = (
 
 async def to_code(config):
     var = await binary_sensor.new_binary_sensor(config)
-    # await cg.register_component(var, config)
     parent = await cg.get_variable(config[CONF_SDL_ID])
-    listener = Lambda(str(ExpressionStatement(var.publish_state(MockObj(STATE_ARG)))))
+    listener = Lambda(
+        str(ExpressionStatement(var.publish_state(RawExpression(STATE_ARG))))
+    )
     listener = await cg.process_lambda(listener, [(cg.bool_, STATE_ARG)])
     cg.add(parent.add_key_listener(config[CONF_KEY], listener))
