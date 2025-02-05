@@ -9,7 +9,6 @@ output:
     id: rtttl_output
     pin: ${pin}
     frequency: 1500Hz
-    channel: 14
     max_power: 0.5
 
 rtttl:
