@@ -1,6 +1,7 @@
 """ESPHome packet transport component."""
 
 import hashlib
+import logging
 
 import esphome.codegen as cg
 from esphome.components.api import CONF_ENCRYPTION
@@ -36,6 +37,9 @@ CONF_ROLLING_CODE_ENABLE = "rolling_code_enable"
 CONF_TRANSPORT_ID = "transport_id"
 
 
+_LOGGER = logging.getLogger(__name__)
+
+
 def sensor_validation(cls: MockObjClass):
     return cv.maybe_simple_value(
         cv.Schema(
@@ -46,6 +50,15 @@ def sensor_validation(cls: MockObjClass):
         ),
         key=CONF_ID,
     )
+
+
+def provider_name_validate(value):
+    value = cv.valid_name(value)
+    if "_" in value:
+        _LOGGER.warning(
+            f"Device names typically do not contain underscores - did you mean to use a hyphen in '{value}'?"
+        )
+    return value
 
 
 ENCRYPTION_SCHEMA = {
@@ -61,7 +74,7 @@ ENCRYPTION_SCHEMA = {
 
 PROVIDER_SCHEMA = cv.Schema(
     {
-        cv.Required(CONF_NAME): cv.valid_name,
+        cv.Required(CONF_NAME): provider_name_validate,
     }
 ).extend(ENCRYPTION_SCHEMA)
 
@@ -107,7 +120,7 @@ SENSOR_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_TRANSPORT_ID): cv.use_id(PacketTransport),
         cv.Optional(CONF_REMOTE_ID): cv.string_strict,
-        cv.Required(CONF_PROVIDER): cv.valid_name,
+        cv.Required(CONF_PROVIDER): provider_name_validate,
     }
 )
 
@@ -131,6 +144,12 @@ async def register_packet_transport(var, config):
             config[CONF_PING_PONG_RECYCLE_TIME].total_seconds
         )
     )
+    for provider in config.get(CONF_PROVIDERS, ()):
+        name = provider[CONF_NAME]
+        cg.add(var.add_provider(name))
+        if encryption := provider.get(CONF_ENCRYPTION):
+            cg.add(var.set_provider_encryption(name, hash_encryption_key(encryption)))
+
     for sens_conf in config.get(CONF_SENSORS, ()):
         sens_id = sens_conf[CONF_ID]
         sensor = await cg.get_variable(sens_id)
@@ -144,12 +163,6 @@ async def register_packet_transport(var, config):
 
     if encryption := config.get(CONF_ENCRYPTION):
         cg.add(var.set_encryption_key(hash_encryption_key(encryption)))
-
-    for provider in config.get(CONF_PROVIDERS, ()):
-        name = provider[CONF_NAME]
-        cg.add(var.add_provider(name))
-        if encryption := provider.get(CONF_ENCRYPTION):
-            cg.add(var.set_provider_encryption(name, hash_encryption_key(encryption)))
 
 
 async def new_packet_transport(config):
