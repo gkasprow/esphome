@@ -10,7 +10,7 @@ static const char *const TAG = "udp_transport";
 
 bool UDPTransport::should_send() { return this->should_broadcast_ && network::is_connected(); }
 void UDPTransport::setup() {
-  packet_transport::PacketTransport::setup();
+  PacketTransport::setup();
   this->should_broadcast_ = this->ping_pong_enable_;
 #ifdef USE_SENSOR
   this->should_broadcast_ |= !this->sensors_.empty();
@@ -31,6 +31,6 @@ void UDPTransport::update() {
   this->resend_data_ = this->should_broadcast_;
 }
 
-void UDPTransport::send_packet(std::vector<uint8_t> &buf) const { this->parent_->send_packet_(buf); }
+void UDPTransport::send_packet(std::vector<uint8_t> &buf) const { this->parent_->send_packet(buf); }
 }  // namespace udp
 }  // namespace esphome

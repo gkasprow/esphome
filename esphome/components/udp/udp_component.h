@@ -26,7 +26,7 @@ class UDPComponent : public Component {
   void setup() override;
   void loop() override;
   void dump_config() override;
-  void send_packet_(std::vector<uint8_t> &buf) const;
+  void send_packet(std::vector<uint8_t> &buf);
 
  protected:
   uint16_t port_{};

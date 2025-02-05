@@ -3,8 +3,6 @@
 #include "esphome/components/network/util.h"
 #include "udp_component.h"
 
-#include "esphome/components/xxtea/xxtea.h"
-
 namespace esphome {
 namespace udp {
 
@@ -131,7 +129,7 @@ void UDPComponent::dump_config() {
   }
 }
 
-void UDPComponent::send_packet_(std::vector<uint8_t> &buf) const {
+void UDPComponent::send_packet(std::vector<uint8_t> &buf) {
 #if defined(USE_SOCKET_IMPL_BSD_SOCKETS) || defined(USE_SOCKET_IMPL_LWIP_SOCKETS)
   for (const auto &saddr : this->sockaddrs_) {
     auto result = this->broadcast_socket_->sendto(buf.data(), buf.size(), 0, &saddr, sizeof(saddr));
