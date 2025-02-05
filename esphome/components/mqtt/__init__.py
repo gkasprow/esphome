@@ -36,6 +36,7 @@ from esphome.const import (
     CONF_PAYLOAD_AVAILABLE,
     CONF_PAYLOAD_NOT_AVAILABLE,
     CONF_PORT,
+    CONF_PUBLISH_NAN_AS_NONE,
     CONF_QOS,
     CONF_REBOOT_TIMEOUT,
     CONF_RETAIN,
@@ -49,7 +50,6 @@ from esphome.const import (
     CONF_USE_ABBREVIATIONS,
     CONF_USERNAME,
     CONF_WILL_MESSAGE,
-    CONF_PUBLISH_NAN_AS_NONE,
     PLATFORM_BK72XX,
     PLATFORM_ESP32,
     PLATFORM_ESP8266,
@@ -382,23 +382,23 @@ async def to_code(config):
     if not birth_message:
         cg.add(var.disable_birth_message())
     else:
-        cg.add(var.set_birth_message(exp_mqtt_message(birth_message)))
+        cg.add(var.set_birth_message(exp_mqtt_message(birth_message), CORE.name))
     will_message = config[CONF_WILL_MESSAGE]
     if not will_message:
         cg.add(var.disable_last_will())
     else:
-        cg.add(var.set_last_will(exp_mqtt_message(will_message)))
+        cg.add(var.set_last_will(exp_mqtt_message(will_message), CORE.name))
     shutdown_message = config[CONF_SHUTDOWN_MESSAGE]
     if not shutdown_message:
         cg.add(var.disable_shutdown_message())
     else:
-        cg.add(var.set_shutdown_message(exp_mqtt_message(shutdown_message)))
+        cg.add(var.set_shutdown_message(exp_mqtt_message(shutdown_message), CORE.name))
 
     log_topic = config[CONF_LOG_TOPIC]
     if not log_topic:
         cg.add(var.disable_log_message())
     else:
-        cg.add(var.set_log_message_template(exp_mqtt_message(log_topic)))
+        cg.add(var.set_log_message_template(exp_mqtt_message(log_topic), CORE.name))
 
         if CONF_LEVEL in log_topic:
             cg.add(var.set_log_level(logger.LOG_LEVELS[log_topic[CONF_LEVEL]]))
