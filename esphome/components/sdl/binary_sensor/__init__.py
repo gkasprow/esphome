@@ -6,6 +6,8 @@ from esphome.const import CONF_KEY
 from .. import SDL_KEYMAP
 from ..display import CONF_SDL_ID, Sdl, sdl_ns
 
+CODEOWNERS = ["@bdm310"]
+
 SdlBinarySensor = sdl_ns.class_(
     "SdlBinarySensor", binary_sensor.BinarySensor, cg.Component
 )
