@@ -87,7 +87,7 @@ void MQTTClientComponent::setup() {
   }
 }
 
-void parse_topic(const std::string &topic, std::string &top_name, std::string &rest) {
+void MQTTClientComponent::parse_topic_(const std::string &topic, std::string &top_name, std::string &rest) {
   std::stringstream ss(topic);
   // Extract the first part
   if (std::getline(ss, top_name, '/')) {
@@ -100,10 +100,10 @@ void parse_topic(const std::string &topic, std::string &top_name, std::string &r
   }
 }
 
-void fix_topic(std::string &topic, const std::string &check_topic_prefix) {
+void MQTTClientComponent::fix_topic_(std::string &topic, const std::string &check_topic_prefix) {
   if (App.is_name_add_mac_suffix_enabled()) {
     std::string top_name(""), rest("");
-    parse_topic(topic, top_name, rest);
+    parse_topic_(topic, top_name, rest);
     if (top_name == check_topic_prefix) {
       topic = str_sanitize(App.get_name()) + rest;
     }
@@ -632,7 +632,7 @@ void MQTTClientComponent::set_log_level(int level) { this->log_level_ = level; }
 void MQTTClientComponent::set_keep_alive(uint16_t keep_alive_s) { this->mqtt_backend_.set_keep_alive(keep_alive_s); }
 void MQTTClientComponent::set_log_message_template(MQTTMessage &&message, const std::string &check_topic_prefix) {
   this->log_message_ = std::move(message);
-  fix_topic(this->log_message_.topic, check_topic_prefix);
+  fix_topic_(this->log_message_.topic, check_topic_prefix);
 }
 const MQTTDiscoveryInfo &MQTTClientComponent::get_discovery_info() const { return this->discovery_info_; }
 void MQTTClientComponent::set_topic_prefix(const std::string &topic_prefix, const std::string &check_topic_prefix) {
@@ -670,19 +670,19 @@ void MQTTClientComponent::recalculate_availability_() {
 
 void MQTTClientComponent::set_last_will(MQTTMessage &&message, const std::string &check_topic_prefix) {
   this->last_will_ = std::move(message);
-  fix_topic(this->last_will_.topic, check_topic_prefix);
+  fix_topic_(this->last_will_.topic, check_topic_prefix);
   this->recalculate_availability_();
 }
 
 void MQTTClientComponent::set_birth_message(MQTTMessage &&message, const std::string &check_topic_prefix) {
   this->birth_message_ = std::move(message);
-  fix_topic(this->birth_message_.topic, check_topic_prefix);
+  fix_topic_(this->birth_message_.topic, check_topic_prefix);
   this->recalculate_availability_();
 }
 
 void MQTTClientComponent::set_shutdown_message(MQTTMessage &&message, const std::string &check_topic_prefix) {
   this->shutdown_message_ = std::move(message);
-  fix_topic(this->shutdown_message_.topic, check_topic_prefix);
+  fix_topic_(this->shutdown_message_.topic, check_topic_prefix);
 }
 
 void MQTTClientComponent::set_discovery_info(std::string &&prefix, MQTTDiscoveryUniqueIdGenerator unique_id_generator,

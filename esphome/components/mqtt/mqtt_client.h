@@ -268,8 +268,8 @@ class MQTTClientComponent : public Component {
   bool is_publish_nan_as_none() const;
 
  protected:
-  void parse_topic(const std::string &topic, std::string &top_name, std::string &rest);
-  void fix_topic(std::string &topic, const std::string &check_topic_prefix);
+  void parse_topic_(const std::string &topic, std::string &top_name, std::string &rest);
+  void fix_topic_(std::string &topic, const std::string &check_topic_prefix);
   void send_device_info_();
 
   /// Reconnect to the MQTT broker if not already connected.
