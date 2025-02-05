@@ -68,6 +68,7 @@ void RemoteTransmitterComponent::configure_rmt_() {
   esp_err_t error;
 
   if (!this->initialized_) {
+    bool open_drain = (this->pin_->get_flags() & gpio::FLAG_OPEN_DRAIN) != 0;
     rmt_tx_channel_config_t channel;
     memset(&channel, 0, sizeof(channel));
     channel.clk_src = RMT_CLK_SRC_DEFAULT;
@@ -75,8 +76,8 @@ void RemoteTransmitterComponent::configure_rmt_() {
     channel.gpio_num = gpio_num_t(this->pin_->get_pin());
     channel.mem_block_symbols = this->rmt_symbols_;
     channel.trans_queue_depth = 1;
-    channel.flags.io_loop_back = (this->pin_->get_flags() & gpio::FLAG_OPEN_DRAIN) ? 1 : 0;
-    channel.flags.io_od_mode = (this->pin_->get_flags() & gpio::FLAG_OPEN_DRAIN) ? 1 : 0;
+    channel.flags.io_loop_back = open_drain;
+    channel.flags.io_od_mode = open_drain;
     channel.flags.invert_out = 0;
     channel.flags.with_dma = this->with_dma_;
     channel.intr_priority = 0;
@@ -114,7 +115,7 @@ void RemoteTransmitterComponent::configure_rmt_() {
       this->mark_failed();
       return;
     }
-    this->digital_write(this->eot_level_);
+    this->digital_write(open_drain || this->inverted_);
     this->initialized_ = true;
   }
 
