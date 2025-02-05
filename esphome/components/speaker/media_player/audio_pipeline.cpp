@@ -88,6 +88,9 @@ void AudioPipeline::resume_tasks() {
 }
 
 AudioPipelineState AudioPipeline::process_state() {
+  /*
+   * Log items from info error queue
+   */
   InfoErrorEvent event;
   if (this->info_error_queue_ != nullptr) {
     while (xQueueReceive(this->info_error_queue_, &event, 0)) {
@@ -129,12 +132,16 @@ AudioPipelineState AudioPipeline::process_state() {
     }
   }
 
+  /*
+   * Determine the current state based on the event group bits and tasks' status
+   */
+
   EventBits_t event_bits = xEventGroupGetBits(this->event_group_);
 
   if (this->pending_url_ || this->pending_file_) {
     // Init command pending
     if (!(event_bits & EventGroupBits::PIPELINE_COMMAND_STOP)) {
-      // Handle pending stop command before starting
+      // Only start if there is no pending stop command
       if ((this->read_task_handle_ == nullptr) || (this->decode_task_handle_ == nullptr)) {
         // At least one task isn't running
         this->start_tasks_();
@@ -159,13 +166,14 @@ AudioPipelineState AudioPipeline::process_state() {
       (!(event_bits & EventGroupBits::READER_MESSAGE_LOADED_MEDIA_TYPE) &&
        (event_bits & EventGroupBits::DECODER_MESSAGE_FINISHED))) {
     // Tasks are finished and there's no media in between the reader and decoder
+
     if (event_bits & EventGroupBits::PIPELINE_COMMAND_STOP) {
-      // Stop commands completed clear these bits
+      // Stop command is fully processed, so clear the command bit
       xEventGroupClearBits(this->event_group_, EventGroupBits::PIPELINE_COMMAND_STOP);
     }
 
     if (!this->is_playing_) {
-      // Was stopped during last call as well, delete tasks
+      // The tasks have been stopped for two ``process_state`` calls in a row, so delete the tasks
       if ((this->read_task_handle_ != nullptr) || (this->decode_task_handle_ != nullptr)) {
         this->delete_tasks_();
         this->speaker_->stop();
@@ -173,10 +181,6 @@ AudioPipelineState AudioPipeline::process_state() {
     }
     this->is_playing_ = false;
     return AudioPipelineState::STOPPED;
-  }
-
-  if ((this->read_task_handle_ == nullptr) && (this->decode_task_handle_ == nullptr)) {
-    xEventGroupClearBits(this->event_group_, EventGroupBits::PIPELINE_COMMAND_STOP);
   }
 
   if ((event_bits & EventGroupBits::READER_MESSAGE_ERROR)) {
@@ -194,7 +198,8 @@ AudioPipelineState AudioPipeline::process_state() {
   }
 
   if ((this->read_task_handle_ == nullptr) && (this->decode_task_handle_ == nullptr)) {
-    // No tasks running
+    // No tasks are running, so the pipeline is stopped.
+    xEventGroupClearBits(this->event_group_, EventGroupBits::PIPELINE_COMMAND_STOP);
     return AudioPipelineState::STOPPED;
   }
 
