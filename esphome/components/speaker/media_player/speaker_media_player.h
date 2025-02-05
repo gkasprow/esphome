@@ -97,11 +97,8 @@ class SpeakerMediaPlayer : public Component, public media_player::MediaPlayer {
 
   inline bool single_pipeline_() { return (this->media_speaker_ == nullptr); }
 
-  // Reads commands from media_control_command_queue_. Starts pipelines and mixer if necessary.
+  // Processes commands from media_control_command_queue_.
   void watch_media_commands_();
-
-  esp_err_t start_pipeline_(AudioPipelineType type, std::string &url);
-  esp_err_t start_pipeline_(AudioPipelineType type, audio::AudioFile *audio_file);
 
   std::unique_ptr<AudioPipeline> announcement_pipeline_;
   std::unique_ptr<AudioPipeline> media_pipeline_;

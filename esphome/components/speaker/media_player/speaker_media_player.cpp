@@ -130,37 +130,6 @@ void SpeakerMediaPlayer::set_playlist_delay_ms(AudioPipelineType pipeline_type, 
   }
 }
 
-esp_err_t SpeakerMediaPlayer::start_pipeline_(AudioPipelineType type, std::string &url) {
-  esp_err_t err = ESP_OK;
-
-  switch (type) {
-    case AudioPipelineType::ANNOUNCEMENT:
-      this->announcement_pipeline_->start_url(url);
-      break;
-    case AudioPipelineType::MEDIA:
-      this->media_pipeline_->start_url(url);
-      break;
-  }
-
-  return err;
-}
-
-esp_err_t SpeakerMediaPlayer::start_pipeline_(AudioPipelineType type, audio::AudioFile *file) {
-  esp_err_t err = ESP_OK;
-
-  switch (type) {
-    case AudioPipelineType::ANNOUNCEMENT:
-      this->announcement_pipeline_->start_file(file);
-      break;
-    case AudioPipelineType::MEDIA:
-
-      this->media_pipeline_->start_file(file);
-      break;
-  }
-
-  return err;
-}
-
 void SpeakerMediaPlayer::watch_media_commands_() {
   if (!this->is_ready()) {
     return;
@@ -375,9 +344,9 @@ void SpeakerMediaPlayer::loop() {
         // Start the next announcement file
         PlaylistItem playlist_item = this->announcement_queue_.front();
         if (playlist_item.url.has_value()) {
-          this->start_pipeline_(AudioPipelineType::ANNOUNCEMENT, playlist_item.url.value());
+          this->announcement_pipeline_->start_url(playlist_item.url.value());
         } else if (playlist_item.file.has_value()) {
-          this->start_pipeline_(AudioPipelineType::ANNOUNCEMENT, playlist_item.file.value());
+          this->announcement_pipeline_->start_file(playlist_item.file.value());
         }
         this->announcement_pipeline_->set_pause_state(true);
       }
@@ -409,9 +378,9 @@ void SpeakerMediaPlayer::loop() {
           if (!this->media_queue_.empty()) {
             PlaylistItem playlist_item = this->media_queue_.front();
             if (playlist_item.url.has_value()) {
-              this->start_pipeline_(AudioPipelineType::MEDIA, playlist_item.url.value());
+              this->media_pipeline_->start_url(playlist_item.url.value());
             } else if (playlist_item.file.has_value()) {
-              this->start_pipeline_(AudioPipelineType::MEDIA, playlist_item.file.value());
+              this->media_pipeline_->start_file(playlist_item.file.value());
             }
             this->media_pipeline_->set_pause_state(true);
           }
