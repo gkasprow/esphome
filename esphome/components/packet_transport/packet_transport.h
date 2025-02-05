@@ -105,7 +105,7 @@ class PacketTransport : public PollingComponent {
   virtual bool should_send() { return true; }
 
   // to be called by child classes when a data packet is received.
-  void process_(std::vector<uint8_t> &buf);
+  void process_(std::vector<uint8_t> &data);
   void send_data_(bool all);
   void flush_();
   void add_data_(uint8_t key, const char *id, float data);
