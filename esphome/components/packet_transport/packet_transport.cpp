@@ -1,6 +1,5 @@
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
-#include "esphome/components/network/util.h"
 #include "packet_transport.h"
 
 #include "esphome/components/xxtea/xxtea.h"
@@ -198,7 +197,7 @@ void PacketTransport::add_data_(uint8_t key, const char *id, uint32_t data) {
   add(this->data_, id);
 }
 void PacketTransport::send_data_(bool all) {
-  if (!this->should_send() || !network::is_connected())
+  if (!this->should_send())
     return;
   this->init_data_();
 #ifdef USE_SENSOR
@@ -445,7 +444,7 @@ void PacketTransport::loop() {
 }
 
 void PacketTransport::send_ping_pong_request_() {
-  if (!this->ping_pong_enable_ || !network::is_connected())
+  if (!this->ping_pong_enable_ || !this->should_send())
     return;
   this->ping_key_ = random_uint32();
   this->ping_header_.clear();
