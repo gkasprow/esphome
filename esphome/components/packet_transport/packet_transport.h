@@ -124,7 +124,7 @@ class PacketTransport : public PollingComponent {
   bool resend_ping_key_{};
   bool resend_data_{};
   const char *name_{};
-  ESPPreferenceObject pref_;
+  ESPPreferenceObject pref_{};
 
   std::vector<uint8_t> encryption_key_{};
 

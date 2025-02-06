@@ -111,13 +111,15 @@ void PacketTransport::setup() {
     return;
   }
   this->resend_ping_key_ = this->ping_pong_enable_;
-  // restore the upper 32 bits of the rolling code, increment and save.
   this->pref_ = global_preferences->make_preference<uint32_t>(PREF_HASH, true);
-  this->pref_.load(&this->rolling_code_[1]);
-  this->rolling_code_[1]++;
-  this->pref_.save(&this->rolling_code_[1]);
-  this->ping_key_ = random_uint32();
-  ESP_LOGV(TAG, "Rolling code incremented, upper part now %u", (unsigned) this->rolling_code_[1]);
+  if (this->rolling_code_enable_) {
+    // restore the upper 32 bits of the rolling code, increment and save.
+    this->pref_.load(&this->rolling_code_[1]);
+    this->rolling_code_[1]++;
+    this->pref_.save(&this->rolling_code_[1]);
+    this->ping_key_ = random_uint32();
+    ESP_LOGV(TAG, "Rolling code incremented, upper part now %u", (unsigned) this->rolling_code_[1]);
+  }
 #ifdef USE_SENSOR
   for (auto &sensor : this->sensors_) {
     sensor.sensor->add_on_state_callback([this, &sensor](float x) {
