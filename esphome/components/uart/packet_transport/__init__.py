@@ -8,6 +8,7 @@ from esphome.cpp_types import PollingComponent
 from .. import UART_DEVICE_SCHEMA, register_uart_device, uart_ns
 
 CODEOWNERS = ["@clydebarrow"]
+DEPENDENCIES = ["uart"]
 
 UDPTransport = uart_ns.class_("UARTTransport", PacketTransport, PollingComponent)
 
