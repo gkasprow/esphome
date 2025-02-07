@@ -11,7 +11,6 @@ DEPENDENCIES = ["spi"]
 CONF_PA_POWER = "pa_power"
 CONF_PA_PIN = "pa_pin"
 CONF_DIO0_PIN = "dio0_pin"
-CONF_NSS_PIN = "nss_pin"
 CONF_RST_PIN = "rst_pin"
 CONF_MODULATION = "modulation"
 CONF_SHAPING = "shaping"
@@ -142,7 +141,6 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(): cv.declare_id(SX127x),
             cv.Optional(CONF_DIO0_PIN): pins.internal_gpio_input_pin_schema,
             cv.Required(CONF_RST_PIN): pins.internal_gpio_output_pin_schema,
-            cv.Required(CONF_NSS_PIN): pins.internal_gpio_output_pin_schema,
             cv.Required(CONF_FREQUENCY): cv.int_range(min=137000000, max=1020000000),
             cv.Required(CONF_MODULATION): cv.enum(MOD),
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
@@ -166,7 +164,7 @@ CONFIG_SCHEMA = cv.All(
         },
     )
     .extend(cv.COMPONENT_SCHEMA)
-    .extend(spi.spi_device_schema(False, 8e6, "mode0")),
+    .extend(spi.spi_device_schema(True, 8e6, "mode0")),
     validate_config,
 )
 
@@ -186,8 +184,6 @@ async def to_code(config):
         cg.add(var.set_dio0_pin(dio0_pin))
     rst_pin = await cg.gpio_pin_expression(config[CONF_RST_PIN])
     cg.add(var.set_rst_pin(rst_pin))
-    nss_pin = await cg.gpio_pin_expression(config[CONF_NSS_PIN])
-    cg.add(var.set_cs_pin(nss_pin))
     cg.add(var.set_frequency(config[CONF_FREQUENCY]))
     cg.add(var.set_modulation(config[CONF_MODULATION]))
     cg.add(var.set_shaping(config[CONF_SHAPING]))

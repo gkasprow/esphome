@@ -234,7 +234,7 @@ void SX127x::dump_config() {
   uint32_t rx_bw_exp = this->rx_bandwidth_ & 0x7;
   float rx_bw = (float) FXOSC / (rx_bw_mant * (1 << (rx_bw_exp + 2)));
   ESP_LOGCONFIG(TAG, "SX127x:");
-  LOG_PIN("  NSS Pin: ", this->cs_);
+  LOG_PIN("  CS Pin: ", this->cs_);
   LOG_PIN("  RST Pin: ", this->rst_pin_);
   LOG_PIN("  DIO0 Pin: ", this->dio0_pin_);
   ESP_LOGCONFIG(TAG, "  Frequency: %f MHz", (float) this->frequency_ / 1000000);
