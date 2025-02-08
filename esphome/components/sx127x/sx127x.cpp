@@ -112,7 +112,11 @@ void SX127x::configure() {
   this->write_register_(REG_RX_CONFIG, this->rx_config_);
 
   // configure packet mode
-  this->write_register_(REG_PACKET_CONFIG_1, 0x00);
+  if (this->crc_enable_) {
+    this->write_register_(REG_PACKET_CONFIG_1, CRC_ON);
+  } else {
+    this->write_register_(REG_PACKET_CONFIG_1, CRC_OFF);
+  }
   if (this->payload_length_ > 0) {
     this->write_register_(REG_PACKET_CONFIG_2, PACKET_MODE);
   } else {
@@ -241,6 +245,7 @@ void SX127x::dump_config() {
   ESP_LOGCONFIG(TAG, "  Modulation: %s", this->modulation_ == MOD_FSK ? "FSK" : "OOK");
   ESP_LOGCONFIG(TAG, "  Bitrate: %" PRIu32 "b/s", this->bitrate_);
   ESP_LOGCONFIG(TAG, "  Bitsync: %s", TRUEFALSE(this->bitsync_));
+  ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
   ESP_LOGCONFIG(TAG, "  Rx Bandwidth: %.1f kHz", (float) rx_bw / 1000);
   ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
   ESP_LOGCONFIG(TAG, "  Rx Floor: %.1f dBm", this->rx_floor_);

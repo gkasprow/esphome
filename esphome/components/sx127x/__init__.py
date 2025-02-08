@@ -8,25 +8,26 @@ MULTI_CONF = True
 CODEOWNERS = ["@swoboda1337"]
 DEPENDENCIES = ["spi"]
 
-CONF_PA_POWER = "pa_power"
-CONF_PA_PIN = "pa_pin"
-CONF_DIO0_PIN = "dio0_pin"
-CONF_RST_PIN = "rst_pin"
-CONF_MODULATION = "modulation"
-CONF_SHAPING = "shaping"
-CONF_RX_FLOOR = "rx_floor"
-CONF_RX_START = "rx_start"
-CONF_RX_BANDWIDTH = "rx_bandwidth"
 CONF_BITRATE = "bitrate"
 CONF_BITSYNC = "bitsync"
-CONF_PAYLOAD_LENGTH = "payload_length"
-CONF_PREAMBLE_SIZE = "preamble_size"
-CONF_PREAMBLE_POLARITY = "preamble_polarity"
-CONF_PREAMBLE_ERRORS = "preamble_errors"
-CONF_SYNC_VALUE = "sync_value"
+CONF_CRC_ENABLE = "crc_enable"
+CONF_DIO0_PIN = "dio0_pin"
 CONF_FSK_FDEV = "fsk_fdev"
 CONF_FSK_RAMP = "fsk_ramp"
+CONF_MODULATION = "modulation"
 CONF_ON_PACKET = "on_packet"
+CONF_PA_PIN = "pa_pin"
+CONF_PA_POWER = "pa_power"
+CONF_PAYLOAD_LENGTH = "payload_length"
+CONF_PREAMBLE_ERRORS = "preamble_errors"
+CONF_PREAMBLE_POLARITY = "preamble_polarity"
+CONF_PREAMBLE_SIZE = "preamble_size"
+CONF_RST_PIN = "rst_pin"
+CONF_RX_BANDWIDTH = "rx_bandwidth"
+CONF_RX_FLOOR = "rx_floor"
+CONF_RX_START = "rx_start"
+CONF_SHAPING = "shaping"
+CONF_SYNC_VALUE = "sync_value"
 
 sx127x_ns = cg.esphome_ns.namespace("sx127x")
 SX127x = sx127x_ns.class_("SX127x", cg.Component, spi.SPIDevice)
@@ -146,6 +147,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_SHAPING, default="NONE"): cv.enum(SHAPING),
             cv.Optional(CONF_BITRATE): cv.int_range(min=500, max=300000),
             cv.Optional(CONF_BITSYNC): cv.boolean,
+            cv.Optional(CONF_CRC_ENABLE, default=False): cv.boolean,
             cv.Optional(CONF_FSK_FDEV, default=5000): cv.int_range(min=0, max=100000),
             cv.Optional(CONF_FSK_RAMP, default="40us"): cv.enum(RAMP),
             cv.Optional(CONF_SYNC_VALUE, default=[]): cv.ensure_list(cv.hex_uint8_t),
@@ -195,6 +197,7 @@ async def to_code(config):
         cg.add(var.set_bitsync(config[CONF_BITSYNC]))
     else:
         cg.add(var.set_bitsync(False))
+    cg.add(var.set_crc_enable(config[CONF_CRC_ENABLE]))
     cg.add(var.set_payload_length(config[CONF_PAYLOAD_LENGTH]))
     cg.add(var.set_preamble_size(config[CONF_PREAMBLE_SIZE]))
     cg.add(var.set_preamble_polarity(config[CONF_PREAMBLE_POLARITY]))

@@ -162,6 +162,11 @@ enum SX127xOokAvg : uint8_t {
   OOK_AVG_RESERVED = 0x10,
 };
 
+enum SX127xPacketConfig1 : uint8_t {
+  CRC_ON = 0x10,
+  CRC_OFF = 0x00,
+};
+
 enum SX127xPacketConfig2 : uint8_t {
   CONTINUOUS_MODE = 0x00,
   PACKET_MODE = 0x40,
@@ -241,6 +246,7 @@ class SX127x : public Component,
   void set_frequency(uint32_t frequency) { this->frequency_ = frequency; }
   void set_bitrate(uint32_t bitrate) { this->bitrate_ = bitrate; }
   void set_bitsync(bool bitsync) { this->bitsync_ = bitsync; }
+  void set_crc_enable(bool crc_enable) { this->crc_enable_ = crc_enable; }
   void set_modulation(SX127xOpMode modulation) { this->modulation_ = modulation; }
   void set_shaping(SX127xPaRamp shaping) { this->shaping_ = shaping; }
   void set_fsk_ramp(SX127xPaRamp ramp) { this->fsk_ramp_ = ramp; }
@@ -290,6 +296,7 @@ class SX127x : public Component,
   float rx_floor_;
   bool rx_start_;
   bool bitsync_;
+  bool crc_enable_;
 };
 
 }  // namespace sx127x
