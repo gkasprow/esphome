@@ -248,15 +248,17 @@ void SX127x::dump_config() {
   ESP_LOGCONFIG(TAG, "  Rx Bandwidth: %.1f kHz", (float) rx_bw / 1000);
   ESP_LOGCONFIG(TAG, "  Rx Start: %s", TRUEFALSE(this->rx_start_));
   ESP_LOGCONFIG(TAG, "  Rx Floor: %.1f dBm", this->rx_floor_);
-  ESP_LOGCONFIG(TAG, "  Payload Length: %" PRIu32, this->payload_length_);
-  ESP_LOGCONFIG(TAG, "  Preamble Polarity: 0x%X", this->preamble_polarity_);
-  ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu8, this->preamble_size_);
-  ESP_LOGCONFIG(TAG, "  Preamble Errors: %" PRIu8, this->preamble_errors_);
+  if (this->preamble_size_ > 0) {
+    ESP_LOGCONFIG(TAG, "  Preamble Size: %" PRIu8, this->preamble_size_);
+    ESP_LOGCONFIG(TAG, "  Preamble Polarity: 0x%X", this->preamble_polarity_);
+    ESP_LOGCONFIG(TAG, "  Preamble Errors: %" PRIu8, this->preamble_errors_);
+  }
   if (this->payload_length_ > 0) {
-    ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
+    ESP_LOGCONFIG(TAG, "  Payload Length: %" PRIu32, this->payload_length_);
     if (!this->sync_value_.empty()) {
       ESP_LOGCONFIG(TAG, "  Sync Value: 0x%s", format_hex(this->sync_value_).c_str());
     }
+    ESP_LOGCONFIG(TAG, "  CRC Enable: %s", TRUEFALSE(this->crc_enable_));
   }
   if (this->modulation_ == MOD_FSK) {
     static const char *shaping_lut[4] = {"NONE", "GAUSSIAN_BT_1_0", "GAUSSIAN_BT_0_5", "GAUSSIAN_BT_0_3"};
