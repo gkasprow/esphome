@@ -52,8 +52,8 @@ void BL0940::loop() {
     return;
   }
   if (read_array((uint8_t *) &buffer, sizeof(buffer))) {
-    if (validate_checksum(&buffer)) {
-      received_package(&buffer);
+    if (validate_checksum_(&buffer)) {
+      received_package_(&buffer);
     }
   } else {
     ESP_LOGW(TAG, "Junk on wire. Throwing away partial message");
@@ -62,7 +62,7 @@ void BL0940::loop() {
   }
 }
 
-bool BL0940::validate_checksum(DataPacket *data) {
+bool BL0940::validate_checksum_(DataPacket *data) {
   uint8_t checksum = this->read_command_;
   // Whole package but checksum
   uint8_t *raw = (uint8_t *) data;
@@ -145,7 +145,7 @@ void BL0940::setup() {
   this->flush();
 }
 
-float BL0940::update_temp(sensor::Sensor *sensor, uint16_le_t temperature) const {
+float BL0940::update_temp_(sensor::Sensor *sensor, uint16_le_t temperature) const {
   auto tb = (float) temperature;
   float converted_temp = ((float) 170 / 448) * (tb / 2 - 32) - 45;
   if (sensor != nullptr) {
@@ -159,7 +159,7 @@ float BL0940::update_temp(sensor::Sensor *sensor, uint16_le_t temperature) const
   return converted_temp;
 }
 
-void BL0940::received_package(DataPacket *data) {
+void BL0940::received_package_(DataPacket *data) {
   // Bad header
   if (data->frame_header != BL0940_PACKET_HEADER) {
     ESP_LOGI(TAG, "Invalid data. Header mismatch: %d", data->frame_header);
@@ -179,8 +179,8 @@ void BL0940::received_package(DataPacket *data) {
   float watt = (int24_t) data->watt / power_reference_;
   float total_energy_consumption = cf_cnt / energy_reference_;
 
-  float tps1 = update_temp(internal_temperature_sensor_, data->tps1);
-  float tps2 = update_temp(external_temperature_sensor_, data->tps2);
+  float tps1 = update_temp_(internal_temperature_sensor_, data->tps1);
+  float tps2 = update_temp_(external_temperature_sensor_, data->tps2);
 
   if (voltage_sensor_ != nullptr) {
     voltage_sensor_->publish_state(v_rms);

@@ -125,12 +125,12 @@ class BL0940 : public PollingComponent, public uart::UARTDevice {
   float energy_reference_;
   bool energy_reference_set_ = false;
 
-  float update_temp(sensor::Sensor *sensor, uint16_le_t packed_temperature) const;
+  float update_temp_(sensor::Sensor *sensor, uint16_le_t packed_temperature) const;
 
   uint32_t prev_cf_cnt_ = 0;
 
-  bool validate_checksum(DataPacket *data);
-  void received_package(DataPacket *data);
+  bool validate_checksum_(DataPacket *data);
+  void received_package_(DataPacket *data);
 };
 
 }  // namespace bl0940
