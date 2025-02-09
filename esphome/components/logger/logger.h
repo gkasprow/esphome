@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdarg>
-#include <vector>
+#include <map>
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
@@ -55,7 +55,7 @@ enum UARTSelection {
 
 class Logger : public Component {
  public:
-  explicit Logger(uint32_t baud_rate, size_t tx_buffer_size);
+  explicit Logger(uint32_t baud_rate, size_t tx_buffer_size, int initial_level);
 #ifdef USE_LOGGER_USB_CDC
   void loop() override;
 #endif
@@ -74,8 +74,11 @@ class Logger : public Component {
   UARTSelection get_uart() const;
 #endif
 
+  /// Set the default log level for this logger.
+  void set_log_level(int level);
   /// Set the log level of the specified tag.
   void set_log_level(const std::string &tag, int log_level);
+  int get_log_level() { return this->current_level_; }
 
   // ========== INTERNAL METHODS ==========
   // (In most use cases you won't need these)
@@ -87,6 +90,9 @@ class Logger : public Component {
 
   /// Register a callback that will be called for every log message sent
   void add_on_log_callback(std::function<void(int, const char *, const char *)> &&callback);
+
+  // add a listener for log level changes
+  void add_listener(std::function<void(int)> &&callback) { level_callback_.add(std::move(callback)); }
 
   float get_setup_priority() const override;
 
@@ -159,17 +165,14 @@ class Logger : public Component {
 #ifdef USE_ESP_IDF
   uart_port_t uart_num_;
 #endif
-  struct LogLevelOverride {
-    std::string tag;
-    int level;
-  };
-  std::vector<LogLevelOverride> log_levels_;
+  std::map<std::string, int> log_levels_{};
   CallbackManager<void(int, const char *, const char *)> log_callback_{};
+  int current_level_;
   /// Prevents recursive log calls, if true a log message is already being processed.
   bool recursion_guard_ = false;
   void *main_task_ = nullptr;
+  CallbackManager<void(int)> level_callback_{};
 };
-
 extern Logger *global_logger;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 class LoggerMessageTrigger : public Trigger<int, const char *, const char *> {
