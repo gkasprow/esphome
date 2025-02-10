@@ -1,0 +1,46 @@
+i2c:
+  - id: i2c_dac7678
+    scl: 5
+    sda: 4
+
+dac7678:
+  address: 0x4A
+  id: dac7678_hub
+  internal_reference: true
+
+output:
+  - platform: dac7678
+    dac7678_id: dac7678_hub
+    channel: 0
+    id: ntcsim_output
+
+sensor:
+  - platform: adc
+    id: temp
+    pin: A0
+  # calibration variant 1
+  - platform: ntcsim
+    temperature_source: temp
+    name: NTC Sensor simulator
+    calibration:
+      b_constant: 3950
+      reference_resistance: 10k
+      reference_temperature: 25°C
+  # calibration variant 2
+  - platform: ntcsim
+    temperature_source: temp
+    name: NTC Sensor simulation 2
+    calibration:
+      - 10.0kOhm -> 25°C
+      - 27.219kOhm -> 0°C
+      - 14.674kOhm -> 15°C
+  # with output
+  - platform: ntcsim
+    temperature_source: temp
+    name: NTC Sensor simulation 3
+    calibration:
+      - 10.0kOhm -> 25°C
+      - 27.219kOhm -> 0°C
+      - 14.674kOhm -> 15°C
+    output: ntcsim_output
+    output_resistance: 100k
