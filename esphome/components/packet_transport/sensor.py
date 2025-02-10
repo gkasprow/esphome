@@ -1,9 +1,13 @@
 import esphome.codegen as cg
-from esphome.components.packet_transport import packet_transport_sensor_schema
 from esphome.components.sensor import new_sensor, sensor_schema
 from esphome.const import CONF_ID
 
-from . import CONF_PROVIDER, CONF_REMOTE_ID, CONF_TRANSPORT_ID
+from . import (
+    CONF_PROVIDER,
+    CONF_REMOTE_ID,
+    CONF_TRANSPORT_ID,
+    packet_transport_sensor_schema,
+)
 
 CONFIG_SCHEMA = packet_transport_sensor_schema(sensor_schema())
 
