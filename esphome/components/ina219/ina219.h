@@ -3,6 +3,7 @@
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/i2c/i2c.h"
+#include "esphome/core/automation.h"
 
 #include <cinttypes>
 
@@ -15,6 +16,8 @@ class INA219Component : public PollingComponent, public i2c::I2CDevice {
   void dump_config() override;
   float get_setup_priority() const override;
   void update() override;
+  void sleep();
+  void wake_up();
 
   void set_shunt_resistance_ohm(float shunt_resistance_ohm) { shunt_resistance_ohm_ = shunt_resistance_ohm; }
   void set_max_current_a(float max_current_a) { max_current_a_ = max_current_a; }
@@ -28,11 +31,19 @@ class INA219Component : public PollingComponent, public i2c::I2CDevice {
   float shunt_resistance_ohm_;
   float max_current_a_;
   float max_voltage_v_;
+  bool sleeping_{false};
   uint32_t calibration_lsb_;
   sensor::Sensor *bus_voltage_sensor_{nullptr};
   sensor::Sensor *shunt_voltage_sensor_{nullptr};
   sensor::Sensor *current_sensor_{nullptr};
   sensor::Sensor *power_sensor_{nullptr};
+};
+template<typename... Ts> class SleepAction : public Action<Ts...>, public Parented<INA219Component> {
+  void play(Ts... x) override { this->parent_->sleep(); }
+};
+
+template<typename... Ts> class WakeUpAction : public Action<Ts...>, public Parented<INA219Component> {
+  void play(Ts... x) override { this->parent_->wake_up(); }
 };
 
 }  // namespace ina219

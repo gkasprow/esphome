@@ -129,6 +129,36 @@ void INA219Component::setup() {
   }
 }
 
+void INA219Component::sleep() {
+  // Set operating mode bits to power-down mode (bits 0-2 set to 0)
+  ESP_LOGD(TAG, "Putting INA219 to sleep");
+  this->sleeping_ = true;
+  uint16_t config;
+  if (!this->read_byte_16(INA219_REGISTER_CONFIG, &config)) {
+    ESP_LOGD(TAG, "INA219 did not respond to sleep action, failed to read config register");
+    return;
+  }
+  config &= ~0b0000000000000111;  // Clear last 3 bits
+  if (!this->write_byte_16(INA219_REGISTER_CONFIG, config)) {
+    ESP_LOGD(TAG, "INA219 did not respond to sleep action, failed to write config register");
+  }
+}
+
+void INA219Component::wake_up() {
+  // Set operating mode bits to continuous operation of Bus and Shunt ADCs (bits 0-2 set to 1)
+  ESP_LOGD(TAG, "Waking up INA219");
+  this->sleeping_ = false;
+  uint16_t config;
+  if (!this->read_byte_16(INA219_REGISTER_CONFIG, &config)) {
+    ESP_LOGD(TAG, "INA219 did not respond to wake up action, failed to read config register");
+    return;
+  }
+  config |= 0b0000000000000111;  // Set last 3 bits
+  if (!this->write_byte_16(INA219_REGISTER_CONFIG, config)) {
+    ESP_LOGD(TAG, "INA219 did not respond to wake up action, failed to write config register");
+  }
+}
+
 void INA219Component::dump_config() {
   ESP_LOGCONFIG(TAG, "INA219:");
   LOG_I2C_DEVICE(this);
@@ -148,6 +178,10 @@ void INA219Component::dump_config() {
 float INA219Component::get_setup_priority() const { return setup_priority::DATA; }
 
 void INA219Component::update() {
+  if (this->sleeping_) {
+    return;
+  }
+
   if (this->bus_voltage_sensor_ != nullptr) {
     uint16_t raw_bus_voltage;
     if (!this->read_byte_16(INA219_REGISTER_BUS_VOLTAGE, &raw_bus_voltage)) {

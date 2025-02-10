@@ -1,6 +1,7 @@
+from esphome import automation
 import esphome.codegen as cg
-import esphome.config_validation as cv
 from esphome.components import i2c, sensor
+import esphome.config_validation as cv
 from esphome.const import (
     CONF_BUS_VOLTAGE,
     CONF_CURRENT,
@@ -14,8 +15,8 @@ from esphome.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_VOLTAGE,
     STATE_CLASS_MEASUREMENT,
-    UNIT_VOLT,
     UNIT_AMPERE,
+    UNIT_VOLT,
     UNIT_WATT,
 )
 
@@ -68,6 +69,40 @@ CONFIG_SCHEMA = (
     .extend(cv.polling_component_schema("60s"))
     .extend(i2c.i2c_device_schema(0x40))
 )
+
+
+SleepAction = ina219_ns.class_("SleepAction", automation.Action)
+WakeUpAction = ina219_ns.class_("WakeUpAction", automation.Action)
+
+
+@automation.register_action(
+    "ina219.sleep",
+    SleepAction,
+    cv.Schema(
+        {
+            cv.GenerateID(): cv.use_id(INA219Component),
+        }
+    ),
+)
+async def ina219_sleep_to_code(config, action_id, template_arg, args):
+    var = cg.new_Pvariable(action_id, template_arg)
+    await cg.register_parented(var, config[CONF_ID])
+    return var
+
+
+@automation.register_action(
+    "ina219.wake_up",
+    WakeUpAction,
+    cv.Schema(
+        {
+            cv.GenerateID(): cv.use_id(INA219Component),
+        }
+    ),
+)
+async def ina219_wake_up_to_code(config, action_id, template_arg, args):
+    var = cg.new_Pvariable(action_id, template_arg)
+    await cg.register_parented(var, config[CONF_ID])
+    return var
 
 
 async def to_code(config):
