@@ -7,6 +7,7 @@
 #include <esp_idf_version.h>
 
 #include <vector>
+#include <queue>
 
 #include <driver/touch_sensor.h>
 
@@ -106,6 +107,9 @@ class ESP32TouchBinarySensor : public binary_sensor::BinarySensor {
   void set_threshold(uint32_t threshold) { this->threshold_ = threshold; }
   uint32_t get_value() const { return this->value_; }
   uint32_t get_wakeup_threshold() const { return this->wakeup_threshold_; }
+  void set_max_deviation(float max_deviation);
+  void set_max_consecutive_anomalies(float max_consecutive_anomalies);
+  void start_calibration(uint32_t interval, uint16_t num_values);
 
  protected:
   friend ESP32TouchComponent;
@@ -114,6 +118,19 @@ class ESP32TouchBinarySensor : public binary_sensor::BinarySensor {
   uint32_t threshold_{0};
   uint32_t value_{0};
   const uint32_t wakeup_threshold_{0};
+
+  bool dynamic_calibration_{false};
+  float max_deviation_{0};
+  std::queue<uint32_t> prev_values_;
+  uint32_t sum_values_{0};
+  uint16_t max_prev_values_{0};
+  uint32_t last_calibration_timestamp_{0};
+  uint32_t calibration_interval_{0};
+  uint16_t consecutive_anomalies_{0};
+  uint16_t max_consecutive_anomalies_{0};
+
+  float get_average_value_();
+  void insert_value_();
 };
 
 }  // namespace esp32_touch

@@ -292,6 +292,10 @@ void ESP32TouchComponent::loop() {
   bool should_print = this->setup_mode_ && now - this->setup_mode_last_log_print_ > 250;
   for (auto *child : this->children_) {
     child->value_ = this->component_touch_pad_read(child->get_touch_pad());
+    if (child->dynamic_calibration_ && (now - child->last_calibration_timestamp_ > child->calibration_interval_)) {
+      child->insert_value_();
+      child->last_calibration_timestamp_ += child->last_calibration_timestamp_ ? child->calibration_interval_ : now;
+    }
 #if !(defined(USE_ESP32_VARIANT_ESP32S2) || defined(USE_ESP32_VARIANT_ESP32S3))
     child->publish_state(child->value_ < child->get_threshold());
 #else
@@ -344,6 +348,62 @@ void ESP32TouchComponent::on_shutdown() {
 
 ESP32TouchBinarySensor::ESP32TouchBinarySensor(touch_pad_t touch_pad, uint32_t threshold, uint32_t wakeup_threshold)
     : touch_pad_(touch_pad), threshold_(threshold), wakeup_threshold_(wakeup_threshold) {}
+
+void ESP32TouchBinarySensor::set_max_deviation(float max_deviation) { this->max_deviation_ = max_deviation; }
+
+void ESP32TouchBinarySensor::set_max_consecutive_anomalies(float max_consecutive_anomalies) {
+  this->max_consecutive_anomalies_ = max_consecutive_anomalies;
+}
+
+void ESP32TouchBinarySensor::start_calibration(uint32_t interval, uint16_t num_values) {
+  this->dynamic_calibration_ = true;
+  this->max_prev_values_ = num_values;
+  this->prev_values_ = std::queue<uint32_t>();
+  if (this->threshold_) {
+    this->prev_values_.push(this->threshold_);
+  }
+  this->sum_values_ = this->threshold_;
+  this->calibration_interval_ = interval;
+  this->last_calibration_timestamp_ = 0;
+  this->consecutive_anomalies_ = 0;
+}
+
+float ESP32TouchBinarySensor::get_average_value_() {
+  if (this->prev_values_.empty())
+    return 0;
+
+  return this->sum_values_ / float(this->prev_values_.size());
+}
+
+void ESP32TouchBinarySensor::insert_value_() {
+  if (!this->prev_values_.empty()) {
+    float avg = this->get_average_value_();
+    if (fabs(float(this->value_) - avg) / avg > this->max_deviation_) {
+      this->consecutive_anomalies_++;
+      if (this->consecutive_anomalies_ < this->max_consecutive_anomalies_)
+        return;
+    }
+  }
+
+  this->consecutive_anomalies_ = 0;
+
+  this->prev_values_.push(this->value_);
+  this->sum_values_ += this->value_;
+
+  while (this->prev_values_.size() > this->max_prev_values_) {
+    this->sum_values_ -= this->prev_values_.front();
+    this->prev_values_.pop();
+  }
+
+#if !(defined(USE_ESP32_VARIANT_ESP32S2) || defined(USE_ESP32_VARIANT_ESP32S3))
+  this->threshold_ =
+      uint32_t(float(this->sum_values_) / float(this->prev_values_.size()) * (1.0 - this->max_deviation_));
+#else
+  this->threshold_ =
+      uint32_t(float(this->sum_values_) / float(this->prev_values_.size()) * (1.0 + this->max_deviation_));
+#endif
+  ESP_LOGVV(TAG, "'%s': New thouch threshold: %d", this->get_name().c_str(), this->threshold_);
+}
 
 }  // namespace esp32_touch
 }  // namespace esphome
