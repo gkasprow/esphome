@@ -1,0 +1,39 @@
+esphome:
+  name: esp32-11
+  friendly_name: esp32-11
+
+esp32:
+  board: esp32-c3-devkitm-1
+
+# Enable logging
+
+logger:
+
+# Enable Home Assistant API
+
+i2c:
+  sda: GPIO6
+  scl: GPIO7
+  scan: true
+  id: bus_a
+
+external_components:
+  # use all components from a local folder
+  - source:
+      type: local
+      path: components
+
+sensor:
+  - platform: pasco2
+    co2:
+      name: tester_co2_name
+    update_interval: 60s
+
+light:
+  - platform: status_led
+    name: sys_status
+    pin:
+      number: GPIO8
+      inverted: True
+    internal: True
+    restore_mode: ALWAYS_OFF
