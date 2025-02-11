@@ -16,5 +16,5 @@ CONFIG_SCHEMA = transport_schema(UDPTransport).extend(UART_DEVICE_SCHEMA)
 
 
 async def to_code(config):
-    var = await new_packet_transport(config)
+    var, _ = await new_packet_transport(config)
     await register_uart_device(var, config)
