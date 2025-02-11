@@ -56,11 +56,17 @@ WaveshareEPaper2P9InDKE = waveshare_epaper_ns.class_(
     "WaveshareEPaper2P9InDKE", WaveshareEPaper
 )
 GDEY042T81 = waveshare_epaper_ns.class_("GDEY042T81", WaveshareEPaper)
+WaveshareEPaper2P9InD = waveshare_epaper_ns.class_(
+    "WaveshareEPaper2P9InD", WaveshareEPaper
+)
 WaveshareEPaper4P2In = waveshare_epaper_ns.class_(
     "WaveshareEPaper4P2In", WaveshareEPaper
 )
 WaveshareEPaper4P2InBV2 = waveshare_epaper_ns.class_(
     "WaveshareEPaper4P2InBV2", WaveshareEPaper
+)
+WaveshareEPaper4P2InBV2BWR = waveshare_epaper_ns.class_(
+    "WaveshareEPaper4P2InBV2BWR", WaveshareEPaperBWR
 )
 WaveshareEPaper5P8In = waveshare_epaper_ns.class_(
     "WaveshareEPaper5P8In", WaveshareEPaper
@@ -88,6 +94,9 @@ WaveshareEPaper7P5InV2 = waveshare_epaper_ns.class_(
 )
 WaveshareEPaper7P5InV2alt = waveshare_epaper_ns.class_(
     "WaveshareEPaper7P5InV2alt", WaveshareEPaper
+)
+WaveshareEPaper7P5InV2P = waveshare_epaper_ns.class_(
+    "WaveshareEPaper7P5InV2P", WaveshareEPaper
 )
 WaveshareEPaper7P5InHDB = waveshare_epaper_ns.class_(
     "WaveshareEPaper7P5InHDB", WaveshareEPaper
@@ -129,10 +138,12 @@ MODELS = {
     "2.90in-b": ("b", WaveshareEPaper2P9InB),
     "2.90in-bv3": ("b", WaveshareEPaper2P9InBV3),
     "2.90inv2-r2": ("c", WaveshareEPaper2P9InV2R2),
+    "2.90in-d": ("b", WaveshareEPaper2P9InD),
     "2.90in-dke": ("c", WaveshareEPaper2P9InDKE),
     "gdey042t81": ("c", GDEY042T81),
     "4.20in": ("b", WaveshareEPaper4P2In),
     "4.20in-bv2": ("b", WaveshareEPaper4P2InBV2),
+    "4.20in-bv2-bwr": ("b", WaveshareEPaper4P2InBV2BWR),
     "5.83in": ("b", WaveshareEPaper5P8In),
     "5.83inv2": ("b", WaveshareEPaper5P8InV2),
     "7.50in": ("b", WaveshareEPaper7P5In),
@@ -142,10 +153,11 @@ MODELS = {
     "7.50in-bc": ("b", WaveshareEPaper7P5InBC),
     "7.50inv2": ("b", WaveshareEPaper7P5InV2),
     "7.50inv2alt": ("b", WaveshareEPaper7P5InV2alt),
+    "7.50inv2p": ("c", WaveshareEPaper7P5InV2P),
     "7.50in-hd-b": ("b", WaveshareEPaper7P5InHDB),
     "2.13in-ttgo-dke": ("c", WaveshareEPaper2P13InDKE),
     "2.13inv3": ("c", WaveshareEPaper2P13InV3),
-    "1.54in-m5coreink-m09": ("c", GDEW0154M09),
+    "1.54in-m5coreink-m09": ("b", GDEW0154M09),
     "13.3in-k": ("b", WaveshareEPaper13P3InK),
 }
 
