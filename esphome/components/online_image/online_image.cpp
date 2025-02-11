@@ -3,6 +3,10 @@
 #include "esphome/core/log.h"
 
 static const char *const TAG = "online_image";
+static const std::string ETAG_HEADER_NAME = "etag";
+static const std::string IF_NONE_MATCH_HEADER_NAME = "if-none-match";
+static const std::string LAST_MODIFIED_HEADER_NAME = "last-modified";
+static const std::string IF_MODIFIED_SINCE_HEADER_NAME = "if-modified-since";
 
 #include "image_decoder.h"
 
@@ -60,6 +64,8 @@ void OnlineImage::release() {
     this->height_ = 0;
     this->buffer_width_ = 0;
     this->buffer_height_ = 0;
+    this->last_modified_ = "";
+    this->etag_ = "";
     this->end_connection_();
   }
 }
@@ -126,9 +132,17 @@ void OnlineImage::update() {
   }
   accept_header.value = accept_mime_type + ",*/*;q=0.8";
 
+  if (!this->etag_.empty()) {
+    headers.push_back(http_request::Header{IF_NONE_MATCH_HEADER_NAME, this->etag_});
+  }
+
+  if (!this->last_modified_.empty()) {
+    headers.push_back(http_request::Header{IF_MODIFIED_SINCE_HEADER_NAME, this->last_modified_});
+  }
+
   headers.push_back(accept_header);
 
-  this->downloader_ = this->parent_->get(this->url_, headers);
+  this->downloader_ = this->parent_->get(this->url_, headers, {ETAG_HEADER_NAME, LAST_MODIFIED_HEADER_NAME});
 
   if (this->downloader_ == nullptr) {
     ESP_LOGE(TAG, "Download failed.");
@@ -201,6 +215,8 @@ void OnlineImage::loop() {
              this->width_, this->height_);
     ESP_LOGD(TAG, "Total time: %lds", ::time(nullptr) - this->start_time_);
     this->end_connection_();
+    this->etag_ = this->downloader_->get_response_header(ETAG_HEADER_NAME);
+    this->last_modified_ = this->downloader_->get_response_header(LAST_MODIFIED_HEADER_NAME);
     this->download_finished_callback_.call();
     return;
   }
