@@ -25,9 +25,9 @@ void DaikinProtocol::encode(RemoteTransmitData *dst, const DaikinData &data) {
 
   uint8_t checksum = 0;
 
-  for (size_t i = 0; i < sizeof(HEADER); i++) {
-    DaikinProtocol::encode_byte(dst, HEADER[i]);
-    checksum += HEADER[i];
+  for (uint8_t byte : HEADER) {
+    DaikinProtocol::encode_byte(dst, byte);
+    checksum += byte;
   }
 
   for (uint8_t byte : data.data) {
