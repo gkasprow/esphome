@@ -1,5 +1,5 @@
 #include "daikin.h"
-#include "esphome/components/remote_base/remote_base.h"
+#include "esphome/components/remote_base/daikin_protocol.h"
 
 namespace esphome {
 namespace daikin {
@@ -7,62 +7,21 @@ namespace daikin {
 static const char *const TAG = "daikin.climate";
 
 void DaikinClimate::transmit_state() {
-  uint8_t remote_state[35] = {0x11, 0xDA, 0x27, 0x00, 0xC5, 0x00, 0x00, 0xD7, 0x11, 0xDA, 0x27, 0x00,
-                              0x42, 0x49, 0x05, 0xA2, 0x11, 0xDA, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00,
-                              0x00, 0x00, 0x00, 0x06, 0x60, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00};
+  const remote_base::DaikinData frame_1{.data = {0xC5, 0x00, 0x00}};
+  const remote_base::DaikinData frame_2{.data = {0x42, 0x49, 0x05}};
 
-  remote_state[21] = this->operation_mode_();
-  remote_state[22] = this->temperature_();
+  remote_base::DaikinData frame_3{
+      .data = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x60, 0x00, 0x00, 0xC0, 0x00, 0x00}};
+
+  frame_3.data[1] = this->operation_mode_();
+  frame_3.data[2] = this->temperature_();
   uint16_t fan_speed = this->fan_speed_();
-  remote_state[24] = fan_speed >> 8;
-  remote_state[25] = fan_speed & 0xff;
+  frame_3.data[4] = fan_speed >> 8;
+  frame_3.data[5] = fan_speed & 0xff;
 
-  // Calculate checksum
-  for (int i = 16; i < 34; i++) {
-    remote_state[34] += remote_state[i];
-  }
-
-  auto transmit = this->transmitter_->transmit();
-  auto *data = transmit.get_data();
-  data->set_carrier_frequency(DAIKIN_IR_FREQUENCY);
-
-  data->mark(DAIKIN_HEADER_MARK);
-  data->space(DAIKIN_HEADER_SPACE);
-  for (int i = 0; i < 8; i++) {
-    for (uint8_t mask = 1; mask > 0; mask <<= 1) {  // iterate through bit mask
-      data->mark(DAIKIN_BIT_MARK);
-      bool bit = remote_state[i] & mask;
-      data->space(bit ? DAIKIN_ONE_SPACE : DAIKIN_ZERO_SPACE);
-    }
-  }
-  data->mark(DAIKIN_BIT_MARK);
-  data->space(DAIKIN_MESSAGE_SPACE);
-  data->mark(DAIKIN_HEADER_MARK);
-  data->space(DAIKIN_HEADER_SPACE);
-
-  for (int i = 8; i < 16; i++) {
-    for (uint8_t mask = 1; mask > 0; mask <<= 1) {  // iterate through bit mask
-      data->mark(DAIKIN_BIT_MARK);
-      bool bit = remote_state[i] & mask;
-      data->space(bit ? DAIKIN_ONE_SPACE : DAIKIN_ZERO_SPACE);
-    }
-  }
-  data->mark(DAIKIN_BIT_MARK);
-  data->space(DAIKIN_MESSAGE_SPACE);
-  data->mark(DAIKIN_HEADER_MARK);
-  data->space(DAIKIN_HEADER_SPACE);
-
-  for (int i = 16; i < 35; i++) {
-    for (uint8_t mask = 1; mask > 0; mask <<= 1) {  // iterate through bit mask
-      data->mark(DAIKIN_BIT_MARK);
-      bool bit = remote_state[i] & mask;
-      data->space(bit ? DAIKIN_ONE_SPACE : DAIKIN_ZERO_SPACE);
-    }
-  }
-  data->mark(DAIKIN_BIT_MARK);
-  data->space(0);
-
-  transmit.perform();
+  this->transmit_<remote_base::DaikinProtocol>(frame_1);
+  this->transmit_<remote_base::DaikinProtocol>(frame_2);
+  this->transmit_<remote_base::DaikinProtocol>(frame_3);
 }
 
 uint8_t DaikinClimate::operation_mode_() {
@@ -140,14 +99,16 @@ uint8_t DaikinClimate::temperature_() {
   }
 }
 
-bool DaikinClimate::parse_state_frame_(const uint8_t frame[]) {
-  uint8_t checksum = 0;
-  for (int i = 0; i < (DAIKIN_STATE_FRAME_SIZE - 1); i++) {
-    checksum += frame[i];
-  }
-  if (frame[DAIKIN_STATE_FRAME_SIZE - 1] != checksum)
+bool DaikinClimate::on_receive(remote_base::RemoteReceiveData data) {
+  auto decoded = remote_base::DaikinProtocol().decode(data);
+  if (!decoded.has_value())
     return false;
-  uint8_t mode = frame[5];
+
+  const remote_base::DaikinData &state = decoded.value();
+  if (state.data.size() != 14 || state.data[0] != 0)  // Frame type
+    return false;
+
+  uint8_t mode = state.data[1];
   if (mode & DAIKIN_MODE_ON) {
     switch (mode & 0xF0) {
       case DAIKIN_MODE_COOL:
@@ -169,12 +130,14 @@ bool DaikinClimate::parse_state_frame_(const uint8_t frame[]) {
   } else {
     this->mode = climate::CLIMATE_MODE_OFF;
   }
-  uint8_t temperature = frame[6];
+
+  uint8_t temperature = state.data[2];
   if (!(temperature & 0xC0)) {
     this->target_temperature = temperature >> 1;
   }
-  uint8_t fan_mode = frame[8];
-  uint8_t swing_mode = frame[9];
+
+  uint8_t fan_mode = state.data[4];
+  uint8_t swing_mode = state.data[5];
   if (fan_mode & 0xF && swing_mode & 0xF) {
     this->swing_mode = climate::CLIMATE_SWING_BOTH;
   } else if (fan_mode & 0xF) {
@@ -203,46 +166,6 @@ bool DaikinClimate::parse_state_frame_(const uint8_t frame[]) {
   }
   this->publish_state();
   return true;
-}
-
-bool DaikinClimate::on_receive(remote_base::RemoteReceiveData data) {
-  uint8_t state_frame[DAIKIN_STATE_FRAME_SIZE] = {};
-  if (!data.expect_item(DAIKIN_HEADER_MARK, DAIKIN_HEADER_SPACE)) {
-    return false;
-  }
-  for (uint8_t pos = 0; pos < DAIKIN_STATE_FRAME_SIZE; pos++) {
-    uint8_t byte = 0;
-    for (int8_t bit = 0; bit < 8; bit++) {
-      if (data.expect_item(DAIKIN_BIT_MARK, DAIKIN_ONE_SPACE)) {
-        byte |= 1 << bit;
-      } else if (!data.expect_item(DAIKIN_BIT_MARK, DAIKIN_ZERO_SPACE)) {
-        return false;
-      }
-    }
-    state_frame[pos] = byte;
-    if (pos == 0) {
-      // frame header
-      if (byte != 0x11)
-        return false;
-    } else if (pos == 1) {
-      // frame header
-      if (byte != 0xDA)
-        return false;
-    } else if (pos == 2) {
-      // frame header
-      if (byte != 0x27)
-        return false;
-    } else if (pos == 3) {  // NOLINT(bugprone-branch-clone)
-      // frame header
-      if (byte != 0x00)
-        return false;
-    } else if (pos == 4) {
-      // frame type
-      if (byte != 0x00)
-        return false;
-    }
-  }
-  return this->parse_state_frame_(state_frame);
 }
 
 }  // namespace daikin
