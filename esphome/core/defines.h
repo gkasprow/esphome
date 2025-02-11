@@ -35,7 +35,6 @@
 #define USE_DEEP_SLEEP
 #define USE_DISPLAY
 #define USE_ESP32_IMPROV_STATE_CALLBACK
-#define USE_ESP_ADF
 #define USE_EVENT
 #define USE_FAN
 #define USE_GRAPH
