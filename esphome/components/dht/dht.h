@@ -42,6 +42,7 @@ class DHT : public PollingComponent {
   void set_model(DHTModel model) { model_ = model; }
   void set_temperature_sensor(sensor::Sensor *temperature_sensor) { temperature_sensor_ = temperature_sensor; }
   void set_humidity_sensor(sensor::Sensor *humidity_sensor) { humidity_sensor_ = humidity_sensor; }
+  void set_internal_pullup(bool use_internal_pullup) { this->use_internal_pullup_ = use_internal_pullup; }
 
   /// Set up the pins and check connection.
   void setup() override;
@@ -59,6 +60,7 @@ class DHT : public PollingComponent {
   bool is_auto_detect_{false};
   sensor::Sensor *temperature_sensor_{nullptr};
   sensor::Sensor *humidity_sensor_{nullptr};
+  bool use_internal_pullup_{true};
 };
 
 }  // namespace dht
