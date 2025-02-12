@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 import logging
+from math import ceil
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from esphome import git
 import esphome.codegen as cg
@@ -160,8 +163,8 @@ def add_idf_component(
     ref: str = None,
     path: str = None,
     refresh: TimePeriod = None,
-    components: Optional[list[str]] = None,
-    submodules: Optional[list[str]] = None,
+    components: list[str] | None = None,
+    submodules: list[str] | None = None,
 ):
     """Add an esp-idf component to the project."""
     if not CORE.using_esp_idf:
@@ -685,6 +688,46 @@ async def to_code(config):
         )
 
 
+custom_partitions = []
+
+
+def add_custom_partition(
+    name: str, p_type: int | str, subtype: int | str, size: int
+) -> None:
+    if name in ["nvs", "app0", "app1", "otadata", "eeprom", "spiffs", "phy_init"]:
+        raise cv.Invalid(f"Partition name {name} is reserved.")
+    if isinstance(p_type, str) and p_type not in ["app", "data"]:
+        raise cv.Invalid(
+            f"Type {p_type} is invalid. Only app and data are allowed. Use numbers for custom types"
+        )
+    if isinstance(p_type, int):
+        if p_type not in range(0x40, 0xFE):
+            raise cv.Invalid(
+                f"Type 0x{p_type:X} is invalid. Only 0x40 - 0xFE are allowed"
+            )
+        p_type = f"0x{p_type:X}"
+    if isinstance(subtype, int):
+        if subtype not in range(0x40, 0xFE):
+            raise cv.Invalid(
+                f"Subtype 0x{subtype:X} is invalid. Only 0x40 - 0xFE are allowed"
+            )
+        subtype = f"0x{subtype:X}"
+    custom_partitions.append(
+        {"name": name, "type": p_type, "subtype": subtype, "size": size}
+    )
+
+
+def _get_custom_partition_half_size() -> int:
+    size = 0
+    for partition in custom_partitions:
+        if partition["type"] == "app":
+            size = ceil(size / 0x10000) * 0x10000  # align to 64KB
+        else:
+            size = ceil(size / 0x1000) * 0x1000  # align to 4KB
+        size += partition["size"]
+    return int(ceil((size / 2) / 0x10000)) * 0x10000  # align to 64KB
+
+
 APP_PARTITION_SIZES = {
     "2MB": 0x0C0000,  # 768 KB
     "4MB": 0x1C0000,  # 1792 KB
@@ -695,7 +738,9 @@ APP_PARTITION_SIZES = {
 
 
 def get_arduino_partition_csv(flash_size):
-    app_partition_size = APP_PARTITION_SIZES[flash_size]
+    app_partition_size = (
+        APP_PARTITION_SIZES[flash_size] - _get_custom_partition_half_size()
+    )
     eeprom_partition_size = 0x1000  # 4 KB
     spiffs_partition_size = 0xF000  # 60 KB
 
@@ -703,6 +748,7 @@ def get_arduino_partition_csv(flash_size):
     app1_partition_start = app0_partition_start + app_partition_size
     eeprom_partition_start = app1_partition_start + app_partition_size
     spiffs_partition_start = eeprom_partition_start + eeprom_partition_size
+    custom_partition_start = spiffs_partition_start + spiffs_partition_size
 
     partition_csv = f"""\
 nvs,      data, nvs,     0x9000, 0x5000,
@@ -710,13 +756,26 @@ otadata,  data, ota,     0xE000, 0x2000,
 app0,     app,  ota_0,   0x{app0_partition_start:X}, 0x{app_partition_size:X},
 app1,     app,  ota_1,   0x{app1_partition_start:X}, 0x{app_partition_size:X},
 eeprom,   data, 0x99,    0x{eeprom_partition_start:X}, 0x{eeprom_partition_size:X},
-spiffs,   data, spiffs,  0x{spiffs_partition_start:X}, 0x{spiffs_partition_size:X}
+spiffs,   data, spiffs,  0x{spiffs_partition_start:X}, 0x{spiffs_partition_size:X},
 """
+    for partition in custom_partitions:
+        if partition["type"] == "app":
+            custom_partition_start = (
+                ceil(custom_partition_start / 0x10000) * 0x10000
+            )  # align to 64KB
+        else:
+            custom_partition_start = (
+                ceil(custom_partition_start / 0x1000) * 0x1000
+            )  # align to 4KB
+        partition_csv += f'{partition["name"]}, {partition["type"]},   {partition["subtype"]},    0x{custom_partition_start:X},   0x{partition["size"]:X},\n'
+        custom_partition_start = custom_partition_start + partition.size
     return partition_csv
 
 
 def get_idf_partition_csv(flash_size):
-    app_partition_size = APP_PARTITION_SIZES[flash_size]
+    app_partition_size = (
+        APP_PARTITION_SIZES[flash_size] - _get_custom_partition_half_size()
+    )
 
     partition_csv = f"""\
 otadata,  data, ota,     ,        0x2000,
@@ -725,6 +784,8 @@ app0,     app,  ota_0,   ,        0x{app_partition_size:X},
 app1,     app,  ota_1,   ,        0x{app_partition_size:X},
 nvs,      data, nvs,     ,        0x6D000,
 """
+    for partition in custom_partitions:
+        partition_csv += f'{partition["name"]}, {partition["type"]},   {partition["subtype"]},    , 0x{partition["size"]:X},\n'
     return partition_csv
 
 
