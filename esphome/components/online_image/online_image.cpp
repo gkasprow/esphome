@@ -134,10 +134,25 @@ void OnlineImage::update() {
   accept_header.value = accept_mime_type + ",*/*;q=0.8";
 
   if (!this->etag_.empty()) {
+    /*
+       The HTTP ETag (entity tag) response header is an identifier for a specific version of a resource.
+       If the resource at a given URL changes, a new Etag value must be generated.
+       See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
+
+       By sending the last ETag as the value of the If-None-Match request header, if the resource hasn't changed, the
+       server will reply HTTP 304 (Not Modified). See
+       https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
+     */
     headers.push_back(http_request::Header{IF_NONE_MATCH_HEADER_NAME, this->etag_});
   }
 
   if (!this->last_modified_.empty()) {
+    /*
+      The Last-Modified response header indicates when the resource last changed.
+      By sending the last Last-Modified as the value of the If-Modified-Since request header, if the resource hasn't
+      changed, the server will reply HTTP 304 (Not Modified). See
+      https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching
+    */
     headers.push_back(http_request::Header{IF_MODIFIED_SINCE_HEADER_NAME, this->last_modified_});
   }
 
