@@ -9,6 +9,7 @@ DEPENDENCIES = ["api", "esp32"]
 CODEOWNERS = ["@jesserockz"]
 
 CONF_CACHE_SERVICES = "cache_services"
+CONF_MAX_CHARACTERISTICS = "max_characteristics"
 CONF_CONNECTIONS = "connections"
 MAX_CONNECTIONS = 3
 
@@ -34,13 +35,10 @@ def validate_connections(config):
             raise cv.Invalid(
                 "Connections can only be used if the proxy is set to active"
             )
-    else:
-        if config[CONF_ACTIVE]:
-            conf = config.copy()
-            conf[CONF_CONNECTIONS] = [
-                CONNECTION_SCHEMA({}) for _ in range(MAX_CONNECTIONS)
-            ]
-            return conf
+    elif config[CONF_ACTIVE]:
+        conf = config.copy()
+        conf[CONF_CONNECTIONS] = [CONNECTION_SCHEMA({}) for _ in range(MAX_CONNECTIONS)]
+        return conf
     return config
 
 
@@ -51,6 +49,9 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_ACTIVE, default=False): cv.boolean,
             cv.SplitDefault(CONF_CACHE_SERVICES, esp32_idf=True): cv.All(
                 cv.only_with_esp_idf, cv.boolean
+            ),
+            cv.SplitDefault(CONF_MAX_CHARACTERISTICS, esp32_idf=40): cv.All(
+                cv.only_with_esp_idf, cv.int_range(min=1, max=500)
             ),
             cv.Optional(CONF_CONNECTIONS): cv.All(
                 cv.ensure_list(CONNECTION_SCHEMA),
@@ -79,5 +80,10 @@ async def to_code(config):
 
     if config.get(CONF_CACHE_SERVICES):
         add_idf_sdkconfig_option("CONFIG_BT_GATTC_CACHE_NVS_FLASH", True)
+
+    if CONF_MAX_CHARACTERISTICS in config:
+        add_idf_sdkconfig_option(
+            "CONFIG_BT_GATTC_MAX_CACHE_CHAR", config[CONF_MAX_CHARACTERISTICS]
+        )
 
     cg.add_define("USE_BLUETOOTH_PROXY")
