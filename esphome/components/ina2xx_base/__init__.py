@@ -30,6 +30,7 @@ CODEOWNERS = ["@latonita"]
 CONF_ADC_AVERAGING = "adc_averaging"
 CONF_ADC_RANGE = "adc_range"
 CONF_ADC_TIME = "adc_time"
+CONF_BUS_VOLTAGE_OVER_LIMIT = "bus_voltage_over_limit"
 CONF_CHARGE = "charge"
 CONF_CHARGE_COULOMBS = "charge_coulombs"
 CONF_ENERGY_JOULES = "energy_joules"
@@ -88,6 +89,11 @@ def validate_model_config(config):
     if tempco > 0 and model not in ["INA228", "INA229"]:
         raise cv.Invalid(
             f"Device model '{model}' does not support temperature coefficient"
+        )
+
+    if config.get(CONF_BUS_VOLTAGE_OVER_LIMIT) and model not in ["INA228", "INA229"]:
+        raise cv.Invalid(
+            f"Device model '{model}' does not support bus voltage over limit"
         )
 
     return config
@@ -193,6 +199,9 @@ INA2XX_SCHEMA = cv.Schema(
             ),
             key=CONF_NAME,
         ),
+        cv.Optional(CONF_BUS_VOLTAGE_OVER_LIMIT): cv.All(
+            cv.voltage, cv.Range(min=0.0, max=0x7FFF * 3.125 / 1000)
+        ),
     }
 ).extend(cv.polling_component_schema("60s"))
 
@@ -253,3 +262,6 @@ async def setup_ina2xx(var, config):
     if conf := config.get(CONF_CHARGE_COULOMBS):
         sens = await sensor.new_sensor(conf)
         cg.add(var.set_charge_sensor_c(sens))
+
+    if conf := config.get(CONF_BUS_VOLTAGE_OVER_LIMIT):
+        cg.add(var.set_bus_voltage_over_limit_v(conf))
