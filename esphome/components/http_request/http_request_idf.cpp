@@ -20,7 +20,7 @@ namespace http_request {
 static const char *const TAG = "http_request.idf";
 
 struct UserData {
-  const std::list<std::string> &collect_header_names;
+  const std::set<std::string> &collect_header_names;
   const std::map<std::string, std::list<std::string>> &response_headers;
 };
 
@@ -55,7 +55,7 @@ esp_err_t HttpRequestIDF::http_event_handler(esp_http_client_event_t *evt) {
 
 std::shared_ptr<HttpContainer> HttpRequestIDF::start(std::string url, std::string method, std::string body,
                                                      std::list<Header> headers,
-                                                     std::list<std::string> collect_header_names) {
+                                                     std::set<std::string> collect_header_names) {
   if (!network::is_connected()) {
     this->status_momentary_error("failed", 1000);
     ESP_LOGE(TAG, "HTTP Request failed; Not connected to network");

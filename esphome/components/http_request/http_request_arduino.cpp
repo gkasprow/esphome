@@ -16,7 +16,7 @@ static const char *const TAG = "http_request.arduino";
 
 std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::string method, std::string body,
                                                          std::list<Header> headers,
-                                                         std::list<std::string> collect_header_names) {
+                                                         std::set<std::string> collect_header_names) {
   if (!network::is_connected()) {
     this->status_momentary_error("failed", 1000);
     ESP_LOGW(TAG, "HTTP Request failed; Not connected to network");
