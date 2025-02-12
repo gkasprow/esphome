@@ -26,6 +26,9 @@ static const size_t MAX_BUTTONS = 4;  // max number of buttons scanned
 void GT911Touchscreen::setup() {
   i2c::ErrorCode err;
   ESP_LOGCONFIG(TAG, "Setting up GT911 Touchscreen...");
+
+  this->setup_noise_level(this->noise_level_);
+
   if (this->reset_pin_ != nullptr) {
     this->reset_pin_->setup();
     this->reset_pin_->digital_write(false);
@@ -84,6 +87,83 @@ void GT911Touchscreen::setup() {
   ESP_LOGCONFIG(TAG, "GT911 Touchscreen setup complete");
 }
 
+uint8_t GT911Touchscreen::gt911_checksum(uint8_t *buf, uint8_t len) {
+  uint8_t checksum = 0;
+  for (uint8_t i = 0; i < len; i++) {
+    checksum += buf[i];
+  }
+  checksum = (~checksum) + 1;
+  return checksum;
+}
+
+#define GT_REG_CONFIG 0x8047
+#define GT_CONFIG_FRESH 0x8100
+void GT911Touchscreen::setup_noise_level(int nr_level) {
+  uint8_t len = GT_CONFIG_FRESH - GT_REG_CONFIG;
+  uint8_t cfg[len];
+  uint8_t err;
+  uint8_t done = 1;
+
+  // Check noise_level is within limits
+  if (nr_level < 0 || nr_level > 15) {
+    ESP_LOGD(TAG, "Noise Level value out of range (0-15)");
+    return;
+  }
+
+  memset(cfg, 0, len);
+
+  // Split the read down as it appears reading 185 bytes in one
+  // go is too much
+  err = this->read_register16(GT_REG_CONFIG, cfg, 100);
+  if (err != i2c::ERROR_OK) {
+    ESP_LOGD(TAG, "Failed to read config space (1)");
+    return;
+  }
+
+  err = this->read_register16(GT_REG_CONFIG + 100, cfg + 100, len - 100);
+  if (err != i2c::ERROR_OK) {
+    ESP_LOGD(TAG, "Failed to read config space (2)");
+    return;
+  }
+
+  if (cfg[len - 1] != this->gt911_checksum(cfg, len - 1)) {
+    ESP_LOGD(TAG, "Failed to read config space (checksum failed)");
+    return;
+  }
+
+  uint8_t old_level = cfg[11];
+
+  if (cfg[11] == (uint8_t) nr_level) {
+    ESP_LOGD(TAG, "noise reduction unchanged");
+    return;
+  }
+
+  cfg[11] = (uint8_t) nr_level;
+  cfg[len - 1] = this->gt911_checksum(cfg, len - 1);
+
+  // Split the read down as it appears writing 185 bytes in one
+  // go is also too much
+  err = this->write_register16(GT_REG_CONFIG, cfg, 100);
+  if (err != i2c::ERROR_OK) {
+    ESP_LOGD(TAG, "Failed to write config space (1)");
+    return;
+  }
+  err = this->write_register16(GT_REG_CONFIG + 100, cfg + 100, len - 100);
+  if (err != i2c::ERROR_OK) {
+    ESP_LOGD(TAG, "Failed to write config space (2)");
+    return;
+  }
+
+  err = this->write_register16(GT_CONFIG_FRESH, &done, 1);
+  if (err != i2c::ERROR_OK) {
+    ESP_LOGW(TAG, "Failed to update GT911 configuration");
+    return;
+  }
+
+  ESP_LOGD(TAG, "noise level updated from %i to %i", old_level, nr_level);
+  return;
+}
+
 void GT911Touchscreen::update_touches() {
   i2c::ErrorCode err;
   uint8_t touch_state = 0;
@@ -127,6 +207,7 @@ void GT911Touchscreen::dump_config() {
   ESP_LOGCONFIG(TAG, "GT911 Touchscreen:");
   LOG_I2C_DEVICE(this);
   LOG_PIN("  Interrupt Pin: ", this->interrupt_pin_);
+  ESP_LOGI(TAG, "  GT911 noise level: %i", this->noise_level_);
 }
 
 }  // namespace gt911
