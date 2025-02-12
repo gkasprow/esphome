@@ -154,6 +154,7 @@ void OnlineImage::update() {
   int http_code = this->downloader_->status_code;
   if (http_code == HTTP_CODE_NOT_MODIFIED) {
     // Image hasn't changed on server. Skip download.
+    ESP_LOGI(TAG, "Server returned HTTP 304 (Not Modified). Download skipped.");
     this->end_connection_();
     return;
   }
