@@ -241,9 +241,14 @@ void PollingComponent::set_update_interval(uint32_t update_interval) { this->upd
 WarnIfComponentBlockingGuard::WarnIfComponentBlockingGuard(Component *component)
     : started_(millis()), component_(component) {}
 WarnIfComponentBlockingGuard::~WarnIfComponentBlockingGuard() {
-  uint32_t blocking_time = millis() - started_;
-  if ((component_ != nullptr) ? component_->should_warn_of_blocking(blocking_time)
-                              : (blocking_time > WARN_IF_BLOCKING_OVER_MS)) {
+  uint32_t blocking_time = millis() - this->started_;
+  bool should_warn;
+  if (this->component_ != nullptr) {
+    should_warn = this->component_->should_warn_of_blocking(blocking_time);
+  } else {
+    should_warn = blocking_time > WARN_IF_BLOCKING_OVER_MS;
+  }
+  if (should_warn) {
     const char *src = component_ == nullptr ? "<null>" : component_->get_component_source();
     ESP_LOGW(TAG, "Component %s took a long time for an operation (%" PRIu32 " ms).", src, blocking_time);
     ESP_LOGW(TAG, "Components should block for at most 30 ms.");
