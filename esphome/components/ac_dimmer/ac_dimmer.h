@@ -9,7 +9,12 @@
 namespace esphome {
 namespace ac_dimmer {
 
-enum DimMethod { DIM_METHOD_LEADING_PULSE = 0, DIM_METHOD_LEADING, DIM_METHOD_TRAILING };
+enum DimMethod {
+  DIM_METHOD_LEADING_PULSE = 0,
+  DIM_METHOD_LEADING_PULSE_DOUBLE,
+  DIM_METHOD_LEADING,
+  DIM_METHOD_TRAILING
+};
 
 struct AcDimmerDataStore {
   /// Zero-cross pin
@@ -22,6 +27,8 @@ struct AcDimmerDataStore {
   uint16_t value;
   /// Minimum power for activation
   uint16_t min_power;
+  /// Once dimming below 100%, don't dim more than this (some dimmers don't work right between 90 and 99%)
+  uint16_t max_dimmer;
   /// Time between the last two ZC pulses
   uint32_t cycle_time_us;
   /// Time (in micros()) of last ZC signal
@@ -34,6 +41,9 @@ struct AcDimmerDataStore {
   bool init_cycle;
   /// Dimmer method
   DimMethod method;
+  // Second half of cycle, for dimmers that only give a single zero crossing pulse
+  // Set to false on the crossing, and then true after it has passed
+  bool first_cycle_done;
 
   uint32_t timer_intr(uint32_t now);
 
@@ -52,6 +62,7 @@ class AcDimmer : public output::FloatOutput, public Component {
   void set_gate_pin(InternalGPIOPin *gate_pin) { gate_pin_ = gate_pin; }
   void set_zero_cross_pin(InternalGPIOPin *zero_cross_pin) { zero_cross_pin_ = zero_cross_pin; }
   void set_init_with_half_cycle(bool init_with_half_cycle) { init_with_half_cycle_ = init_with_half_cycle; }
+  void set_max_dim(float max_dim) { max_dim_ = max_dim; }
   void set_method(DimMethod method) { method_ = method; }
 
  protected:
@@ -61,6 +72,7 @@ class AcDimmer : public output::FloatOutput, public Component {
   InternalGPIOPin *zero_cross_pin_;
   AcDimmerDataStore store_;
   bool init_with_half_cycle_;
+  float max_dim_;
   DimMethod method_;
 };
 
