@@ -8,6 +8,9 @@
 #include "esphome/core/component.h"
 #include "esphome/core/controller.h"
 #include "esphome/core/entity_base.h"
+#ifdef USE_CLIMATE
+#include "esphome/core/log.h"
+#endif
 
 namespace esphome {
 namespace prometheus {
