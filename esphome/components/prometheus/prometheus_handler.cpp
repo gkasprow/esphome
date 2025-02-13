@@ -5,9 +5,6 @@
 namespace esphome {
 namespace prometheus {
 
-// Longest: HORIZONTAL
-#define PSTR_LOCAL(mode_s) strncpy_P(buf, (PGM_P) ((mode_s)), 15)
-
 void PrometheusHandler::handleRequest(AsyncWebServerRequest *req) {
   AsyncResponseStream *stream = req->beginResponseStream("text/plain; version=0.0.4; charset=utf-8");
   std::string area = App.get_area();
