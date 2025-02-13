@@ -861,7 +861,7 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",mode=\""));
-  stream->print(PSTR_LOCAL(climate::climate_mode_to_string(obj->mode)));
+  stream->print(LOG_STR_ARG(climate::climate_mode_to_string(obj->mode)));
   stream->print(F("\"} "));
   stream->print(F("1.0"));
   stream->print(F("\n"));
