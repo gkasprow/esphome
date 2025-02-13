@@ -5,6 +5,9 @@
 namespace esphome {
 namespace prometheus {
 
+// Longest: HORIZONTAL
+#define PSTR_LOCAL(mode_s) strncpy_P(buf, (PGM_P) ((mode_s)), 15)
+
 void PrometheusHandler::handleRequest(AsyncWebServerRequest *req) {
   AsyncResponseStream *stream = req->beginResponseStream("text/plain; version=0.0.4; charset=utf-8");
   std::string area = App.get_area();
@@ -858,7 +861,7 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",mode=\""));
-  stream->print(climate::climate_mode_to_string(obj->mode));
+  stream->print(PSTR_LOCAL(climate::climate_mode_to_string(obj->mode)));
   stream->print(F("\"} "));
   stream->print(F("1.0"));
   stream->print(F("\n"));
