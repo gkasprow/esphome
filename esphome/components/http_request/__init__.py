@@ -21,6 +21,7 @@ http_request_ns = cg.esphome_ns.namespace("http_request")
 HttpRequestComponent = http_request_ns.class_("HttpRequestComponent", cg.Component)
 HttpRequestArduino = http_request_ns.class_("HttpRequestArduino", HttpRequestComponent)
 HttpRequestIDF = http_request_ns.class_("HttpRequestIDF", HttpRequestComponent)
+HttpRequestHost = http_request_ns.class_("HttpRequestHost", HttpRequestComponent)
 
 HttpContainer = http_request_ns.class_("HttpContainer")
 
@@ -85,6 +86,8 @@ def validate_ssl_verification(config):
 
 
 def _declare_request_class(value):
+    if CORE.is_host:
+        return cv.declare_id(HttpRequestHost)(value)
     if CORE.using_esp_idf:
         return cv.declare_id(HttpRequestIDF)(value)
     if CORE.is_esp8266 or CORE.is_esp32 or CORE.is_rp2040:
@@ -126,6 +129,7 @@ CONFIG_SCHEMA = cv.All(
         esp32_arduino=cv.Version(0, 0, 0),
         esp_idf=cv.Version(0, 0, 0),
         rp2040_arduino=cv.Version(0, 0, 0),
+        host=cv.Version(0, 0, 0),
     ),
     validate_ssl_verification,
 )
