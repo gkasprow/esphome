@@ -17,6 +17,9 @@ class OneWireBus {
    */
   virtual bool reset() = 0;
 
+  /// strong pullup during convertion
+  virtual void strong_pullup() = 0;
+
   /// Write a word to the bus. LSB first.
   virtual void write8(uint8_t val) = 0;
 
