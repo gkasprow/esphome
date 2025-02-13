@@ -835,14 +835,33 @@ void PrometheusHandler::valve_row_(AsyncResponseStream *stream, valve::Valve *ob
 
 #ifdef USE_CLIMATE
 void PrometheusHandler::climate_type_(AsyncResponseStream *stream) {
-  stream->print(F("#TYPE esphome_climate_mode gauge\n"));
+  stream->print(F("#TYPE esphome_climate_setting gauge\n"));
   stream->print(F("#TYPE esphome_climate_value gauge\n"));
   stream->print(F("#TYPE esphome_climate_failed gauge\n"));
 }
 
-void PrometheusHandler::climate_mode_row_(AsyncResponseStream *stream, climate::Climate *obj, std::string &area,
-                                          std::string &node, std::string &friendly_name, std::string &category,
-                                          std::string &climate_value) {
+void PrometheusHandler::climate_setting_row_(AsyncResponseStream *stream, climate::Climate *obj, std::string &area,
+                                             std::string &node, std::string &friendly_name, std::string &category,
+                                             std::string &climate_value) {
+  stream->print(F("esphome_climate_setting{id=\""));
+  stream->print(relabel_id_(obj).c_str());
+  add_area_label_(stream, area);
+  add_node_label_(stream, node);
+  add_friendly_name_label_(stream, friendly_name);
+  stream->print(F("\",name=\""));
+  stream->print(relabel_name_(obj).c_str());
+  stream->print(F("\",category=\""));
+  stream->print(category.c_str());
+  stream->print(F("\",value=\""));
+  stream->print(LOG_STR_ARG(climate::climate_mode_to_string(obj->mode)));
+  stream->print(F("\"} "));
+  stream->print(F("1.0"));
+  stream->print(F("\n"));
+}
+
+void PrometheusHandler::climate_value_row_(AsyncResponseStream *stream, climate::Climate *obj, std::string &area,
+                                           std::string &node, std::string &friendly_name, std::string &category,
+                                           std::string &climate_value) {
   stream->print(F("esphome_climate_value{id=\""));
   stream->print(relabel_id_(obj).c_str());
   add_area_label_(stream, area);
@@ -870,43 +889,65 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} 0\n"));
   // Data itself
-  stream->print(F("esphome_climate_mode{id=\""));
-  stream->print(relabel_id_(obj).c_str());
-  add_area_label_(stream, area);
-  add_node_label_(stream, node);
-  add_friendly_name_label_(stream, friendly_name);
-  stream->print(F("\",name=\""));
-  stream->print(relabel_name_(obj).c_str());
-  stream->print(F("\",mode=\""));
-  stream->print(LOG_STR_ARG(climate::climate_mode_to_string(obj->mode)));
-  stream->print(F("\"} "));
-  stream->print(F("1.0"));
-  stream->print(F("\n"));
+  std::string climate_mode_category = "mode";
+  auto climate_mode_value = LOG_STR_ARG(climate::climate_mode_to_string(obj->mode));
+  climate_setting_row_(stream, obj, area, node, friendly_name, climate_mode_category, climate_mode_value);
+  //  stream->print(F("esphome_climate_setting{id=\""));
+  //  stream->print(relabel_id_(obj).c_str());
+  //  add_area_label_(stream, area);
+  //  add_node_label_(stream, node);
+  //  add_friendly_name_label_(stream, friendly_name);
+  //  stream->print(F("\",name=\""));
+  //  stream->print(relabel_name_(obj).c_str());
+  //  stream->print(F("\",value=\""));
+  //  stream->print(LOG_STR_ARG(climate::climate_mode_to_string(obj->mode)));
+  //  stream->print(F("\"} "));
+  //  stream->print(F("1.0"));
+  //  stream->print(F("\n"));
   const auto traits = obj->get_traits();
   // Now see if traits is supported
+  int8_t target_accuracy = traits.get_target_temperature_accuracy_decimals();
+  int8_t current_accuracy = traits.get_current_temperature_accuracy_decimals();
+  // max temp
+  std::string max_temp = "maximum_temperature";
+  auto max_temp_value = value_accuracy_to_string(traits.get_visual_max_temperature(), target_accuracy);
+  climate_mode_row_(stream, obj, area, node, friendly_name, max_temp, max_temp_value);
+  // max temp
+  std::string min_temp = "mininum_temperature";
+  auto min_temp_value = value_accuracy_to_string(traits.get_visual_max_temperature(), target_accuracy);
+  climate_mode_row_(stream, obj, area, node, friendly_name, min_temp, min_temp_value);
+  // now check optional things
   if (traits.get_supports_current_temperature()) {
     std::string current_temp = "current_temperature";
-    int8_t current_accuracy = traits.get_current_temperature_accuracy_decimals();
     auto current_temp_value = value_accuracy_to_string(obj->current_temperature, current_accuracy);
     climate_mode_row_(stream, obj, area, node, friendly_name, current_temp, current_temp_value);
   }
   if (traits.get_supports_target_temperature()) {
     std::string target_temp = "target_temperature";
-    int8_t target_accuracy = traits.get_target_temperature_accuracy_decimals();
     auto target_temp_value = value_accuracy_to_string(obj->target_temperature, target_accuracy);
     climate_mode_row_(stream, obj, area, node, friendly_name, target_temp, target_temp_value);
   }
-  if (traits.get_supports_current_humidity()) {
-    std::string current_hum = "current_humidity";
-    int8_t current_accuracy = traits.get_current_humidity_accuracy_decimals();
-    auto current_hum_value = value_accuracy_to_string(obj->current_humidity, current_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, current_hum, current_hum_value);
+  if (traits.get_supports_two_point_target_temperature()) {
+    std::string target_temp_low = "target_temperature_low";
+    auto target_temp_low_value = value_accuracy_to_string(obj->target_temperature_low, target_accuracy);
+    climate_mode_row_(stream, obj, area, node, friendly_name, target_temp_low, target_temp_low_value);
+    std::string target_temp_high = "target_temperature_high";
+    auto target_temp_high_value = value_accuracy_to_string(obj->target_temperature_high, target_accuracy);
+    climate_mode_row_(stream, obj, area, node, friendly_name, target_temp_high, target_temp_high_value);
   }
-  if (traits.get_supports_target_humidity()) {
-    std::string target_hum = "target_humidity";
-    int8_t target_accuracy = traits.get_target_humidity_accuracy_decimals();
-    auto target_hum_value = value_accuracy_to_string(obj->target_humidity, target_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, target_hum, target_hum_value);
+  if (traits.get_supports_action()) {
+    stream->print(F("esphome_climate_setting{id=\""));
+    stream->print(relabel_id_(obj).c_str());
+    add_area_label_(stream, area);
+    add_node_label_(stream, node);
+    add_friendly_name_label_(stream, friendly_name);
+    stream->print(F("\",name=\""));
+    stream->print(relabel_name_(obj).c_str());
+    stream->print(F("\",value=\""));
+    stream->print(LOG_STR_ARG(climate::climate_action_to_string(obj->action)));
+    stream->print(F("\"} "));
+    stream->print(F("1.0"));
+    stream->print(F("\n"));
   }
 }
 #endif
