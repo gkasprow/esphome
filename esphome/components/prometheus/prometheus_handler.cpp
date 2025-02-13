@@ -841,8 +841,8 @@ void PrometheusHandler::climate_type_(AsyncResponseStream *stream) {
 }
 
 void PrometheusHandler::climate_setting_row_(AsyncResponseStream *stream, climate::Climate *obj, std::string &area,
-                                             std::string &node, std::string &friendly_name, std::string &category,
-                                             std::string &climate_value) {
+                                             std::string &node, std::string &friendly_name, std::string &setting,
+                                             const LogString &setting_value) {
   stream->print(F("esphome_climate_setting{id=\""));
   stream->print(relabel_id_(obj).c_str());
   add_area_label_(stream, area);
@@ -851,9 +851,9 @@ void PrometheusHandler::climate_setting_row_(AsyncResponseStream *stream, climat
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",category=\""));
-  stream->print(category.c_str());
+  stream->print(setting.c_str());
   stream->print(F("\",value=\""));
-  stream->print(LOG_STR_ARG(climate::climate_mode_to_string(obj->mode)));
+  stream->print(LOG_STR_ARG(setting_value));
   stream->print(F("\"} "));
   stream->print(F("1.0"));
   stream->print(F("\n"));
@@ -890,7 +890,7 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   stream->print(F("\"} 0\n"));
   // Data itself
   std::string climate_mode_category = "mode";
-  auto climate_mode_value = LOG_STR_ARG(climate::climate_mode_to_string(obj->mode));
+  auto climate_mode_value = climate::climate_mode_to_string(obj->mode);
   climate_setting_row_(stream, obj, area, node, friendly_name, climate_mode_category, climate_mode_value);
   //  stream->print(F("esphome_climate_setting{id=\""));
   //  stream->print(relabel_id_(obj).c_str());
