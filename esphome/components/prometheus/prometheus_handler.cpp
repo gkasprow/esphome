@@ -832,7 +832,8 @@ void PrometheusHandler::valve_row_(AsyncResponseStream *stream, valve::Valve *ob
 
 #ifdef USE_CLIMATE
 void PrometheusHandler::climate_type_(AsyncResponseStream *stream) {
-  stream->print(F("#TYPE esphome_climate_operation gauge\n"));
+  stream->print(F("#TYPE esphome_climate_mode gauge\n"));
+  stream->print(F("#TYPE esphome_climate_value gauge\n"));
   stream->print(F("#TYPE esphome_climate_failed gauge\n"));
 }
 
@@ -849,18 +850,32 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\"} 0\n"));
   // Data itself
-  stream->print(F("esphome_climate_operation{id=\""));
+  stream->print(F("esphome_climate_mode{id=\""));
   stream->print(relabel_id_(obj).c_str());
   add_area_label_(stream, area);
   add_node_label_(stream, node);
   add_friendly_name_label_(stream, friendly_name);
   stream->print(F("\",name=\""));
   stream->print(relabel_name_(obj).c_str());
-  stream->print(F("\",operation=\""));
-  //  stream->print(valve::valve_operation_to_str(obj->current_operation));
+  stream->print(F("\",mode=\""));
+  stream->print(climate::climate_mode_to_string(obj->mode));
   stream->print(F("\"} "));
   stream->print(F("1.0"));
   stream->print(F("\n"));
+  // Now see if position is supported
+  if (obj->get_traits().get_supports_current_temperature()) {
+    stream->print(F("esphome_climate_value{id=\""));
+    stream->print(relabel_id_(obj).c_str());
+    add_area_label_(stream, area);
+    add_node_label_(stream, node);
+    add_friendly_name_label_(stream, friendly_name);
+    stream->print(F("\",name=\""));
+    stream->print(relabel_name_(obj).c_str());
+    stream->print(F("\",category=current_temperature\""));
+    stream->print(F("\"} "));
+    stream->print(obj->current_temperature);
+    stream->print(F("\n"));
+  }
 }
 #endif
 
