@@ -27,9 +27,7 @@ class Sml : public Component, public uart::UARTDevice {
   void add_on_data_callback(std::function<void(std::vector<uint8_t>, bool)> &&callback);
 
  protected:
-  void process_sml_file_(const bytes &sml_data);
-  void log_obis_info_(const std::vector<ObisInfo> &obis_info_vec);
-  void publish_obis_info_(const std::vector<ObisInfo> &obis_info_vec);
+  void process_sml_file_(const byte_span &sml_data);
   char check_start_end_bytes_(uint8_t byte);
   void publish_value_(const ObisInfo &obis_info);
 
