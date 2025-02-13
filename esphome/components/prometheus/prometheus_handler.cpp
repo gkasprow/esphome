@@ -852,7 +852,7 @@ void PrometheusHandler::climate_setting_row_(AsyncResponseStream *stream, climat
   stream->print(relabel_name_(obj).c_str());
   stream->print(F("\",category=\""));
   stream->print(setting.c_str());
-  stream->print(F("\",value=\""));
+  stream->print(F("\",setting_value=\""));
   stream->print(LOG_STR_ARG(setting_value));
   stream->print(F("\"} "));
   stream->print(F("1.0"));
