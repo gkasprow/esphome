@@ -904,7 +904,7 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   std::string min_temp = "mininum_temperature";
   auto min_temp_value = value_accuracy_to_string(traits.get_visual_min_temperature(), target_accuracy);
   climate_value_row_(stream, obj, area, node, friendly_name, min_temp, min_temp_value);
-  // now check optional things
+  // now check optional traits
   if (traits.get_supports_current_temperature() && !std::isnan(obj->current_temperature)) {
     std::string current_temp = "current_temperature";
     auto current_temp_value = value_accuracy_to_string(obj->current_temperature, current_accuracy);
