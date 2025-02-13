@@ -911,29 +911,28 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   // max temp
   std::string max_temp = "maximum_temperature";
   auto max_temp_value = value_accuracy_to_string(traits.get_visual_max_temperature(), target_accuracy);
-  climate_mode_row_(stream, obj, area, node, friendly_name, max_temp, max_temp_value);
+  climate_value_row_(stream, obj, area, node, friendly_name, max_temp, max_temp_value);
   // max temp
   std::string min_temp = "mininum_temperature";
   auto min_temp_value = value_accuracy_to_string(traits.get_visual_max_temperature(), target_accuracy);
-  climate_mode_row_(stream, obj, area, node, friendly_name, min_temp, min_temp_value);
+  climate_value_row_(stream, obj, area, node, friendly_name, min_temp, min_temp_value);
   // now check optional things
   if (traits.get_supports_current_temperature()) {
     std::string current_temp = "current_temperature";
     auto current_temp_value = value_accuracy_to_string(obj->current_temperature, current_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, current_temp, current_temp_value);
-  }
-  if (traits.get_supports_target_temperature()) {
-    std::string target_temp = "target_temperature";
-    auto target_temp_value = value_accuracy_to_string(obj->target_temperature, target_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, target_temp, target_temp_value);
+    climate_value_row_(stream, obj, area, node, friendly_name, current_temp, current_temp_value);
   }
   if (traits.get_supports_two_point_target_temperature()) {
     std::string target_temp_low = "target_temperature_low";
     auto target_temp_low_value = value_accuracy_to_string(obj->target_temperature_low, target_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, target_temp_low, target_temp_low_value);
+    climate_value_row_(stream, obj, area, node, friendly_name, target_temp_low, target_temp_low_value);
     std::string target_temp_high = "target_temperature_high";
     auto target_temp_high_value = value_accuracy_to_string(obj->target_temperature_high, target_accuracy);
-    climate_mode_row_(stream, obj, area, node, friendly_name, target_temp_high, target_temp_high_value);
+    climate_value_row_(stream, obj, area, node, friendly_name, target_temp_high, target_temp_high_value);
+  } else {
+    std::string target_temp = "target_temperature";
+    auto target_temp_value = value_accuracy_to_string(obj->target_temperature, target_accuracy);
+    climate_value_row_(stream, obj, area, node, friendly_name, target_temp, target_temp_value);
   }
   if (traits.get_supports_action()) {
     stream->print(F("esphome_climate_setting{id=\""));
