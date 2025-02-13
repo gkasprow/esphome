@@ -204,25 +204,20 @@ void CSE7766Component::parse_data_() {
 
 #if ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE
   {
-    std::string s = "Parsed:";
-    char buff[64] = {0};
+    std::string buf = "Parsed:";
     if (have_voltage) {
-      snprintf(buff, sizeof(buff), " V=%.2fV", voltage);
-      s += buff;
+      buf += str_sprintf(" V=%fV", voltage);
     }
     if (have_current) {
-      snprintf(buff, sizeof(buff), " I=%.2fmA (~%fmA)", current * 1000.0f, calculated_current * 1000.0f);
-      s += buff;
+      buf += str_sprintf(" I=%fmA (~%fmA)", current * 1000.0f, calculated_current * 1000.0f);
     }
     if (have_power) {
-      snprintf(buff, sizeof(buff), " P=%.2fW", power);
-      s += buff;
+      buf += str_sprintf(" P=%fW", power);
     }
     if (energy != 0.0f) {
-      snprintf(buff, sizeof(buff), " E=%dkWh", cf_pulses);
-      s += buff;
+      buf += str_sprintf(" E=%fkWh (%u)", energy, cf_pulses);
     }
-    ESP_LOGVV(TAG, "%s", s.c_str());
+    ESP_LOGVV(TAG, "%s", buf.c_str());
   }
 #endif
 }
