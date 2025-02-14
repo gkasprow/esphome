@@ -243,6 +243,7 @@ ThrottleFilter = sensor_ns.class_("ThrottleFilter", Filter)
 TimeoutFilter = sensor_ns.class_("TimeoutFilter", Filter, cg.Component)
 DebounceFilter = sensor_ns.class_("DebounceFilter", Filter, cg.Component)
 HeartbeatFilter = sensor_ns.class_("HeartbeatFilter", Filter, cg.Component)
+ConfirmationFilter = sensor_ns.class_("ConfirmationFilter", Filter)
 DeltaFilter = sensor_ns.class_("DeltaFilter", Filter)
 OrFilter = sensor_ns.class_("OrFilter", Filter)
 CalibrateLinearFilter = sensor_ns.class_("CalibrateLinearFilter", Filter)
@@ -521,6 +522,46 @@ async def lambda_filter_to_code(config, filter_id):
         config, [(float, "x")], return_type=cg.optional.template(float)
     )
     return cg.new_Pvariable(filter_id, lambda_)
+
+
+CONFIRMATION_SCHEMA = cv.Schema(
+    {
+        cv.Required(CONF_VALUE): cv.positive_float,
+        cv.Optional(CONF_TYPE, default="absolute"): cv.one_of(
+            "absolute", "percentage", lower=True
+        ),
+    }
+)
+
+
+def validate_confirmation(config):
+    try:
+        value = cv.positive_float(config)
+        return CONFIRMATION_SCHEMA({CONF_VALUE: value, CONF_TYPE: "absolute"})
+    except cv.Invalid:
+        pass
+    try:
+        value = cv.percentage(config)
+        return CONFIRMATION_SCHEMA({CONF_VALUE: value, CONF_TYPE: "percentage"})
+    except cv.Invalid:
+        pass
+    raise cv.Invalid(
+        "confirmation filter requires a positive number or percentage value."
+    )
+
+
+@FILTER_REGISTRY.register(
+    "confirmation",
+    ConfirmationFilter,
+    cv.Any(CONFIRMATION_SCHEMA, validate_confirmation),
+)
+async def confirmation_filter_to_code(config, filter_id):
+    percentage = config[CONF_TYPE] == "percentage"
+    return cg.new_Pvariable(
+        filter_id,
+        config[CONF_VALUE],
+        percentage,
+    )
 
 
 DELTA_SCHEMA = cv.Schema(

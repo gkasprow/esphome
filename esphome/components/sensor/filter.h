@@ -355,6 +355,19 @@ class HeartbeatFilter : public Filter, public Component {
   bool has_value_{false};
 };
 
+class ConfirmationFilter : public Filter {
+ public:
+  explicit ConfirmationFilter(float delta, bool percentage_mode);
+
+  optional<float> new_value(float value) override;
+
+ protected:
+  float delta_;
+  float current_delta_;
+  bool percentage_mode_;
+  float last_value_{NAN};
+};
+
 class DeltaFilter : public Filter {
  public:
   explicit DeltaFilter(float delta, bool percentage_mode);

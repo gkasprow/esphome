@@ -331,6 +331,27 @@ optional<float> ThrottleFilter::new_value(float value) {
   return {};
 }
 
+// ConfirmationFilter
+ConfirmationFilter::ConfirmationFilter(float delta, bool percentage_mode)
+    : delta_(delta), current_delta_(delta), percentage_mode_(percentage_mode), last_value_(NAN) {}
+optional<float> ConfirmationFilter::new_value(float value) {
+  optional<float> ret = {};
+  if (std::isnan(value)) {
+    if (std::isnan(this->last_value_)) {
+      ret = value;
+    }
+  } else if (!std::isnan(this->last_value_)) {
+    if (this->percentage_mode_) {
+      this->current_delta_ = fabsf(this->last_value_ * this->delta_);
+    }
+    if (fabsf(value - this->last_value_) <= this->current_delta_) {
+      ret = value;
+    }
+  }
+  this->last_value_ = value;
+  return ret;
+}
+
 // DeltaFilter
 DeltaFilter::DeltaFilter(float delta, bool percentage_mode)
     : delta_(delta), current_delta_(delta), percentage_mode_(percentage_mode), last_value_(NAN) {}
