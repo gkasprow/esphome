@@ -900,6 +900,7 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
   if (obj->is_internal() && !this->include_internal_)
     return;
   // Data itself
+  bool any_failures = false;
   std::string climate_mode_category = "mode";
   const auto *climate_mode_value = climate::climate_mode_to_string(obj->mode);
   climate_setting_row_(stream, obj, area, node, friendly_name, climate_mode_category, climate_mode_value);
@@ -920,21 +921,34 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
     std::string current_temp = "current_temperature";
     if (std::isnan(obj->current_temperature)) {
       climate_failed_row_(stream, obj, area, node, friendly_name, current_temp, true);
+      any_failures = true;
     } else {
       auto current_temp_value = value_accuracy_to_string(obj->current_temperature, current_accuracy);
       climate_value_row_(stream, obj, area, node, friendly_name, current_temp, current_temp_value);
       climate_failed_row_(stream, obj, area, node, friendly_name, current_temp, false);
     }
   }
-  if (traits.get_supports_current_humidity() && !std::isnan(obj->current_humidity)) {
+  if (traits.get_supports_current_humidity()) {
     std::string current_humidity = "current_humidity";
-    auto current_humidity_value = value_accuracy_to_string(obj->current_humidity, 0);
-    climate_value_row_(stream, obj, area, node, friendly_name, current_humidity, current_humidity_value);
+    if (std::isnan(obj->current_humidity)) {
+      climate_failed_row_(stream, obj, area, node, friendly_name, current_temp, true);
+      any_failures = true;
+    } else {
+      auto current_humidity_value = value_accuracy_to_string(obj->current_humidity, 0);
+      climate_value_row_(stream, obj, area, node, friendly_name, current_humidity, current_humidity_value);
+      climate_failed_row_(stream, obj, area, node, friendly_name, current_humidity, false);
+    }
   }
-  if (traits.get_supports_target_humidity() && !std::isnan(obj->target_humidity)) {
+  if (traits.get_supports_target_humidity()) {
     std::string target_humidity = "target_humidity";
-    auto target_humidity_value = value_accuracy_to_string(obj->target_humidity, 0);
-    climate_value_row_(stream, obj, area, node, friendly_name, target_humidity, target_humidity_value);
+    if (std::isnan(obj->target_humidity)) {
+      climate_failed_row_(stream, obj, area, node, friendly_name, current_temp, true);
+      any_failures = true;
+    } else {
+      auto target_humidity_value = value_accuracy_to_string(obj->target_humidity, 0);
+      climate_value_row_(stream, obj, area, node, friendly_name, target_humidity, target_humidity_value);
+      climate_failed_row_(stream, obj, area, node, friendly_name, target_humidity, false);
+    }
   }
   if (traits.get_supports_two_point_target_temperature()) {
     std::string target_temp_low = "target_temperature_low";
@@ -953,20 +967,36 @@ void PrometheusHandler::climate_row_(AsyncResponseStream *stream, climate::Clima
     const auto *climate_trait_value = climate::climate_action_to_string(obj->action);
     climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
   }
-  if (traits.get_supports_fan_modes() && obj->fan_mode.has_value()) {
+  if (traits.get_supports_fan_modes()) {
     std::string climate_trait_category = "fan_mode";
-    const auto *climate_trait_value = climate::climate_fan_mode_to_string(obj->fan_mode.value());
-    climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
+    if (obj->fan_mode.has_value()) {
+      const auto *climate_trait_value = climate::climate_fan_mode_to_string(obj->fan_mode.value());
+      climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
+      climate_failed_row_(stream, obj, area, node, friendly_name, climate_trait_category, false);
+    } else {
+      climate_failed_row_(stream, obj, area, node, friendly_name, climate_trait_category, true);
+      any_failures = true;
+    }
   }
   if (traits.get_supports_presets() && obj->preset.has_value()) {
     std::string climate_trait_category = "preset";
-    const auto *climate_trait_value = climate::climate_preset_to_string(obj->preset.value());
-    climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
+    if (obj->fan_mode.has_value()) {
+      const auto *climate_trait_value = climate::climate_preset_to_string(obj->preset.value());
+      climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
+      climate_failed_row_(stream, obj, area, node, friendly_name, climate_trait_category, false);
+    } else {
+      climate_failed_row_(stream, obj, area, node, friendly_name, climate_trait_category, true);
+      any_failures = true;
+    }
   }
   if (traits.get_supports_swing_modes()) {
     std::string climate_trait_category = "swing_mode";
     const auto *climate_trait_value = climate::climate_swing_mode_to_string(obj->swing_mode);
     climate_setting_row_(stream, obj, area, node, friendly_name, climate_trait_category, climate_trait_value);
+  }
+  if (!any_failures) {
+    std::string climate_trait_category = "all";
+    climate_failed_row_(stream, obj, area, node, friendly_name, climate_trait_category, false);
   }
 }
 #endif
