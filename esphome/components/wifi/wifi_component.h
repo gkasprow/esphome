@@ -223,13 +223,17 @@ class WiFiComponent : public Component {
    */
   void set_ap(const WiFiAP &ap);
   WiFiAP get_ap() { return this->ap_; }
+  void start_ap();
+  void stop_ap();
 #endif  // USE_WIFI_AP
 
   void enable();
   void disable();
+  void disconnect();
   bool is_disabled();
-  void start_scanning();
+  void start_scanning(bool passive = false);
   void check_scanning_finished();
+
   void start_connecting(const WiFiAP &ap, bool two);
   void set_fast_connect(bool fast_connect);
   void set_ap_timeout(uint32_t ap_timeout) { ap_timeout_ = ap_timeout; }
@@ -341,6 +345,8 @@ class WiFiComponent : public Component {
   WiFiSTAConnectStatus wifi_sta_connect_status_();
   bool wifi_scan_start_(bool passive);
 
+  void print_scan_result_();
+
 #ifdef USE_WIFI_AP
   bool wifi_ap_ip_config_(optional<ManualIP> manual_ip);
   bool wifi_start_ap_(const WiFiAP &ap);
@@ -403,6 +409,7 @@ class WiFiComponent : public Component {
   std::vector<WiFiScanResult> scan_result_;
   bool scan_done_{false};
   bool ap_setup_{false};
+  bool ap_active_{false};
   optional<float> output_power_;
   bool passive_scan_{false};
   ESPPreferenceObject pref_;

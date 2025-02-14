@@ -129,7 +129,6 @@ class WebServer : public Controller, public Component, public AsyncWebHandler {
 
   /// Handle an index request under '/'.
   void handle_index_request(AsyncWebServerRequest *request);
-
   /// Return the webserver configuration as JSON.
   std::string get_config_json();
 

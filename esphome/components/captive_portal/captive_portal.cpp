@@ -10,10 +10,20 @@ namespace captive_portal {
 
 static const char *const TAG = "captive_portal";
 
+void CaptivePortal::handle_captive_portal(AsyncWebServerRequest *request) {
+  auto *response = request->beginResponse_P(200, "text/html", INDEX_GZ, sizeof(INDEX_GZ));
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);
+}
 void CaptivePortal::handle_config(AsyncWebServerRequest *request) {
   AsyncResponseStream *stream = request->beginResponseStream("application/json");
   stream->addHeader("cache-control", "public, max-age=0, must-revalidate");
   stream->printf(R"({"mac":"%s","name":"%s","aps":[{})", get_mac_address_pretty().c_str(), App.get_name().c_str());
+
+  // Todo Test this if it is needed!
+  bool passive_scan = request->url() == "/" ? false : true;
+
+  wifi::global_wifi_component->start_scanning(passive_scan);
 
   for (auto &scan : wifi::global_wifi_component->get_scan_result()) {
     if (scan.get_is_hidden())
@@ -33,18 +43,32 @@ void CaptivePortal::handle_wifisave(AsyncWebServerRequest *request) {
   ESP_LOGI(TAG, "  SSID='%s'", ssid.c_str());
   ESP_LOGI(TAG, "  Password=" LOG_SECRET("'%s'"), psk.c_str());
   wifi::global_wifi_component->save_wifi_sta(ssid, psk);
-  wifi::global_wifi_component->start_scanning();
   request->redirect("/?save");
 }
 
+void CaptivePortal::handleRequest(AsyncWebServerRequest *req) {
+  if (req->url() == this->portal_path_) {
+    this->handle_captive_portal(req);
+    return;
+  } else if (req->url() == "/config.json") {
+    this->handle_config(req);
+    return;
+  } else if (req->url() == "/wifisave") {
+    this->handle_wifisave(req);
+    return;
+  }
+}
+
 void CaptivePortal::setup() {}
-void CaptivePortal::start() {
+void CaptivePortal::start(const String portal_path) {
+  ESP_LOGV(TAG, "Starting Captive Portal using path: %s", portal_path.c_str());
+  this->portal_path_ = portal_path;
   this->base_->init();
   if (!this->initialized_) {
     this->base_->add_handler(this);
     this->base_->add_ota_handler();
   }
-
+#ifdef USE_WIFI_AP
 #ifdef USE_ARDUINO
   this->dns_server_ = make_unique<DNSServer>();
   this->dns_server_->setErrorReplyCode(DNSReplyCode::NoError);
@@ -61,24 +85,20 @@ void CaptivePortal::start() {
     auto url = "http://" + wifi::global_wifi_component->wifi_soft_ap_ip().str();
     req->redirect(url.c_str());
   });
-
+#endif  // USE_WIFI_AP
   this->initialized_ = true;
   this->active_ = true;
 }
 
-void CaptivePortal::handleRequest(AsyncWebServerRequest *req) {
-  if (req->url() == "/") {
-    auto *response = req->beginResponse_P(200, "text/html", INDEX_GZ, sizeof(INDEX_GZ));
-    response->addHeader("Content-Encoding", "gzip");
-    req->send(response);
-    return;
-  } else if (req->url() == "/config.json") {
-    this->handle_config(req);
-    return;
-  } else if (req->url() == "/wifisave") {
-    this->handle_wifisave(req);
-    return;
-  }
+void CaptivePortal::end() {
+  ESP_LOGV(TAG, "Ending Captive Portal...");
+
+  this->active_ = false;
+  this->base_->deinit();
+#ifdef USE_ARDUINO
+  this->dns_server_->stop();
+  this->dns_server_ = nullptr;
+#endif
 }
 
 CaptivePortal::CaptivePortal(web_server_base::WebServerBase *base) : base_(base) { global_captive_portal = this; }
