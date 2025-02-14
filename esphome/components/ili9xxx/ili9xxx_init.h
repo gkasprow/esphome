@@ -1,5 +1,5 @@
 #pragma once
-#include "esphome/core/helpers.h"
+#include "esphome/core/hal.h"
 
 #include <cinttypes>
 
