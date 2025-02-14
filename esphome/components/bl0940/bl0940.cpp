@@ -7,28 +7,44 @@ namespace bl0940 {
 
 static const char *const TAG = "bl0940";
 
-static const uint8_t BL0940_READ_COMMAND = 0x50;  // 0x58 according to documentation
 static const uint8_t BL0940_FULL_PACKET = 0xAA;
-static const uint8_t BL0940_PACKET_HEADER = 0x55;  // 0x58 according to documentation
+static const uint8_t BL0940_PACKET_HEADER = 0x55;  // 0x58 according to en doc but 0x55 in cn doc
 
-static const uint8_t BL0940_WRITE_COMMAND = 0xA0;  // 0xA8 according to documentation
+static const uint8_t BL0940_READ_COMMAND = 0x58;
+static const uint8_t BL0940_WRITE_COMMAND = 0xA8;
+
+// ----------------------------------------------------
+// values from initial implementation
+
+static const uint8_t BL0940_TUYA_READ_COMMAND = 0x50;
+static const uint8_t BL0940_TUYA_WRITE_COMMAND = 0xA0;
+
+static const float BL0940_TUYA_PREF = 1430;
+static const float BL0940_TUYA_UREF = 33000;
+static const float BL0940_TUYA_IREF = 275000;
+// Measured to 297J  per click according to power consumption of 5 minutes
+// Converted to kWh (3.6MJ per kwH). Used to be 256 * 1638.4
+static const float BL0940_TUYA_EREF = 3.6e6 / 297;
+//
+// ----------------------------------------------------
+
 static const uint8_t BL0940_REG_I_FAST_RMS_CTRL = 0x10;
 static const uint8_t BL0940_REG_MODE = 0x18;
 static const uint8_t BL0940_REG_SOFT_RESET = 0x19;
 static const uint8_t BL0940_REG_USR_WRPROT = 0x1A;
 static const uint8_t BL0940_REG_TPS_CTRL = 0x1B;
 
-const uint8_t BL0940_INIT[5][6] = {
+const uint8_t BL0940_INIT[5][5] = {
     // Reset to default
-    {BL0940_WRITE_COMMAND, BL0940_REG_SOFT_RESET, 0x5A, 0x5A, 0x5A, 0x38},
+    {BL0940_REG_SOFT_RESET, 0x5A, 0x5A, 0x5A, 0x38},
     // Enable User Operation Write
-    {BL0940_WRITE_COMMAND, BL0940_REG_USR_WRPROT, 0x55, 0x00, 0x00, 0xF0},
+    {BL0940_REG_USR_WRPROT, 0x55, 0x00, 0x00, 0xF0},
     // 0x0100 = CF_UNABLE energy pulse, AC_FREQ_SEL 50Hz, RMS_UPDATE_SEL 800mS
-    {BL0940_WRITE_COMMAND, BL0940_REG_MODE, 0x00, 0x10, 0x00, 0x37},
+    {BL0940_REG_MODE, 0x00, 0x10, 0x00, 0x37},
     // 0x47FF = Over-current and leakage alarm on, Automatic temperature measurement, Interval 100mS
-    {BL0940_WRITE_COMMAND, BL0940_REG_TPS_CTRL, 0xFF, 0x47, 0x00, 0xFE},
+    {BL0940_REG_TPS_CTRL, 0xFF, 0x47, 0x00, 0xFE},
     // 0x181C = Half cycle, Fast RMS threshold 6172
-    {BL0940_WRITE_COMMAND, BL0940_REG_I_FAST_RMS_CTRL, 0x1C, 0x18, 0x00, 0x1B}};
+    {BL0940_REG_I_FAST_RMS_CTRL, 0x1C, 0x18, 0x00, 0x1B}};
 
 void BL0940::loop() {
   DataPacket buffer;
@@ -36,7 +52,7 @@ void BL0940::loop() {
     return;
   }
   if (read_array((uint8_t *) &buffer, sizeof(buffer))) {
-    if (validate_checksum(&buffer)) {
+    if (validate_checksum_(&buffer)) {
       received_package_(&buffer);
     }
   } else {
@@ -46,35 +62,91 @@ void BL0940::loop() {
   }
 }
 
-bool BL0940::validate_checksum(const DataPacket *data) {
-  uint8_t checksum = BL0940_READ_COMMAND;
+bool BL0940::validate_checksum_(DataPacket *data) {
+  uint8_t checksum = this->read_command_;
   // Whole package but checksum
-  for (uint32_t i = 0; i < sizeof(data->raw) - 1; i++) {
-    checksum += data->raw[i];
+  uint8_t *raw = (uint8_t *) data;
+  for (uint32_t i = 0; i < sizeof(*data) - 1; i++) {
+    checksum += raw[i];
   }
   checksum ^= 0xFF;
   if (checksum != data->checksum) {
-    ESP_LOGW(TAG, "BL0940 invalid checksum! 0x%02X != 0x%02X", checksum, data->checksum);
+    ESP_LOGW(TAG, "Invalid checksum! 0x%02X != 0x%02X", checksum, data->checksum);
   }
   return checksum == data->checksum;
 }
 
 void BL0940::update() {
   this->flush();
-  this->write_byte(BL0940_READ_COMMAND);
+  this->write_byte(this->read_command_);
   this->write_byte(BL0940_FULL_PACKET);
 }
 
 void BL0940::setup() {
+  if (!this->read_command_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->read_command_ = BL0940_TUYA_READ_COMMAND;
+    } else {
+      this->read_command_ = BL0940_READ_COMMAND;
+    }
+  }
+
+  if (!this->write_command_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->write_command_ = BL0940_TUYA_WRITE_COMMAND;
+    } else {
+      this->write_command_ = BL0940_WRITE_COMMAND;
+    }
+  }
+
+  // calculate references based on schematic defaults if not set explicitly
+  if (!this->voltage_reference_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->voltage_reference_ = BL0940_TUYA_UREF;
+    } else {
+      // formula: 79931 / Vref * (R1 * 1000) / (R1 + R2)
+      this->voltage_reference_ = 79931 / this->vref_ * (this->r_one_ * 1000) / (this->r_one_ + this->r_two_);
+    }
+  }
+  if (!this->current_reference_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->current_reference_ = BL0940_TUYA_IREF;
+    } else {
+      // formula: 324004 * RL / Vref
+      this->current_reference_ = 324004 * this->r_shunt_ / this->vref_;
+    }
+  }
+  if (this->voltage_reference_set_ && this->current_reference_set_) {
+    // calculate power reference based on custom voltage and current reference
+    this->power_reference_ = this->voltage_reference_ * this->current_reference_ * 4046 / 324004 / 79931;
+  } else if (!this->power_reference_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->power_reference_ = BL0940_TUYA_PREF;
+    } else {
+      // formula: 4046 * RL * R1 * 1000 / Vref² / (R1 + R2)
+      this->power_reference_ =
+          4046 * this->r_shunt_ * this->r_one_ * 1000 / this->vref_ / this->vref_ / (this->r_one_ + this->r_two_);
+    }
+  }
+  if (!this->energy_reference_set_) {
+    if (this->tuya_mode_enabled_) {
+      this->energy_reference_ = BL0940_TUYA_EREF;
+    } else {
+      // formula: 3600000 * 4046 * RL * R1 * 1000 / (1638.4 * 256) / Vref² / (R1 + R2)
+      // or:  power_reference_ * 3600000 / (1638.4 * 256)
+      this->energy_reference_ = this->power_reference_ * 3600000 / (1638.4 * 256);
+    }
+  }
+
   for (auto *i : BL0940_INIT) {
-    this->write_array(i, 6);
+    this->write_byte(this->write_command_), this->write_array(i, 5);
     delay(1);
   }
   this->flush();
 }
 
-float BL0940::update_temp_(sensor::Sensor *sensor, ube16_t temperature) const {
-  auto tb = (float) (temperature.h << 8 | temperature.l);
+float BL0940::update_temp_(sensor::Sensor *sensor, uint16_le_t temperature) const {
+  auto tb = (float) temperature;
   float converted_temp = ((float) 170 / 448) * (tb / 2 - 32) - 45;
   if (sensor != nullptr) {
     if (sensor->has_state() && std::abs(converted_temp - sensor->get_state()) > max_temperature_diff_) {
@@ -87,18 +159,25 @@ float BL0940::update_temp_(sensor::Sensor *sensor, ube16_t temperature) const {
   return converted_temp;
 }
 
-void BL0940::received_package_(const DataPacket *data) const {
+void BL0940::received_package_(DataPacket *data) {
   // Bad header
   if (data->frame_header != BL0940_PACKET_HEADER) {
     ESP_LOGI(TAG, "Invalid data. Header mismatch: %d", data->frame_header);
     return;
   }
 
-  float v_rms = (float) to_uint32_t(data->v_rms) / voltage_reference_;
-  float i_rms = (float) to_uint32_t(data->i_rms) / current_reference_;
-  float watt = (float) to_int32_t(data->watt) / power_reference_;
-  uint32_t cf_cnt = to_uint32_t(data->cf_cnt);
-  float total_energy_consumption = (float) cf_cnt / energy_reference_;
+  // cf_cnt is only 24 bits, so track overflows
+  uint32_t cf_cnt = (uint24_t) data->cf_cnt;
+  cf_cnt |= this->prev_cf_cnt_ & 0xff000000;
+  if (cf_cnt < this->prev_cf_cnt_) {
+    cf_cnt += 0x1000000;
+  }
+  this->prev_cf_cnt_ = cf_cnt;
+
+  float v_rms = (uint24_t) data->v_rms / voltage_reference_;
+  float i_rms = (uint24_t) data->i_rms / current_reference_;
+  float watt = (int24_t) data->watt / power_reference_;
+  float total_energy_consumption = cf_cnt / energy_reference_;
 
   float tps1 = update_temp_(internal_temperature_sensor_, data->tps1);
   float tps2 = update_temp_(external_temperature_sensor_, data->tps2);
@@ -122,6 +201,18 @@ void BL0940::received_package_(const DataPacket *data) const {
 
 void BL0940::dump_config() {  // NOLINT(readability-function-cognitive-complexity)
   ESP_LOGCONFIG(TAG, "BL0940:");
+  ESP_LOGCONFIG(TAG, "  TUYA MODE: %s", TRUEFALSE(this->tuya_mode_enabled_));
+  ESP_LOGCONFIG(TAG, "  READ  CMD: 0x%02X", this->read_command_);
+  ESP_LOGCONFIG(TAG, "  WRITE CMD: 0x%02X", this->write_command_);
+  ESP_LOGCONFIG(TAG, "  ------------------");
+  ESP_LOGCONFIG(TAG, "  Vref: %f", this->vref_);
+  ESP_LOGCONFIG(TAG, "  R shunt: %f", this->r_shunt_);
+  ESP_LOGCONFIG(TAG, "  R One: %f", this->r_one_);
+  ESP_LOGCONFIG(TAG, "  R Two: %f", this->r_two_);
+  ESP_LOGCONFIG(TAG, "  Current reference: %f", this->current_reference_);
+  ESP_LOGCONFIG(TAG, "  Energy reference: %f", this->energy_reference_);
+  ESP_LOGCONFIG(TAG, "  Power reference: %f", this->power_reference_);
+  ESP_LOGCONFIG(TAG, "  Voltage reference: %f", this->voltage_reference_);
   LOG_SENSOR("", "Voltage", this->voltage_sensor_);
   LOG_SENSOR("", "Current", this->current_sensor_);
   LOG_SENSOR("", "Power", this->power_sensor_);
@@ -129,10 +220,6 @@ void BL0940::dump_config() {  // NOLINT(readability-function-cognitive-complexit
   LOG_SENSOR("", "Internal temperature", this->internal_temperature_sensor_);
   LOG_SENSOR("", "External temperature", this->external_temperature_sensor_);
 }
-
-uint32_t BL0940::to_uint32_t(ube24_t input) { return input.h << 16 | input.m << 8 | input.l; }
-
-int32_t BL0940::to_int32_t(sbe24_t input) { return input.h << 16 | input.m << 8 | input.l; }
 
 }  // namespace bl0940
 }  // namespace esphome
