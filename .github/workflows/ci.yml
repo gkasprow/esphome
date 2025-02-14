@@ -61,8 +61,8 @@ jobs:
           pip install -r requirements.txt -r requirements_optional.txt -r requirements_test.txt
           pip install -e .
 
-  black:
-    name: Check black
+  py-format:
+    name: Check black or ruff
     runs-on: ubuntu-24.04
     needs:
       - common
@@ -74,13 +74,10 @@ jobs:
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
           cache-key: ${{ needs.common.outputs.cache-key }}
-      - name: Run black
+      - name: Run black or ruff
         run: |
           . venv/bin/activate
-          black --verbose esphome tests
-      - name: Suggested changes
-        run: script/ci-suggest-changes
-        if: always()
+          find esphome tests -name *.py -type f | parallel 'ruff format --quiet --check {} || black --quiet --check {}'
 
   flake8:
     name: Check flake8
@@ -255,7 +252,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs:
       - common
-      - black
+      - py-format
       - ci-custom
       - clang-format
       - flake8
@@ -482,7 +479,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs:
       - common
-      - black
+      - py-format
       - ci-custom
       - clang-format
       - flake8
