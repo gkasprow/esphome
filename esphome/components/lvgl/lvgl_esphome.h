@@ -98,7 +98,7 @@ class LvglComponent;
 
 class LvPageType : public Parented<LvglComponent> {
  public:
-  LvPageType(bool skip) : skip(skip) {}
+  LvPageType(bool skip, lv_group_t *def_group) : skip(skip), def_group(def_group) {}
 
   void setup(size_t index) {
     this->index = index;
@@ -110,6 +110,7 @@ class LvPageType : public Parented<LvglComponent> {
   lv_obj_t *obj{};
   size_t index{};
   bool skip;
+  lv_group_t *def_group{};
 };
 
 using LvLambdaType = std::function<void(lv_obj_t *)>;
@@ -188,6 +189,7 @@ class LvglComponent : public PollingComponent {
   static void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2);
   static void add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_event_code_t event1, lv_event_code_t event2,
                            lv_event_code_t event3);
+  void add_input(lv_indev_t *input);
   void add_page(LvPageType *page);
   void show_page(size_t index, lv_scr_load_anim_t anim, uint32_t time);
   void show_next_page(lv_scr_load_anim_t anim, uint32_t time);
@@ -229,6 +231,8 @@ class LvglComponent : public PollingComponent {
   CallbackManager<void(uint32_t)> idle_callbacks_{};
   CallbackManager<void(bool)> pause_callbacks_{};
   lv_color_t *rotate_buf_{};
+
+  std::vector<lv_indev_t *> inputs_{};
 };
 
 class IdleTrigger : public Trigger<> {

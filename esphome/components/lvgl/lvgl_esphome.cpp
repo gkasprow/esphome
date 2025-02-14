@@ -117,6 +117,7 @@ void LvglComponent::add_event_cb(lv_obj_t *obj, event_callback_t callback, lv_ev
   add_event_cb(obj, callback, event2);
   add_event_cb(obj, callback, event3);
 }
+void LvglComponent::add_input(lv_indev_t *input) { this->inputs_.push_back(input); }
 void LvglComponent::add_page(LvPageType *page) {
   this->pages_.push_back(page);
   page->set_parent(this);
@@ -127,6 +128,9 @@ void LvglComponent::show_page(size_t index, lv_scr_load_anim_t anim, uint32_t ti
     return;
   this->current_page_ = index;
   lv_scr_load_anim(this->pages_[this->current_page_]->obj, anim, time, 0, false);
+  for (lv_indev_t *indev : this->inputs_) {
+    lv_indev_set_group(indev, this->pages_[this->current_page_]->def_group);
+  }
 }
 void LvglComponent::show_next_page(lv_scr_load_anim_t anim, uint32_t time) {
   if (this->pages_.empty() || (this->current_page_ == this->pages_.size() - 1 && !this->page_wrap_))
