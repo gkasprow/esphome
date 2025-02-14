@@ -472,6 +472,36 @@ def coolix_dumper(var, config):
     pass
 
 
+# Daikin
+DaikinData, DaikinBinarySensor, DaikinTrigger, DaikinAction, DaikinDumper = (
+    declare_protocol("Daikin")
+)
+
+DAIKIN_SCHEMA = cv.Schema({cv.Required(CONF_DATA): [cv.hex_uint8_t]})
+
+
+@register_binary_sensor("daikin", DaikinBinarySensor, DAIKIN_SCHEMA)
+def daikin_binary_sensor(var, config):
+    cg.add(var.set_code(config[CONF_DATA]))
+
+
+@register_action("daikin", DaikinAction, DAIKIN_SCHEMA)
+async def daikin_action(var, config, args):
+    vec_ = cg.std_vector.template(cg.uint8)
+    template_ = await cg.templatable(config[CONF_DATA], args, vec_, vec_)
+    cg.add(var.set_data(template_))
+
+
+@register_trigger("daikin", DaikinTrigger, DaikinData)
+def daikin_trigger(var, config):
+    pass
+
+
+@register_dumper("daikin", DaikinDumper)
+def daikin_dumper(var, config):
+    pass
+
+
 # Dish
 DishData, DishBinarySensor, DishTrigger, DishAction, DishDumper = declare_protocol(
     "Dish"

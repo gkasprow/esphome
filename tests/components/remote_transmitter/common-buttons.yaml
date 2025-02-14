@@ -197,3 +197,25 @@ button:
           command: 0xEC
           rc_code_1: 0x0D
           rc_code_2: 0x0D
+  - platform: template
+    name: Daikin
+    on_press:
+      - remote_transmitter.transmit_daikin:
+          data:
+            [
+              0x00,
+              0x61,
+              0x32,
+              0x00,
+              0xB0,
+              0x00,
+              0x00,
+              0x00,
+              0x00,
+              0x00,
+              0x00,
+              0xC5,
+              0x00,
+              0x08,
+            ]
+
