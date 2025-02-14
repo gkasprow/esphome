@@ -1,12 +1,12 @@
 #include "debug_component.h"
 
 #include <algorithm>
-#include "esphome/core/log.h"
-#include "esphome/core/hal.h"
-#include "esphome/core/helpers.h"
-#include "esphome/core/version.h"
 #include <cinttypes>
 #include <climits>
+#include "esphome/core/hal.h"
+#include "esphome/core/helpers.h"
+#include "esphome/core/log.h"
+#include "esphome/core/version.h"
 
 namespace esphome {
 namespace debug {
