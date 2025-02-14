@@ -7,7 +7,6 @@ import esphome.config_validation as cv
 from esphome.const import (
     CONF_AUTO_CLEAR_ENABLED,
     CONF_BUFFER_SIZE,
-    CONF_GROUP,
     CONF_ID,
     CONF_LAMBDA,
     CONF_ON_IDLE,
@@ -23,18 +22,13 @@ from esphome.helpers import write_file_if_changed
 
 from . import defines as df, helpers, lv_validation as lvalid
 from .automation import disp_update, focused_widgets, update_to_code
-from .defines import CONF_DRAW_ROUNDING, add_define
-from .encoders import (
-    ENCODERS_CONFIG,
-    encoders_to_code,
-    get_default_group,
-    initial_focus_to_code,
-)
+from .defines import CONF_DEFAULT_GROUP, CONF_DRAW_ROUNDING, add_define
+from .encoders import ENCODERS_CONFIG, encoders_to_code, initial_focus_to_code
 from .gradient import GRADIENT_SCHEMA, gradients_to_code
 from .hello_world import get_hello_world
 from .keypads import KEYPADS_CONFIG, keypads_to_code
 from .lv_validation import lv_bool, lv_images_used
-from .lvcode import LvContext, LvglComponent, lvgl_static
+from .lvcode import LvContext, LvglComponent, lv, lv_expr, lvgl_static
 from .schemas import (
     DISP_BG_SCHEMA,
     FLEX_OBJ_SCHEMA,
@@ -172,13 +166,6 @@ def multi_conf_validate(configs: list[dict]):
     display_list = [disp for disps in displays for disp in disps]
     if len(display_list) != len(set(display_list)):
         raise cv.Invalid("A display ID may be used in only one LVGL instance")
-    for config in configs:
-        for item in (df.CONF_ENCODERS, df.CONF_KEYPADS):
-            for enc in config.get(item, ()):
-                if CONF_GROUP not in enc:
-                    raise cv.Invalid(
-                        f"'{item}' must have an explicit group set when using multiple LVGL instances"
-                    )
     base_config = configs[0]
     for config in configs[1:]:
         for item in (
@@ -301,7 +288,6 @@ async def to_code(configs):
     else:
         add_define("LV_FONT_DEFAULT", await lvalid.lv_font.process(default_font))
     cg.add(lvgl_static.esphome_lvgl_init())
-    default_group = get_default_group(config_0)
 
     for config in configs:
         frac = config[CONF_BUFFER_SIZE]
@@ -326,6 +312,9 @@ async def to_code(configs):
         )
         await cg.register_component(lv_component, config)
         Widget.create(config[CONF_ID], lv_component, LvScrActType(), config)
+
+        default_group = cg.Pvariable(config[CONF_DEFAULT_GROUP], lv_expr.group_create())
+        cg.add(lv.group_set_default(default_group))
 
         lv_scr_act = get_scr_act(lv_component)
         async with LvContext():
