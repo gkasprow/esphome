@@ -94,6 +94,7 @@
 #ifdef USE_ARDUINO
 #define USE_PROMETHEUS
 #define USE_WIFI_WPA2_EAP
+#define USE_OPTOLINK_VITOWIFI_PROTOCOL P300
 #endif
 
 // IDF-specific feature flags
