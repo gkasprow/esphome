@@ -173,14 +173,6 @@ class OnlineImage : public PollingComponent,
    * decoded images).
    */
   int buffer_height_;
-  /**
-   * The value of the ETag HTTP header provided in the last response.
-   */
-  std::string etag_ = "";
-  /**
-   * The value of the Last-Modified HTTP header provided in the last response.
-   */
-  std::string last_modified_ = "";
 
   time_t start_time_;
 

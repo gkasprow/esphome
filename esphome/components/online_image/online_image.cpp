@@ -3,10 +3,6 @@
 #include "esphome/core/log.h"
 
 static const char *const TAG = "online_image";
-static const std::string ETAG_HEADER_NAME = "etag";
-static const std::string IF_NONE_MATCH_HEADER_NAME = "if-none-match";
-static const std::string LAST_MODIFIED_HEADER_NAME = "last-modified";
-static const std::string IF_MODIFIED_SINCE_HEADER_NAME = "if-modified-since";
 
 #include "image_decoder.h"
 
@@ -64,8 +60,6 @@ void OnlineImage::release() {
     this->height_ = 0;
     this->buffer_width_ = 0;
     this->buffer_height_ = 0;
-    this->last_modified_ = "";
-    this->etag_ = "";
     this->end_connection_();
   }
 }
@@ -133,32 +127,9 @@ void OnlineImage::update() {
   }
   accept_header.value = accept_mime_type + ",*/*;q=0.8";
 
-  if (!this->etag_.empty()) {
-    /*
-       The HTTP ETag (entity tag) response header is an identifier for a specific version of a resource.
-       If the resource at a given URL changes, a new Etag value must be generated.
-       See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
-
-       By sending the last ETag as the value of the If-None-Match request header, if the resource hasn't changed, the
-       server will reply HTTP 304 (Not Modified). See
-       https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
-     */
-    headers.push_back(http_request::Header{IF_NONE_MATCH_HEADER_NAME, this->etag_});
-  }
-
-  if (!this->last_modified_.empty()) {
-    /*
-      The Last-Modified response header indicates when the resource last changed.
-      By sending the last Last-Modified as the value of the If-Modified-Since request header, if the resource hasn't
-      changed, the server will reply HTTP 304 (Not Modified). See
-      https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching
-    */
-    headers.push_back(http_request::Header{IF_MODIFIED_SINCE_HEADER_NAME, this->last_modified_});
-  }
-
   headers.push_back(accept_header);
 
-  this->downloader_ = this->parent_->get(this->url_, headers, {ETAG_HEADER_NAME, LAST_MODIFIED_HEADER_NAME});
+  this->downloader_ = this->parent_->get(this->url_, headers);
 
   if (this->downloader_ == nullptr) {
     ESP_LOGE(TAG, "Download failed.");
@@ -170,7 +141,6 @@ void OnlineImage::update() {
   int http_code = this->downloader_->status_code;
   if (http_code == HTTP_CODE_NOT_MODIFIED) {
     // Image hasn't changed on server. Skip download.
-    ESP_LOGI(TAG, "Server returned HTTP 304 (Not Modified). Download skipped.");
     this->end_connection_();
     return;
   }
@@ -232,8 +202,6 @@ void OnlineImage::loop() {
              this->width_, this->height_);
     ESP_LOGD(TAG, "Total time: %lds", ::time(nullptr) - this->start_time_);
     this->end_connection_();
-    this->etag_ = this->downloader_->get_response_header(ETAG_HEADER_NAME);
-    this->last_modified_ = this->downloader_->get_response_header(LAST_MODIFIED_HEADER_NAME);
     this->download_finished_callback_.call();
     return;
   }
