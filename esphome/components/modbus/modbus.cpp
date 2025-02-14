@@ -1,7 +1,6 @@
 #include "modbus.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
-
 namespace esphome {
 namespace modbus {
 
@@ -11,38 +10,80 @@ void Modbus::setup() {
   if (this->flow_control_pin_ != nullptr) {
     this->flow_control_pin_->setup();
   }
+  // 3.5 characters * 11 bits per character * 1000ms/sec / (bits/sec) (Standard modbus frame delay)
+  this->frame_delay_ms_ = (3.5 * 11 * 1000 / this->parent_->get_baud_rate()) + 1;
+  if (this->frame_delay_ms_ < 2)
+    this->frame_delay_ms_ = 2;  // 1750us minimium per spec - rounded up to 2ms.
+
+  this->long_rx_buffer_delay_ms_ =
+      (this->parent_->get_rx_full_threshold() * 11 * 1000 / this->parent_->get_baud_rate()) + 1;
 }
+
 void Modbus::loop() {
+  // First process all available incoming data.
+  this->receive_and_parse_modbus_bytes_();
+
+  // If the response frame is finished (including interframe delay) - we timeout.
+  // The long_rx_buffer_delay accounts for long responses (larger than the UART rx_full_threshold) to avoid timeouts
+  // when the buffer is filling the back half of the response
+  const uint16_t timeout = std::max(
+      (uint16_t) this->frame_delay_ms_,
+      (uint16_t) (this->rx_buffer_.size() > this->parent_->get_rx_full_threshold() - 1 ? this->long_rx_buffer_delay_ms_
+                                                                                       : 0));
+  if (millis() - this->last_modbus_byte_ > timeout) {
+    clear_rx_buffer_("timeout");
+  }
+
+  // If we're past the send_wait_time timeout and response buffer doesn't have the start of the expected response
+  if (this->waiting_for_response_ != 0 &&
+      millis() - this->last_send_ > this->last_send_tx_offset_ + this->send_wait_time_ &&
+      (this->rx_buffer_.empty() || this->rx_buffer_[0] != this->waiting_for_response_)) {
+    ESP_LOGV(TAG, "Stop waiting for response from %d %dms after last send", this->waiting_for_response_,
+             millis() - this->last_send_);
+    this->waiting_for_response_ = 0;
+  }
+
+  // If there's no response pending and there's commands in the buffer
+  if (!this->tx_blocked() && !this->tx_buffer_.empty()) {
+    this->defer("send_next_frame", [this]() { this->send_next_frame_(); });
+  }
+}
+
+bool Modbus::tx_blocked() {
   const uint32_t now = millis();
 
+  // We block transmission in any of these case:
+  // 1. There are bytes in the UART Rx buffer
+  // 2. There are bytes in our Rx buffer
+  // 3. We're waiting for a response
+  // 4. The last sent byte isn't more than frame_delay ms ago (i.e. wait to tell receivers that our previous Tx is done)
+  // 5. The last received byte isn't more than frame_delay ms ago (i.e. wait to be sure there isn't more Rx coming)
+  // 6. If we're a client - also wait for the turnaround delay, to give the servers time to process the previous message
+  return this->available() || !this->rx_buffer_.empty() || (this->waiting_for_response_ != 0) ||
+         (now - this->last_send_ < this->last_send_tx_offset_ + this->frame_delay_ms_ +
+                                       (this->role == ModbusRole::CLIENT ? this->turnaround_delay_ms_ : 0)) ||
+         (now - this->last_modbus_byte_ <
+          this->frame_delay_ms_ + (this->role == ModbusRole::CLIENT ? this->turnaround_delay_ms_ : 0));
+}
+
+bool Modbus::tx_buffer_empty() { return this->tx_buffer_.empty(); }
+
+void Modbus::receive_and_parse_modbus_bytes_() {
   while (this->available()) {
     uint8_t byte;
     this->read_byte(&byte);
-    if (this->parse_modbus_byte_(byte)) {
-      this->last_modbus_byte_ = now;
+    if (this->rx_buffer_.empty()) {
+      ESP_LOGV(TAG, "Modbus received first Byte %d (0X%x) %dms after last send", byte, byte,
+               millis() - this->last_send_);
     } else {
-      size_t at = this->rx_buffer_.size();
-      if (at > 0) {
-        ESP_LOGV(TAG, "Clearing buffer of %d bytes - parse failed", at);
-        this->rx_buffer_.clear();
-      }
-    }
-  }
-
-  if (now - this->last_modbus_byte_ > 50) {
-    size_t at = this->rx_buffer_.size();
-    if (at > 0) {
-      ESP_LOGV(TAG, "Clearing buffer of %d bytes - timeout", at);
-      this->rx_buffer_.clear();
+      ESP_LOGVV(TAG, "Modbus received Byte %d (0X%x) %dms after last send", byte, byte, millis() - this->last_send_);
     }
 
-    // stop blocking new send commands after sent_wait_time_ ms after response received
-    if (now - this->last_send_ > send_wait_time_) {
-      if (waiting_for_response > 0) {
-        ESP_LOGV(TAG, "Stop waiting for response from %d", waiting_for_response);
-      }
-      waiting_for_response = 0;
+    // If the bytes in the rx buffer do not parse, clear out the buffer
+    if (!this->parse_modbus_byte_(byte)) {
+      this->clear_rx_buffer_("parse failed");
     }
+    this->last_modbus_byte_ = millis();
   }
 }
 
@@ -50,7 +91,7 @@ bool Modbus::parse_modbus_byte_(uint8_t byte) {
   size_t at = this->rx_buffer_.size();
   this->rx_buffer_.push_back(byte);
   const uint8_t *raw = &this->rx_buffer_[0];
-  ESP_LOGVV(TAG, "Modbus received Byte  %d (0X%x)", byte, byte);
+
   // Byte 0: modbus address (match all)
   if (at == 0)
     return true;
@@ -120,9 +161,11 @@ bool Modbus::parse_modbus_byte_(uint8_t byte) {
     uint16_t remote_crc = uint16_t(raw[data_offset + data_len]) | (uint16_t(raw[data_offset + data_len + 1]) << 8);
     if (computed_crc != remote_crc) {
       if (this->disable_crc_) {
-        ESP_LOGD(TAG, "Modbus CRC Check failed, but ignored! %02X!=%02X", computed_crc, remote_crc);
+        ESP_LOGD(TAG, "Modbus CRC Check failed, but ignored! %02X!=%02X  %s %dms after last send", computed_crc,
+                 remote_crc, format_hex_pretty(this->rx_buffer_).c_str(), millis() - this->last_send_);
       } else {
-        ESP_LOGW(TAG, "Modbus CRC Check failed! %02X!=%02X", computed_crc, remote_crc);
+        ESP_LOGW(TAG, "Modbus CRC Check failed! %02X!=%02X %s %dms after last send", computed_crc, remote_crc,
+                 format_hex_pretty(this->rx_buffer_).c_str(), millis() - this->last_send_);
         return false;
       }
     }
@@ -133,38 +176,81 @@ bool Modbus::parse_modbus_byte_(uint8_t byte) {
     if (device->address_ == address) {
       // Is it an error response?
       if ((function_code & 0x80) == 0x80) {
-        ESP_LOGD(TAG, "Modbus error function code: 0x%X exception: %d", function_code, raw[2]);
-        if (waiting_for_response != 0) {
-          device->on_modbus_error(function_code & 0x7F, raw[2]);
-        } else {
+        uint8_t exception = raw[2];
+        ESP_LOGD(TAG, "Modbus error function code: 0x%X exception: %d", function_code, exception);
+        if (waiting_for_response_ == address) {
+          this->defer("on_modbus_error", [device, function_code, exception]() {
+            device->on_modbus_error(function_code & 0x7F, exception);
+          });
+        } else if (this->role == ModbusRole::CLIENT) {
           // Ignore modbus exception not related to a pending command
           ESP_LOGD(TAG, "Ignoring Modbus error - not expecting a response");
         }
       } else if (this->role == ModbusRole::SERVER && (function_code == 0x3 || function_code == 0x4)) {
-        device->on_modbus_read_registers(function_code, uint16_t(data[1]) | (uint16_t(data[0]) << 8),
-                                         uint16_t(data[3]) | (uint16_t(data[2]) << 8));
+        this->defer("on_modbus_read_registers", [device, data, function_code]() {
+          device->on_modbus_read_registers(function_code, uint16_t(data[1]) | (uint16_t(data[0]) << 8),
+                                           uint16_t(data[3]) | (uint16_t(data[2]) << 8));
+        });
       } else {
-        device->on_modbus_data(data);
+        this->defer("on_modbus_data", [device, data]() { device->on_modbus_data(data); });
       }
       found = true;
     }
   }
-  waiting_for_response = 0;
 
-  if (!found) {
+  if (!found && this->role == ModbusRole::CLIENT) {
     ESP_LOGW(TAG, "Got Modbus frame from unknown address 0x%02X! ", address);
   }
 
-  // reset buffer
-  ESP_LOGV(TAG, "Clearing buffer of %d bytes - parse succeeded", at);
-  this->rx_buffer_.clear();
+  this->clear_rx_buffer_("parse succeeded");
+
+  if (this->waiting_for_response_ == address)
+    this->waiting_for_response_ = 0;
+
   return true;
+}
+
+void Modbus::send_next_frame_() {
+  if (this->tx_buffer_.empty())
+    return;
+
+  if (this->tx_blocked())
+    return;
+
+  std::vector<uint8_t> data = this->tx_buffer_.front();
+
+  if (this->role == ModbusRole::CLIENT) {
+    this->waiting_for_response_ = data[0];
+  }
+
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->digital_write(true);
+    this->write_array(data);
+    this->flush();
+    this->flow_control_pin_->digital_write(false);
+    this->last_send_tx_offset_ = 0;
+  } else {
+    this->write_array(data);
+    this->last_send_tx_offset_ = data.size() * 11 * 1000 / this->parent_->get_baud_rate() + 1;
+  }
+
+  this->tx_buffer_.pop_front();
+
+  ESP_LOGV(TAG, "Modbus write: %s %dms after last send", format_hex_pretty(data).c_str(), millis() - this->last_send_);
+  this->last_send_ = millis();
+
+  if (!this->tx_buffer_.empty()) {
+    ESP_LOGV(TAG, "Modbus write queue contains %d items.", this->tx_buffer_.size());
+  }
 }
 
 void Modbus::dump_config() {
   ESP_LOGCONFIG(TAG, "Modbus:");
   LOG_PIN("  Flow Control Pin: ", this->flow_control_pin_);
   ESP_LOGCONFIG(TAG, "  Send Wait Time: %d ms", this->send_wait_time_);
+  ESP_LOGCONFIG(TAG, "  Turnaround Time: %d ms", this->turnaround_delay_ms_);
+  ESP_LOGCONFIG(TAG, "  Frame Delay: %d ms", this->frame_delay_ms_);
+  ESP_LOGCONFIG(TAG, "  Long Rx Buffer Delay: %d ms", this->long_rx_buffer_delay_ms_);
   ESP_LOGCONFIG(TAG, "  CRC Disabled: %s", YESNO(this->disable_crc_));
 }
 float Modbus::get_setup_priority() const {
@@ -206,21 +292,7 @@ void Modbus::send(uint8_t address, uint8_t function_code, uint16_t start_address
     }
   }
 
-  auto crc = crc16(data.data(), data.size());
-  data.push_back(crc >> 0);
-  data.push_back(crc >> 8);
-
-  if (this->flow_control_pin_ != nullptr)
-    this->flow_control_pin_->digital_write(true);
-
-  this->write_array(data);
-  this->flush();
-
-  if (this->flow_control_pin_ != nullptr)
-    this->flow_control_pin_->digital_write(false);
-  waiting_for_response = address;
-  last_send_ = millis();
-  ESP_LOGV(TAG, "Modbus write: %s", format_hex_pretty(data).c_str());
+  send_raw(data);
 }
 
 // Helper function for lambdas
@@ -229,20 +301,26 @@ void Modbus::send_raw(const std::vector<uint8_t> &payload) {
   if (payload.empty()) {
     return;
   }
+  std::vector<uint8_t> data = payload;
 
-  if (this->flow_control_pin_ != nullptr)
-    this->flow_control_pin_->digital_write(true);
+  auto crc = crc16(data.data(), data.size());
+  data.push_back(crc >> 0);
+  data.push_back(crc >> 8);
 
-  auto crc = crc16(payload.data(), payload.size());
-  this->write_array(payload);
-  this->write_byte(crc & 0xFF);
-  this->write_byte((crc >> 8) & 0xFF);
-  this->flush();
-  if (this->flow_control_pin_ != nullptr)
-    this->flow_control_pin_->digital_write(false);
-  waiting_for_response = payload[0];
-  ESP_LOGV(TAG, "Modbus write raw: %s", format_hex_pretty(payload).c_str());
-  last_send_ = millis();
+  if (this->tx_buffer_.size() < MODBUS_TX_BUFFER_SIZE) {
+    this->tx_buffer_.push_back(data);
+  } else {
+    ESP_LOGW(TAG, "Modbus write buffer full, dropped: %s", format_hex_pretty(data).c_str());
+  }
+}
+
+void Modbus::clear_rx_buffer_(const std::string &reason) {
+  size_t at = this->rx_buffer_.size();
+  if (at > 0) {
+    ESP_LOGV(TAG, "Clearing buffer of %d bytes - %s %dms after last send", at, reason.c_str(),
+             millis() - this->last_send_);
+    this->rx_buffer_.clear();
+  }
 }
 
 }  // namespace modbus
