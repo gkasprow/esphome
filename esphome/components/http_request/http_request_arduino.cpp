@@ -134,7 +134,7 @@ std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::s
     for (const auto &collect_header_name : collect_header_names) {
       if (str_equals_case_insensitive(collect_header_name, header_name)) {
         std::string header_value = container->client_.header(i).c_str();
-        ESP_LOGD(TAG, "Received response header, name: %s, value: %s", header_name, header_value);
+        ESP_LOGD(TAG, "Received response header, name: %s, value: %s", header_name.c_str(), header_value.c_str());
         container->response_headers_[header_name].push_back(header_value);
         break;
       }
