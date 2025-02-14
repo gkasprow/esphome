@@ -20,6 +20,7 @@ VL53L0XSensor = vl53l0x_ns.class_(
 
 CONF_SIGNAL_RATE_LIMIT = "signal_rate_limit"
 CONF_LONG_RANGE = "long_range"
+CONF_TIMING_BUDGET = "timing_budget"
 
 
 def check_keys(obj):
@@ -35,6 +36,13 @@ def check_timeout(value):
     value = cv.positive_time_period_microseconds(value)
     if value.total_seconds > 60:
         raise cv.Invalid("Maximum timeout can not be greater then 60 seconds")
+    return value
+
+
+def check_timing_budget(value):
+    value = cv.positive_time_period_microseconds(value)
+    if value.total_microseconds < 17000 or value.total_microseconds > 4294967295:
+        raise cv.Invalid("Timing budget must be between 17000us and 4294967295us")
     return value
 
 
@@ -54,6 +62,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_LONG_RANGE, default=False): cv.boolean,
             cv.Optional(CONF_TIMEOUT, default="10ms"): check_timeout,
             cv.Optional(CONF_ENABLE_PIN): pins.gpio_output_pin_schema,
+            cv.Optional(CONF_TIMING_BUDGET): check_timing_budget,
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -72,5 +81,8 @@ async def to_code(config):
     if CONF_ENABLE_PIN in config:
         enable = await cg.gpio_pin_expression(config[CONF_ENABLE_PIN])
         cg.add(var.set_enable_pin(enable))
+
+    if CONF_TIMING_BUDGET in config:
+        cg.add(var.set_timing_budget(config[CONF_TIMING_BUDGET]))
 
     await i2c.register_i2c_device(var, config)
