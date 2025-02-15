@@ -33,6 +33,7 @@ import tornado.process
 import tornado.queues
 import tornado.web
 import tornado.websocket
+import voluptuous as vol
 import yaml
 from yaml.nodes import Node
 
@@ -51,7 +52,6 @@ from .util.text import friendly_name_slugify
 
 if TYPE_CHECKING:
     from requests import Response
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -598,6 +598,19 @@ class DownloadListRequestHandler(BaseHandler):
         if storage_json is None:
             self.send_error(404)
             return
+
+        config = yaml_util.load_yaml(settings.rel_path(configuration))
+
+        if const.CONF_EXTERNAL_COMPONENTS in config:
+            from esphome.components.external_components import (
+                do_external_components_pass,
+            )
+
+            try:
+                do_external_components_pass(config)
+            except vol.Invalid:
+                self.send_error(404)
+                return
 
         from esphome.components.esp32 import VARIANTS as ESP32_VARIANTS
 
