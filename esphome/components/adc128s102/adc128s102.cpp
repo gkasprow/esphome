@@ -25,7 +25,10 @@ uint16_t ADC128S102::read_data(uint8_t channel) {
   uint8_t adc_primary_byte = this->transfer_byte(control);
   uint8_t adc_secondary_byte = this->transfer_byte(0x00);
   this->disable();
-
+  this->enable();
+  uint8_t adc_primary_byte = this->transfer_byte(control);
+  uint8_t adc_secondary_byte = this->transfer_byte(0x00);
+  this->disable();
   uint16_t digital_value = adc_primary_byte << 8 | adc_secondary_byte;
 
   return digital_value;
