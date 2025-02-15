@@ -15,7 +15,8 @@ namespace http_request {
 static const char *const TAG = "http_request.arduino";
 
 std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::string method, std::string body,
-                                                         std::list<Header> headers) {
+                                                         std::list<Header> headers,
+                                                         std::set<std::string> collect_header_names) {
   if (!network::is_connected()) {
     this->status_momentary_error("failed", 1000);
     ESP_LOGW(TAG, "HTTP Request failed; Not connected to network");
@@ -100,9 +101,15 @@ std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::s
   }
 
   // returned needed headers must be collected before the requests
-  static const char *header_keys[] = {"Content-Length", "Content-Type"};
-  static const size_t HEADER_COUNT = sizeof(header_keys) / sizeof(header_keys[0]);
-  container->client_.collectHeaders(header_keys, HEADER_COUNT);
+  const char *header_keys[collect_header_names.size() + 2];
+  int index = 0;
+  for (auto const &header_name : collect_header_names) {
+    header_keys[index++] = header_name.c_str();
+  }
+  // header names must be lowercase
+  header_keys[index++] = "content-length";
+  header_keys[index++] = "content-type";
+  container->client_.collectHeaders(header_keys, index);
 
   App.feed_wdt();
   container->status_code = container->client_.sendRequest(method.c_str(), body.c_str());
@@ -119,6 +126,19 @@ std::shared_ptr<HttpContainer> HttpRequestArduino::start(std::string url, std::s
     ESP_LOGE(TAG, "HTTP Request failed; URL: %s; Code: %d", url.c_str(), container->status_code);
     this->status_momentary_error("failed", 1000);
     // Still return the container, so it can be used to get the status code and error message
+  }
+
+  container->response_headers_ = {};
+  for (int i = 0; i < container->client_.headers(); i++) {
+    const std::string header_name = str_lower_case(container->client_.headerName(i).c_str());
+    for (const auto &collect_header_name : collect_header_names) {
+      if (str_equals_case_insensitive(collect_header_name, header_name)) {
+        std::string header_value = container->client_.header(i).c_str();
+        ESP_LOGD(TAG, "Received response header, name: %s, value: %s", header_name.c_str(), header_value.c_str());
+        container->response_headers_[header_name].push_back(header_value);
+        break;
+      }
+    }
   }
 
   int content_length = container->client_.getSize();

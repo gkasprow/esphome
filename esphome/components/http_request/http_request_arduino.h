@@ -30,8 +30,8 @@ class HttpContainerArduino : public HttpContainer {
 
 class HttpRequestArduino : public HttpRequestComponent {
  public:
-  std::shared_ptr<HttpContainer> start(std::string url, std::string method, std::string body,
-                                       std::list<Header> headers) override;
+  std::shared_ptr<HttpContainer> start(std::string url, std::string method, std::string body, std::list<Header> headers,
+                                       std::set<std::string> collect_header_names) override;
 };
 
 }  // namespace http_request

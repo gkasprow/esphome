@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -95,9 +96,26 @@ class HttpContainer : public Parented<HttpRequestComponent> {
 
   size_t get_bytes_read() const { return this->bytes_read_; }
 
+  /**
+   * @brief Get response headers.
+   *
+   * @return The key is the lower case response header name, the value is the header value.
+   */
+  std::map<std::string, std::list<std::string>> get_response_headers() const { return this->response_headers_; }
+
+  std::string get_response_header(const std::string &header_name) {
+    auto header_name_lower_case = str_lower_case(header_name);
+    if (this->response_headers_.count(header_name_lower_case) == 0) {
+      return "";
+    } else {
+      return this->response_headers_[header_name_lower_case].front();
+    }
+  }
+
  protected:
   size_t bytes_read_{0};
   bool secure_{false};
+  std::map<std::string, std::list<std::string>> response_headers_{};
 };
 
 class HttpRequestResponseTrigger : public Trigger<std::shared_ptr<HttpContainer>, std::string &> {
@@ -119,19 +137,34 @@ class HttpRequestComponent : public Component {
   void set_follow_redirects(bool follow_redirects) { this->follow_redirects_ = follow_redirects; }
   void set_redirect_limit(uint16_t limit) { this->redirect_limit_ = limit; }
 
-  std::shared_ptr<HttpContainer> get(std::string url) { return this->start(std::move(url), "GET", "", {}); }
-  std::shared_ptr<HttpContainer> get(std::string url, std::list<Header> headers) {
-    return this->start(std::move(url), "GET", "", std::move(headers));
+  std::shared_ptr<HttpContainer> get(const std::string &url) { return this->start(url, "GET", "", {}); }
+  std::shared_ptr<HttpContainer> get(const std::string &url, const std::list<Header> &headers) {
+    return this->start(url, "GET", "", headers);
   }
-  std::shared_ptr<HttpContainer> post(std::string url, std::string body) {
-    return this->start(std::move(url), "POST", std::move(body), {});
+  std::shared_ptr<HttpContainer> get(std::string url, std::list<Header> headers,
+                                     std::set<std::string> collect_header_names) {
+    return this->start(std::move(url), "GET", "", std::move(headers), std::move(collect_header_names));
   }
-  std::shared_ptr<HttpContainer> post(std::string url, std::string body, std::list<Header> headers) {
-    return this->start(std::move(url), "POST", std::move(body), std::move(headers));
+  std::shared_ptr<HttpContainer> post(const std::string &url, const std::string &body) {
+    return this->start(url, "POST", body, {});
+  }
+  std::shared_ptr<HttpContainer> post(const std::string &url, const std::string &body,
+                                      const std::list<Header> &headers) {
+    return this->start(url, "POST", body, headers);
+  }
+  std::shared_ptr<HttpContainer> post(std::string url, std::string body, std::list<Header> headers,
+                                      std::set<std::string> collect_header_names) {
+    return this->start(std::move(url), "POST", std::move(body), std::move(headers), std::move(collect_header_names));
+  }
+
+  std::shared_ptr<HttpContainer> start(const std::string &url, const std::string &method, const std::string &body,
+                                       const std::list<Header> &headers) {
+    return this->start(url, method, body, headers, {});
   }
 
   virtual std::shared_ptr<HttpContainer> start(std::string url, std::string method, std::string body,
-                                               std::list<Header> headers) = 0;
+                                               std::list<Header> headers,
+                                               std::set<std::string> collect_header_names) = 0;
 
  protected:
   const char *useragent_{nullptr};
@@ -150,6 +183,8 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
   TEMPLATABLE_VALUE(bool, capture_response)
 
   void add_header(const char *key, TemplatableValue<const char *, Ts...> value) { this->headers_.insert({key, value}); }
+
+  void add_collect_header_name(const char *value) { this->collect_header_names_.insert(value); }
 
   void add_json(const char *key, TemplatableValue<std::string, Ts...> value) { this->json_.insert({key, value}); }
 
@@ -184,8 +219,13 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
       header.value = val.value(x...);
       headers.push_back(header);
     }
+    std::set<std::string> collect_header_names;
+    for (const auto &item : this->collect_header_names_) {
+      collect_header_names.insert(item);
+    }
 
-    auto container = this->parent_->start(this->url_.value(x...), this->method_.value(x...), body, headers);
+    auto container =
+        this->parent_->start(this->url_.value(x...), this->method_.value(x...), body, headers, collect_header_names);
 
     if (container == nullptr) {
       for (auto *trigger : this->error_triggers_)
@@ -239,6 +279,7 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
   void encode_json_func_(Ts... x, JsonObject root) { this->json_func_(x..., root); }
   HttpRequestComponent *parent_;
   std::map<const char *, TemplatableValue<const char *, Ts...>> headers_{};
+  std::set<std::string> collect_header_names_{};
   std::map<const char *, TemplatableValue<std::string, Ts...>> json_{};
   std::function<void(Ts..., JsonObject)> json_func_{nullptr};
   std::vector<HttpRequestResponseTrigger *> response_triggers_{};
