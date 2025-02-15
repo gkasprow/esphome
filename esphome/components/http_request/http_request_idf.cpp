@@ -37,7 +37,7 @@ esp_err_t HttpRequestIDF::http_event_handler(esp_http_client_event_t *evt) {
 
   switch (evt->event_id) {
     case HTTP_EVENT_ON_HEADER: {
-      auto *header_name = evt->header_key;
+      const std::string header_name = str_lower_case(evt->header_key);
       for (const auto &collect_header_name : collect_header_names) {
         if (str_equals_case_insensitive(collect_header_name, header_name)) {
           ESP_LOGD(TAG, "Received response header, name: %s, value: %s", header_name, evt->header_value);
