@@ -9,8 +9,6 @@
 #include <esp_netif.h>
 #include <esp_tls.h>
 
-#include <utility>
-
 namespace esphome {
 namespace http_request {
 
