@@ -106,6 +106,10 @@ std::shared_ptr<HttpContainer> HttpRequestIDF::start(std::string url, std::strin
   const uint32_t start = millis();
   watchdog::WatchdogManager wdm(this->get_watchdog_timeout());
 
+  config.event_handler = http_event_handler;
+  auto user_data = UserData{collect_header_names, {}};
+  config.user_data = static_cast<void *>(&user_data);
+
   esp_http_client_handle_t client = esp_http_client_init(&config);
 
   std::shared_ptr<HttpContainerIDF> container = std::make_shared<HttpContainerIDF>(client);
@@ -118,10 +122,6 @@ std::shared_ptr<HttpContainer> HttpRequestIDF::start(std::string url, std::strin
   }
 
   const int body_len = body.length();
-
-  config.event_handler = http_event_handler;
-  auto user_data = UserData{collect_header_names, {}};
-  config.user_data = static_cast<void *>(&user_data);
 
   esp_err_t err = esp_http_client_open(client, body_len);
   if (err != ESP_OK) {
