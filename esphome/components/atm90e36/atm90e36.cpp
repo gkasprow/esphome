@@ -147,7 +147,7 @@ void ATM90E36Component::loop() {
 void ATM90E36Component::update() {
   if (this->read16_(ATM90E36_REGISTER_CONFIGSTART) != 0x8765) { //0x5678) {
     this->status_set_warning();
-    ESP_LOGCONFIG(TAG, "Respuesta REGISTER_CONFIGSTART erronea...", this->read16_(ATM90E36_REGISTER_CONFIGSTART));
+    ESP_LOGCONFIG(TAG, "Incorrect REGISTER_CONFIGSTART response...", this->read16_(ATM90E36_REGISTER_CONFIGSTART));
     return;
   }
   this->set_publish_interval_flag_(true);
@@ -155,7 +155,7 @@ void ATM90E36Component::update() {
 }
 
 void ATM90E36Component::setup() {
-  ESP_LOGCONFIG(TAG, "Configurando componente ATM90E36...");
+  ESP_LOGCONFIG(TAG, "Configuring ATM90E36 component...");
   this->spi_setup();
 
   uint16_t mmode0 = 0x87;  // 3P4W 50Hz
@@ -178,7 +178,7 @@ void ATM90E36Component::setup() {
   
   this->write16_(ATM90E36_REGISTER_CONFIGSTART, 0x5678); // Metering calibration startup
   if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != 0x5678) {
-    ESP_LOGW(TAG, "No se ha podido inicializar ATM90E36 IC, compruebe la configuración SPI");
+    ESP_LOGW(TAG, "The ATM90E36 IC could not be initialized, please check the SPI configuration.");
     this->mark_failed();
     return;
   }
@@ -274,7 +274,7 @@ void ATM90E36Component::dump_config() {
   ESP_LOGCONFIG("", "ATM90E36:");
   LOG_PIN("  CS Pin: ", this->cs_);
   if (this->is_failed()) {
-    ESP_LOGE(TAG, "ERROR en comunicación con ATM90E36!");
+    ESP_LOGE(TAG, "ERROR in communication with ATM90E36!");
   }
   LOG_UPDATE_INTERVAL(this);
   LOG_SENSOR("  ", "Voltage A", this->phase_[PHASEA].voltage_sensor_);
@@ -344,13 +344,13 @@ int ATM90E36Component::read32_(uint16_t addr_h, uint16_t addr_l) {
 }
 
 void ATM90E36Component::write16_(uint16_t a_register, uint16_t val) {
-  ESP_LOGVV(TAG, "Escribir registro write16_ 0x%04" PRIX16 " valor 0x%04" PRIX16, a_register, val);
+  ESP_LOGVV(TAG, "Write register write16_ 0x%04" PRIX16 " valor 0x%04" PRIX16, a_register, val);
   this->enable();
   this->write_byte16(a_register);
   this->write_byte16(val);
   this->disable();
   if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != val)
-    ESP_LOGW(TAG, "SPI ERROR escritura registro 0x%04X valor 0x%04X", a_register, val);
+    ESP_LOGW(TAG, "SPI ERROR writing register 0x%04X value 0x%04X", a_register, val);
 }
 
 float ATM90E36Component::get_local_phase_voltage_(uint8_t phase) { return this->phase_[phase].voltage_; }
@@ -384,7 +384,7 @@ float ATM90E36Component::get_local_phase_peak_current_(uint8_t phase) { return t
 float ATM90E36Component::get_phase_voltage_(uint8_t phase) {
   const uint16_t voltage = this->read16_(ATM90E36_REGISTER_URMS + phase);
   if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != voltage)
-    ESP_LOGW(TAG, "SPI URMS Error de lectura del registro de voltaje.");
+    ESP_LOGW(TAG, "SPI URMS error reading the voltage register.");
   return (float) voltage / 100;
 }
 
@@ -395,7 +395,7 @@ float ATM90E36Component::get_phase_voltage_avg_(uint8_t phase) {
   for (uint8_t i = 0; i < reads; i++) {
     voltage = this->read16_(ATM90E36_REGISTER_URMS + phase);
     if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != voltage)
-      ESP_LOGW(TAG, "SPI URMS Error de lectura del registro de voltaje..");
+      ESP_LOGW(TAG, "SPI URMS error reading the voltage register..");
     accumulation += voltage;
   }
   voltage = accumulation / reads;
@@ -410,7 +410,7 @@ float ATM90E36Component::get_phase_current_avg_(uint8_t phase) {
   for (uint8_t i = 0; i < reads; i++) {
     current = this->read16_(ATM90E36_REGISTER_IRMS + phase);
     if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != current)
-      ESP_LOGW(TAG, "SPI IRMS Error de lectura del registro de corriente.");
+      ESP_LOGW(TAG, "SPI IRMS error reading the current register..");
     accumulation += current;
   }
   current = accumulation / reads;
@@ -421,7 +421,7 @@ float ATM90E36Component::get_phase_current_avg_(uint8_t phase) {
 float ATM90E36Component::get_phase_current_(uint8_t phase) {
   const uint16_t current = this->read16_(ATM90E36_REGISTER_IRMS + phase);
   if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != current)
-    ESP_LOGW(TAG, "SPI IRMS Error de lectura del registro de corriente.");
+    ESP_LOGW(TAG, "SPI IRMS error reading the current register..");
   return (float) current / 1000;
 }
 
@@ -468,7 +468,7 @@ float ATM90E36Component::get_total_apparent_power_() {
 float ATM90E36Component::get_phase_power_factor_(uint8_t phase) {
   const int16_t powerfactor = this->read16_(ATM90E36_REGISTER_PFMEAN + phase);
   if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != powerfactor)
-    ESP_LOGW(TAG, "SPI Error de lectura del factor de potencia..");
+    ESP_LOGW(TAG, "SPI error reading the power factor..");
   return (float) powerfactor / 1000;
 }
 
