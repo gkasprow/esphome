@@ -147,7 +147,7 @@ void ATM90E36Component::loop() {
 void ATM90E36Component::update() {
   if (this->read16_(ATM90E36_REGISTER_CONFIGSTART) != 0x8765) { //0x5678) {
     this->status_set_warning();
-    ESP_LOGCONFIG(TAG, "Respuesta REGISTER_CONFIGSTART erronea...",this->read16_(ATM90E36_REGISTER_CONFIGSTART));
+    ESP_LOGCONFIG(TAG, "Respuesta REGISTER_CONFIGSTART erronea...", this->read16_(ATM90E36_REGISTER_CONFIGSTART));
     return;
   }
   this->set_publish_interval_flag_(true);
