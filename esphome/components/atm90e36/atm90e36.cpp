@@ -183,87 +183,88 @@ void ATM90E36Component::setup() {
     return;
   }
   
-  this->write16_(ATM90E36_REGISTER_PLCONSTH, 0x0861);       // PL Constant MSB (default) = 140625000
-  this->write16_(ATM90E36_REGISTER_PLCONSTL, 0xC468);       // PL Constant LSB (default)
-  this->write16_(ATM90E36_REGISTER_ZXCONFIG, 0xD654);       // ZX2, ZX1, ZX0 pin config
-  this->write16_(ATM90E36_REGISTER_MMODE0, mmode0);         // Mode Config (frequency set in main program)
-  this->write16_(ATM90E36_REGISTER_MMODE1, pga_gain_);      // PGA Gain Configuration for Current Channels
-  this->write16_(ATM90E36_REGISTER_PSTARTTH, 0x1D4C);       // All Active Startup Power Threshold - 0.02A/0.00032 = 7500
-  this->write16_(ATM90E36_REGISTER_QSTARTTH, 0x1D4C);       // All Reactive Startup Power Threshold - 50%
-  this->write16_(ATM90E36_REGISTER_SSTARTTH, 0x1D4C);       // All Reactive Startup Power Threshold - 50%
-  this->write16_(ATM90E36_REGISTER_PPHASETH, 0x02EE);       // Each Phase Active Phase Threshold - 0.002A/0.00032 = 750
-  this->write16_(ATM90E36_REGISTER_QPHASETH, 0x02EE);       // Each phase Reactive Phase Threshold - 10%
-  this->write16_(ATM90E36_REGISTER_SPHASETH, 0x0000);       // Apparent  Phase Threshold
-  this->write16_(ATM90E36_REGISTER_CSO, 0x4741);            // Checksum 0
-  // Set metering calibration values (CALIBRATION)
-  this->write16_(ATM90E36_REGISTER_HARMSTART, 0x5678); // Inicio de la calibración de medición
-  this->write16_(ATM90E36_REGISTER_PQGAINA, 0x0000);       // Line calibration gain
-  this->write16_(ATM90E36_REGISTER_PHIA, 0x0000);        // Line calibration angle
-  this->write16_(ATM90E36_REGISTER_PQGAINB, 0x0000);       // Line calibration gain
-  this->write16_(ATM90E36_REGISTER_PHIB, 0x0000);        // Line calibration angle
-  this->write16_(ATM90E36_REGISTER_PQGAINC, 0x0000);       // Line calibration gain
-  this->write16_(ATM90E36_REGISTER_PHIC, 0x0000);        // Line calibration angle
-  // Configura potencia
-  this->write16_(ATM90E36_REGISTER_POFFSETA, 0x0000); // Offset de potencia activa de la línea A
-  this->write16_(ATM90E36_REGISTER_QOFFSETA, 0x0000); // Offset de potencia reactiva de la línea A
-  this->write16_(ATM90E36_REGISTER_POFFSETB, 0x0000); // Offset de potencia activa de la línea B
-  this->write16_(ATM90E36_REGISTER_QOFFSETB, 0x0000); // Offset de potencia reactiva de la línea N
-  this->write16_(ATM90E36_REGISTER_POFFSETC, 0x0000); // Offset de potencia activa de la línea C
-  this->write16_(ATM90E36_REGISTER_QOFFSETC, 0x0000); // Offset de potencia reactiva de la línea C
-  this->write16_(ATM90E36_REGISTER_CS1, 0x0000);       // Checksum 1 ??no se si es correcto el valor
-  // Set metering calibration values (HARMONIC)
-  this->write16_(ATM90E36_REGISTER_HARMSTART, 0x5678); // Inicio de la calibración de medición
-  this->write16_(ATM90E36_REGISTER_POFFSETAF, 0x0000); // Offset de potencia activa fundamental de la línea A
-  this->write16_(ATM90E36_REGISTER_POFFSETBF, 0x0000); // Offset de potencia activa fundamental de la línea B
-  this->write16_(ATM90E36_REGISTER_POFFSETCF, 0x0000); // Offset de potencia activa fundamental de la línea C
-  this->write16_(ATM90E36_REGISTER_PGAINAF, 0x0000);   // Ganancia de potencia activa fundamental de la línea A
-  this->write16_(ATM90E36_REGISTER_PGAINBF, 0x0000);   // Ganancia de potencia activa fundamental de la línea B
-  this->write16_(ATM90E36_REGISTER_PGAINCF, 0x0000);   // Ganancia de potencia activa fundamental de la línea C
-  this->write16_(ATM90E36_REGISTER_CS2, 0x0000);     // Checksum 2 ??no se si es correcto el valor
+	this->write16_(ATM90E36_REGISTER_PLCONSTH, 0x0861);       // PL Constant MSB (default) = 140625000
+	this->write16_(ATM90E36_REGISTER_PLCONSTL, 0xC468);       // PL Constant LSB (default)
+	this->write16_(ATM90E36_REGISTER_ZXCONFIG, 0xD654);       // ZX2, ZX1, ZX0 pin config
+	this->write16_(ATM90E36_REGISTER_MMODE0, mmode0);         // Mode Config (frequency set in main program)
+	this->write16_(ATM90E36_REGISTER_MMODE1, pga_gain_);      // PGA Gain Configuration for Current Channels
+	this->write16_(ATM90E36_REGISTER_PSTARTTH, 0x1D4C);       // All Active Startup Power Threshold - 0.02A/0.00032 = 7500
+	this->write16_(ATM90E36_REGISTER_QSTARTTH, 0x1D4C);       // All Reactive Startup Power Threshold - 50%
+	this->write16_(ATM90E36_REGISTER_SSTARTTH, 0x1D4C);       // All Reactive Startup Power Threshold - 50%
+	this->write16_(ATM90E36_REGISTER_PPHASETH, 0x02EE);       // Each Phase Active Phase Threshold - 0.002A/0.00032 = 750
+	this->write16_(ATM90E36_REGISTER_QPHASETH, 0x02EE);       // Each phase Reactive Phase Threshold - 10%
+	this->write16_(ATM90E36_REGISTER_SPHASETH, 0x0000);       // Apparent  Phase Threshold
+	this->write16_(ATM90E36_REGISTER_CSO, 0x4741);            // Checksum 0
+	  // Set metering calibration values (CALIBRATION)
+	this->write16_(ATM90E36_REGISTER_HARMSTART, 0x5678); // Start of measurement calibration
+	this->write16_(ATM90E36_REGISTER_PQGAINA, 0x0000);       // Line calibration gain
+	this->write16_(ATM90E36_REGISTER_PHIA, 0x0000);        // Line calibration angle
+	this->write16_(ATM90E36_REGISTER_PQGAINB, 0x0000);       // Line calibration gain
+	this->write16_(ATM90E36_REGISTER_PHIB, 0x0000);        // Line calibration angle
+	this->write16_(ATM90E36_REGISTER_PQGAINC, 0x0000);       // Line calibration gain
+	this->write16_(ATM90E36_REGISTER_PHIC, 0x0000);        // Line calibration angle
+	// Configure power
+	this->write16_(ATM90E36_REGISTER_POFFSETA, 0x0000); // Active power offset for line A
+	this->write16_(ATM90E36_REGISTER_QOFFSETA, 0x0000); // Reactive power offset for line A
+	this->write16_(ATM90E36_REGISTER_POFFSETB, 0x0000); // Active power offset for line B
+	this->write16_(ATM90E36_REGISTER_QOFFSETB, 0x0000); // Reactive power offset for line N
+	this->write16_(ATM90E36_REGISTER_POFFSETC, 0x0000); // Active power offset for line C
+	this->write16_(ATM90E36_REGISTER_QOFFSETC, 0x0000); // Reactive power offset for line C
+	this->write16_(ATM90E36_REGISTER_CS1, 0x0000);       // Checksum 1 ?? I'm not sure if the value is correct
+	// Set metering calibration values (HARMONIC)
+	this->write16_(ATM90E36_REGISTER_HARMSTART, 0x5678); // Start of measurement calibration
+	this->write16_(ATM90E36_REGISTER_POFFSETAF, 0x0000); // Fundamental active power offset for line A
+	this->write16_(ATM90E36_REGISTER_POFFSETBF, 0x0000); // Fundamental active power offset for line B
+	this->write16_(ATM90E36_REGISTER_POFFSETCF, 0x0000); // Fundamental active power offset for line C
+	this->write16_(ATM90E36_REGISTER_PGAINAF, 0x0000);   // Fundamental active power gain for line A
+	this->write16_(ATM90E36_REGISTER_PGAINBF, 0x0000);   // Fundamental active power gain for line B
+	this->write16_(ATM90E36_REGISTER_PGAINCF, 0x0000);   // Fundamental active power gain for line C
+	this->write16_(ATM90E36_REGISTER_CS2, 0x0000);     // Checksum 2 ?? I'm not sure if the value is correct
 
-  //**************** REGISTROS DE CALIBRACIÓN DE MEDICIÓN ****************
-  this->write16_(ATM90E36_REGISTER_ADJSTART, 0x5678); // Calibración de medición
-  // Configurar los offsets de calibración de voltaje y corriente para la FASE A
-  this->phase_[PHASEA].voltage_offset_ = calibrate_voltage_offset_phase(PHASEA);
-  this->write16_(ATM90E36_REGISTER_UOFFSETA, this->phase_[PHASEA].voltage_offset_);  // Offset de voltaje de la fase A
-  this->phase_[PHASEA].current_offset_ = calibrate_current_offset_phase(PHASEA);
-  this->write16_(ATM90E36_REGISTER_IOFFSETA, this->phase_[PHASEA].current_offset_);  // Offset de corriente de la fase A
-  // Configurar la ganancia de voltaje y corriente para la FASE A
-  this->write16_(ATM90E36_REGISTER_UGAINA, this->phase_[PHASEA].voltage_gain_);  // Ganancia RMS de voltaje de la fase A
-  this->write16_(ATM90E36_REGISTER_IGAINA, this->phase_[PHASEA].ct_gain_);       // Ganancia de corriente de la línea A
-  // Configurar los offsets de calibración de voltaje y corriente para la FASE B
-  this->phase_[PHASEB].voltage_offset_ = calibrate_voltage_offset_phase(PHASEB);
-  this->write16_(ATM90E36_REGISTER_UOFFSETB, this->phase_[PHASEB].voltage_offset_);  // Offset de voltaje de la fase B
-  this->phase_[PHASEB].current_offset_ = calibrate_current_offset_phase(PHASEB);
-  this->write16_(ATM90E36_REGISTER_IOFFSETB, this->phase_[PHASEB].current_offset_);  // Offset de corriente de la fase B
-  // Configurar la ganancia de voltaje y corriente para la FASE B
-  this->write16_(ATM90E36_REGISTER_UGAINB, this->phase_[PHASEB].voltage_gain_);  // Ganancia RMS de voltaje de la fase B
-  this->write16_(ATM90E36_REGISTER_IGAINB, this->phase_[PHASEB].ct_gain_);       // Ganancia de corriente de la línea B
-  // Configurar los offsets de calibración de voltaje y corriente para la FASE C
-  this->phase_[PHASEC].voltage_offset_ = calibrate_voltage_offset_phase(PHASEC);
-  this->write16_(ATM90E36_REGISTER_UOFFSETC, this->phase_[PHASEC].voltage_offset_);  // Offset de voltaje de la fase C
-  this->phase_[PHASEC].current_offset_ = calibrate_current_offset_phase(PHASEC);
-  this->write16_(ATM90E36_REGISTER_IOFFSETC, this->phase_[PHASEC].current_offset_);  // Offset de corriente de la fase C
-  // Configurar la ganancia de voltaje y corriente para la FASE C
-  this->write16_(ATM90E36_REGISTER_UGAINC, this->phase_[PHASEC].voltage_gain_);  // Ganancia RMS de voltaje de la fase C
-  this->write16_(ATM90E36_REGISTER_IGAINC, this->phase_[PHASEC].ct_gain_);       // Ganancia de corriente de la línea C
-  this->write16_(ATM90E36_REGISTER_IGAINN, 0xFD7F); // Ganancia de corriente de la línea D
-  this->write16_(ATM90E36_REGISTER_CS3, 0x02F6); // Checksum 3, fin de la configuración
+	//**************** MEASUREMENT CALIBRATION REGISTERS ****************
+	this->write16_(ATM90E36_REGISTER_ADJSTART, 0x5678); // Measurement calibration
+	// Configure the voltage and current calibration offsets for PHASE A
+	this->phase_[PHASEA].voltage_offset_ = calibrate_voltage_offset_phase(PHASEA);
+	this->write16_(ATM90E36_REGISTER_UOFFSETA, this->phase_[PHASEA].voltage_offset_);  // Voltage offset for phase A
+	this->phase_[PHASEA].current_offset_ = calibrate_current_offset_phase(PHASEA);
+	this->write16_(ATM90E36_REGISTER_IOFFSETA, this->phase_[PHASEA].current_offset_);  // Current offset for phase A
+	// Configure the voltage and current gain for PHASE A
+	this->write16_(ATM90E36_REGISTER_UGAINA, this->phase_[PHASEA].voltage_gain_);  // RMS voltage gain for phase A
+	this->write16_(ATM90E36_REGISTER_IGAINA, this->phase_[PHASEA].ct_gain_);       // Current gain for line A
+	// Configure the voltage and current calibration offsets for PHASE B
+	this->phase_[PHASEB].voltage_offset_ = calibrate_voltage_offset_phase(PHASEB);
+	this->write16_(ATM90E36_REGISTER_UOFFSETB, this->phase_[PHASEB].voltage_offset_);  // Voltage offset for phase B
+	this->phase_[PHASEB].current_offset_ = calibrate_current_offset_phase(PHASEB);
+	this->write16_(ATM90E36_REGISTER_IOFFSETB, this->phase_[PHASEB].current_offset_);  // Current offset for phase B
+	// Configure the voltage and current gain for PHASE B
+	this->write16_(ATM90E36_REGISTER_UGAINB, this->phase_[PHASEB].voltage_gain_);  // RMS voltage gain for phase B
+	this->write16_(ATM90E36_REGISTER_IGAINB, this->phase_[PHASEB].ct_gain_);       // Current gain for line B
+	// Configure the voltage and current calibration offsets for PHASE C
+	this->phase_[PHASEC].voltage_offset_ = calibrate_voltage_offset_phase(PHASEC);
+	this->write16_(ATM90E36_REGISTER_UOFFSETC, this->phase_[PHASEC].voltage_offset_);  // Voltage offset for phase C
+	this->phase_[PHASEC].current_offset_ = calibrate_current_offset_phase(PHASEC);
+	this->write16_(ATM90E36_REGISTER_IOFFSETC, this->phase_[PHASEC].current_offset_);  // Current offset for phase C
+	// Configure the voltage and current gain for PHASE C
+	this->write16_(ATM90E36_REGISTER_UGAINC, this->phase_[PHASEC].voltage_gain_);  // RMS voltage gain for phase C
+	this->write16_(ATM90E36_REGISTER_IGAINC, this->phase_[PHASEC].ct_gain_);       // Current gain for line C
+	this->write16_(ATM90E36_REGISTER_IGAINN, 0xFD7F); // Current gain for line D
+	this->write16_(ATM90E36_REGISTER_CS3, 0x02F6); // Checksum 3, end of configuration
+
 /*
   6886H (Power-up state):
-    Es el valor predeterminado tras un reinicio o al encender el dispositivo.
-    Este estado desactiva la verificación de checksum, lo que significa que no se generan errores relacionados con la integridad de los datos.
+    It is the default value after a reset or when the device is powered on.
+    This state disables checksum verification, meaning that no errors related to data integrity are generated.
   5678H (Calibration state):
-    Este valor activa un modo de calibración.
-    También desactiva la verificación de checksum, permitiendo que se escriban y reconfiguren registros relacionados con la calibración.
-    Al escribir este valor, se realiza un reinicio de los registros asociados.
+    This value activates a calibration mode.
+    It also disables checksum verification, allowing calibration-related registers to be written and reconfigured.
+    When this value is written, the associated registers are reset.
   8765H (Operation state):
-    Este es el valor que habilita el modo de operación normal.
-    En este estado, se habilita la verificación de checksum:
-        Si el checksum detecta un error, el sistema genera una señal de advertencia (IRQ/Warn) y detiene las operaciones de medición.
-        Esto asegura que los datos críticos no estén corruptos y que el sistema funcione de manera confiable.
+    This is the value that enables normal operating mode.
+    In this state, checksum verification is enabled:
+        If the checksum detects an error, the system generates a warning signal (IRQ/Warn) and stops measurement operations.
+        This ensures that critical data is not corrupted and that the system operates reliably.
 */
-  // Finalización configuración
+  // End of configuration
   this->write16_(ATM90E36_REGISTER_CONFIGSTART, 0x8765); // 0x6886 //0x5678 //8765);
   this->write16_(ATM90E36_REGISTER_CALSTART, 0x8765); // 0x6886 //0x5678 //8765);
   this->write16_(ATM90E36_REGISTER_HARMSTART, 0x8765); // 0x6886 //0x5678 //8765);
@@ -424,14 +425,13 @@ float ATM90E36Component::get_phase_current_(uint8_t phase) {
     ESP_LOGW(TAG, "SPI IRMS error reading the current register..");
   return (float) current / 1000;
 }
-
-// Leer un valor de 16 bits desde el registro de potencia activa para la fase especificada.
+// Read a 16-bit value from the active power register for the specified phase.
 float ATM90E36Component::get_phase_active_power_(uint8_t phase) {
   const int16_t val = static_cast<int16_t>(this->read16_(ATM90E36_REGISTER_PMEAN + phase));
-  //return static_cast<float>(val) / 1000.0; // Devuelve el valor en kW.
-  return static_cast<float>(val); // Devuelve el valor en vatios (W).
+  //return static_cast<float>(val) / 1000.0; // Returns the value in kW.
+  return static_cast<float>(val); // Returns the value in watts (W).
 }
-// Potencia reactiva
+// Reactive power
 float ATM90E36Component::get_phase_reactive_power_(uint8_t phase) {
   uint16_t val = this->read16_(ATM90E36_REGISTER_QMEAN + phase);
   if (val & 0x8000) {
@@ -439,36 +439,39 @@ float ATM90E36Component::get_phase_reactive_power_(uint8_t phase) {
   }
   return (float)val / 250;
 }
-// Potencia aparente
+// Apparent power
 float ATM90E36Component::get_phase_apparent_power_(uint8_t phase) {
   uint16_t val = this->read16_(ATM90E36_REGISTER_SMEANA + phase);
   if (val & 0x8000) {
     val= (val & 0x7FFF) * -1;
   }
-  //return (float)val / 1000;  // Kva
+  //return (float)val / 1000;  // kVA
   return (float)val;
 }
 /*
-// Total potencia activa
+// Total active power
 float ATM90E36Component::get_total_active_power_() {
   const int16_t apower = this->read16_(ATM90E36_REGISTER_PMEANT); 
   return (float)apower / 250;
 }
-// Total potencia reactiva
+// Total reactive power
 float ATM90E36Component::get_total_reactive_power_() {
   const uint16_t qpower = this->read16_(ATM90E36_REGISTER_QMEANT);
   return (float)qpower / 250;
 }
-// Total potencia aparente
+// Total apparent power
 float ATM90E36Component::get_total_apparent_power_() {
   const uint16_t spower = this->read16_(ATM90E36_REGISTER_SMEANT);
   return (float)spower / 250;
 }
-*/
+*/  
+
 float ATM90E36Component::get_phase_power_factor_(uint8_t phase) {
-  const int16_t powerfactor = this->read16_(ATM90E36_REGISTER_PFMEAN + phase);
-  if (this->read16_(ATM90E36_REGISTER_LASTSPIDATA) != powerfactor)
-    ESP_LOGW(TAG, "SPI error reading the power factor..");
+  const int16_t powerfactor = this->read16_(ATM90E36_REGISTER_PFMEAN + phase);  //0xBD + offset
+  
+  int16_t lastspi = this->read16_(ATM90E36_REGISTER_LASTSPIDATA);
+  if ( lastspi != powerfactor)
+    ESP_LOGW(TAG, "SPI error reading the power factor..", powerfactor, lastspi );
   return (float) powerfactor / 1000;
 }
 
@@ -531,7 +534,8 @@ uint16_t ATM90E36Component::calibrate_voltage_offset_phase(uint8_t phase) {
   const uint32_t average_value = total_value / num_reads;
   const uint32_t shifted_value = average_value >> 7;
   const uint32_t voltage_offset = ~shifted_value + 1;
-  return voltage_offset & 0xFFFF;  // Obtener los 16 bits inferiores
+  return voltage_offset & 0xFFFF;  // Get the lower 16 bits
+
 }
 
 uint16_t ATM90E36Component::calibrate_current_offset_phase(uint8_t phase) {
@@ -543,7 +547,8 @@ uint16_t ATM90E36Component::calibrate_current_offset_phase(uint8_t phase) {
   }
   const uint32_t average_value = total_value / num_reads;
   const uint32_t current_offset = ~average_value + 1;
-  return current_offset & 0xFFFF;  // obtener los 16 bits inferiores
+  return current_offset & 0xFFFF;  // Get the lower 16 bits
+
 }
 
 }  // namespace atm90e36
