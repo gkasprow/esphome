@@ -329,7 +329,7 @@ class SPIClient;
 
 class SPIComponent : public Component {
  public:
-  SPIDelegate *register_device(SPIClient *device, SPIMode mode, SPIBitOrder bit_order, uint32_t data_rate,
+  virtual SPIDelegate *register_device(SPIClient *device, SPIMode mode, SPIBitOrder bit_order, uint32_t data_rate,
                                GPIOPin *cs_pin);
   void unregister_device(SPIClient *device);
 
