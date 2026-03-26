@@ -1,0 +1,57 @@
+# AD9959 4-Channel DDS Example
+# 500 MSPS Direct Digital Synthesizer with 10-bit DACs
+
+esphome:
+  name: ad9959-test
+
+esp32:
+  board: esp32dev
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+
+ad9959:
+  id: dds
+  cs_pin: GPIO5
+  reset_pin: GPIO4
+  io_update_pin: GPIO16
+  ref_clock: 25000000  # 25 MHz crystal
+  pll_multiplier: 20   # 500 MHz core clock
+
+output:
+  - platform: ad9959
+    id: dds_ch0
+    ad9959_id: dds
+    channel: 0
+
+  - platform: ad9959
+    id: dds_ch1
+    ad9959_id: dds
+    channel: 1
+
+  - platform: ad9959
+    id: dds_ch2
+    ad9959_id: dds
+    channel: 2
+
+  - platform: ad9959
+    id: dds_ch3
+    ad9959_id: dds
+    channel: 3
+
+# Example: Use number component for frequency control
+number:
+  - platform: template
+    name: "Channel 0 Frequency"
+    id: ch0_freq
+    min_value: 0
+    max_value: 200000000
+    step: 1000
+    unit_of_measurement: "Hz"
+    optimistic: true
+    on_value:
+      then:
+        - output.set_level:
+            id: dds_ch0
+            level: !lambda 'return x / 250000000.0;'
