@@ -2,7 +2,12 @@ from esphome import pins
 import esphome.codegen as cg
 from esphome.components import spi
 import esphome.config_validation as cv
-from esphome.const import CONF_BUS_ID, CONF_CHANNEL, CONF_CHANNELS, CONF_ID
+from esphome.const import CONF_CHANNEL, CONF_CHANNELS, CONF_ID
+
+try:
+    from esphome.const import CONF_BUS_ID
+except ImportError:
+    CONF_BUS_ID = "bus_id"
 
 CODEOWNERS = ["@wizath"]
 
