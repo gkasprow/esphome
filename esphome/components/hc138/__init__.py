@@ -1,8 +1,8 @@
-import esphome.codegen as cg
-import esphome.config_validation as cv
-from esphome.components import spi, gpio
-from esphome.const import CONF_CHANNEL, CONF_CHANNELS, CONF_ID, CONF_PIN, CONF_SPI_ID, CONF_MISO_PIN
 from esphome import pins
+import esphome.codegen as cg
+from esphome.components import spi
+import esphome.config_validation as cv
+from esphome.const import CONF_BUS_ID, CONF_CHANNEL, CONF_CHANNELS, CONF_ID
 
 CODEOWNERS = ["@wizath"]
 
@@ -17,7 +17,6 @@ CONF_AO = "a0"
 CONF_A1 = "a1"
 CONF_A2 = "a2"
 
-CONF_BUS_ID = "bus_id"
 CONFIG_SCHEMA = (
     cv.Schema(
         {
@@ -42,14 +41,14 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await spi.register_spi_device(var, config)
-    
+
     a0 = await cg.gpio_pin_expression(config[CONF_AO])
     a1 = await cg.gpio_pin_expression(config[CONF_A1])
     a2 = await cg.gpio_pin_expression(config[CONF_A2])
     cg.add(var.set_a0(a0))
     cg.add(var.set_a1(a1))
     cg.add(var.set_a2(a2))
-    
+
     for conf in config[CONF_CHANNELS]:
         chan = cg.new_Pvariable(conf[CONF_BUS_ID])
         await cg.register_component(chan, config)

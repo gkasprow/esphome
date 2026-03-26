@@ -1,0 +1,89 @@
+# Example configuration for DAC8775 4-channel 16-bit DAC
+# Current output ranges: 0-20mA, 0-24mA, 4-20mA, 3.5-23.5mA, +-24mA
+# Voltage output ranges: 0-5V, 0-10V, +-5V, +-10V (with 20% overrange options)
+
+esphome:
+  name: dac8775-test
+
+esp32:
+  board: esp32dev
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+dac8775:
+  id: dac_chip
+  cs_pin: GPIO5
+  reset_pin: GPIO4
+  ldac_pin: GPIO16      # Optional - for synchronous updates
+  use_internal_reference: true
+
+output:
+  # Channel A - 4-20mA current loop (industrial standard)
+  - platform: dac8775
+    id: current_out_a
+    dac8775_id: dac_chip
+    channel: 0
+    range: "4-20mA"
+
+  # Channel B - 0-10V voltage output
+  - platform: dac8775
+    id: voltage_out_b
+    dac8775_id: dac_chip
+    channel: 1
+    range: "0-10V"
+
+  # Channel C - Bipolar +-10V voltage output
+  - platform: dac8775
+    id: voltage_out_c
+    dac8775_id: dac_chip
+    channel: 2
+    range: "+-10V"
+
+  # Channel D - 0-24mA current output
+  - platform: dac8775
+    id: current_out_d
+    dac8775_id: dac_chip
+    channel: 3
+    range: "0-24mA"
+
+# Example usage with number component
+number:
+  - platform: template
+    name: "Current Output A"
+    id: current_a_control
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    unit_of_measurement: "%"
+    set_action:
+      - output.set_level:
+          id: current_out_a
+          level: !lambda "return x / 100.0;"
+
+  - platform: template
+    name: "Voltage Output B"
+    id: voltage_b_control
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    unit_of_measurement: "%"
+    set_action:
+      - output.set_level:
+          id: voltage_out_b
+          level: !lambda "return x / 100.0;"
+
+  - platform: template
+    name: "Bipolar Voltage C"
+    id: voltage_c_control
+    min_value: -100
+    max_value: 100
+    step: 0.1
+    unit_of_measurement: "%"
+    set_action:
+      - output.set_level:
+          id: voltage_out_c
+          # For bipolar outputs: -1.0 = -10V, 0.0 = 0V, +1.0 = +10V
+          level: !lambda "return x / 100.0;"

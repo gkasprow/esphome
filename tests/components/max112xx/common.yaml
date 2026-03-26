@@ -1,0 +1,13 @@
+sensor:
+  - platform: max112xx
+    name: MAX112xx ADC
+    cs_pin: ${cs_pin}
+    update_interval: 60s
+    gain: 1
+    rate: 10SPS
+    line_frequency: 50Hz
+    reference_voltage: 2.5V
+    bipolar: true
+    signal_buffer: false
+    reference_buffer: false
+    self_calibrate: true

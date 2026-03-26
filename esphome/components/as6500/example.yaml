@@ -1,0 +1,32 @@
+# AS6500 Time-to-Digital Converter Example
+# 4-channel TDC with picosecond resolution for LIDAR, PET, flowmeters
+# SPI Mode 1 (CPOL=0, CPHA=1)
+
+esphome:
+  name: as6500-test
+
+esp32:
+  board: esp32dev
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+sensor:
+  - platform: as6500
+    cs_pin: GPIO5
+    interrupt_pin: GPIO4
+    update_interval: 100ms
+    refclk_divisions: 195313  # 5.12MHz crystal, 1ps LSB resolution
+    high_resolution: "OFF"    # OFF, X2, X4
+    channel_combine: "NORMAL" # NORMAL, PULSE_DISTANCE, PULSE_WIDTH
+    use_crystal: true         # true=XOSC, false=external REFCLK pin
+    channel_1:
+      name: "TDC Channel 1"
+    channel_2:
+      name: "TDC Channel 2"
+    channel_3:
+      name: "TDC Channel 3"
+    channel_4:
+      name: "TDC Channel 4"
