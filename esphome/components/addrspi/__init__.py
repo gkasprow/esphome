@@ -2,7 +2,7 @@ from esphome import pins
 import esphome.codegen as cg
 from esphome.components import spi
 import esphome.config_validation as cv
-from esphome.const import CONF_CHANNEL, CONF_CHANNELS, CONF_ID
+from esphome.const import CONF_BUS_ID, CONF_CHANNEL, CONF_CHANNELS, CONF_ID
 
 CODEOWNERS = ["@wizath"]
 DEPENDENCIES = ["spi"]
@@ -13,8 +13,6 @@ ADDRSPIChannel = addrspi_ns.class_("ADDRSPIChannel", spi.SPIComponent)
 
 MULTI_CONF = True
 
-CONF_BUS_ID = "bus_id"
-CONF_SPI_ID = "spi_id"
 CONF_ADDRESS_PINS = "address_pins"
 
 

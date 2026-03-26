@@ -2,13 +2,12 @@ from esphome import pins
 import esphome.codegen as cg
 from esphome.components import spi
 import esphome.config_validation as cv
-from esphome.const import CONF_ID
+from esphome.const import CONF_ID, CONF_RESET_PIN
 
 DEPENDENCIES = ["spi"]
 CODEOWNERS = ["@wizath"]
 MULTI_CONF = True
 
-CONF_RESET_PIN = "reset_pin"
 CONF_IO_UPDATE_PIN = "io_update_pin"
 CONF_REF_CLOCK = "ref_clock"
 CONF_PLL_MULTIPLIER = "pll_multiplier"

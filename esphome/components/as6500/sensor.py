@@ -2,13 +2,12 @@ from esphome import pins
 import esphome.codegen as cg
 from esphome.components import sensor, spi
 import esphome.config_validation as cv
-from esphome.const import CONF_ID, STATE_CLASS_MEASUREMENT
+from esphome.const import CONF_ID, CONF_INTERRUPT_PIN, STATE_CLASS_MEASUREMENT
 
 from . import as6500_ns
 
 DEPENDENCIES = ["spi"]
 
-CONF_INTERRUPT_PIN = "interrupt_pin"
 CONF_REFCLK_DIVISIONS = "refclk_divisions"
 CONF_HIGH_RESOLUTION = "high_resolution"
 CONF_CHANNEL_COMBINE = "channel_combine"
