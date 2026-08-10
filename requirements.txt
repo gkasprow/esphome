@@ -26,7 +26,7 @@ freetype-py==2.5.1
 kconfiglib==13.7.1
 
 # esp-idf >= 5.0 requires this
-pyparsing >= 3.0
+pyparsing >= 3.3.2
 
 # For autocompletion
 argcomplete>=2.0.0
